@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
 Streamlit Dashboard for Project Orpheus
 
@@ -14,22 +16,52 @@ import matplotlib
 matplotlib.use('Agg')  # Use non-interactive backend for Streamlit
 import matplotlib.pyplot as plt
 
-# Add project root to path for imports
+# Add project root to path for imports - more robust method
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
+sys.path.insert(0, str(project_root / "src"))
 
+# Alternative import strategy - try different approaches
 try:
+    # First try: direct src import
     from src.data_processing import load_exportify, clean
     from src.pattern_analysis import playlist_stats, repeat_obsessions, temporal_patterns
     from src.emotion_analysis import add_spotify_audio_features, add_lyric_sentiment, compute_emotion_summary
     from src.visualization import plot_emotion_timeline, plot_top_artists, plot_audio_features_radar
     from src.config import DATA_DIR_RAW, DATA_DIR_PROCESSED
-except ImportError as e:
-    st.error(f"Import error: {e}")
-    st.error(f"Project root: {project_root}")
-    st.error(f"Current working directory: {Path.cwd()}")
-    st.error("Make sure you're running this from the project root directory")
-    st.stop()
+except ImportError:
+    try:
+        # Second try: relative import from project root
+        import os
+        os.chdir(project_root)
+        from src.data_processing import load_exportify, clean
+        from src.pattern_analysis import playlist_stats, repeat_obsessions, temporal_patterns
+        from src.emotion_analysis import add_spotify_audio_features, add_lyric_sentiment, compute_emotion_summary
+        from src.visualization import plot_emotion_timeline, plot_top_artists, plot_audio_features_radar
+        from src.config import DATA_DIR_RAW, DATA_DIR_PROCESSED
+    except ImportError as e:
+        st.error(f"❌ Import error: {e}")
+        st.error(f"📁 Project root: {project_root}")
+        st.error(f"📂 Current working directory: {Path.cwd()}")
+        st.error(f"🔍 Python path: {sys.path[:3]}...")
+        
+        # Show debug info to help troubleshoot
+        st.error("📋 **Troubleshooting Steps:**")
+        st.error("1. Make sure you're running from the project root:")
+        st.error(f"   `cd \"{project_root}\"`")
+        st.error("2. Then run: `streamlit run ui/app.py`")
+        st.error("3. Or try: `python -m streamlit run ui/app.py`")
+        
+        # Check if src directory exists
+        src_dir = project_root / "src"
+        if src_dir.exists():
+            st.error(f"✅ src directory exists at: {src_dir}")
+            src_files = list(src_dir.glob("*.py"))
+            st.error(f"🐍 Python files found: {[f.name for f in src_files]}")
+        else:
+            st.error(f"❌ src directory not found at: {src_dir}")
+        
+        st.stop()
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -138,6 +170,20 @@ def show_welcome_page():
             st.text(f"Data directory: {DATA_DIR_RAW}")
             sample_files = list(DATA_DIR_RAW.glob("*.csv"))
             st.text(f"Available CSV files: {[f.name for f in sample_files]}")
+            
+            # Show Python path for debugging
+            st.text(f"Python executable: {sys.executable}")
+            st.text(f"Python path (first 3): {sys.path[:3]}")
+            
+            # Check if src modules can be imported individually
+            try:
+                import src.config
+                st.text("✅ src.config imported successfully")
+            except ImportError as e:
+                st.text(f"❌ src.config import failed: {e}")
+                
+        # Note about Fivetran/corporate networks
+        st.info("💼 **Corporate Network Note**: If you're on a corporate network that blocks external services, some features (like Spotify API) may be limited, but the core CSV analysis will still work perfectly!")
 
 
 def load_sample_data():

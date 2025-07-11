@@ -16,7 +16,11 @@ cd "c:\Users\benjamin.haddon\Documents\orpheus"
 .\orpheus_venv\Scripts\python.exe main.py
 
 # Launch web dashboard
+cd "c:\Users\benjamin.haddon\Documents\orpheus"
 .\orpheus_venv\Scripts\streamlit.exe run ui/app.py
+
+# OR use the launcher script
+.\launch_streamlit.bat
 ```
 
 ---
@@ -107,6 +111,18 @@ DEFAULT_TOP_N = 10            # Top results to show
 ---
 
 ## 🆘 **Quick Troubleshooting**
+
+### **"No module named 'src'"**
+```powershell
+# Make sure you're in the project directory
+cd "c:\Users\benjamin.haddon\Documents\orpheus"
+
+# Then run streamlit
+.\orpheus_venv\Scripts\streamlit.exe run ui/app.py
+
+# Or use the launcher
+.\launch_streamlit.bat
+```
 
 ### **"No module named pandas"**
 ```powershell
