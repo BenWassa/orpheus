@@ -1,299 +1,220 @@
 """
-🎵 Project Orpheus - Pattern Analyzer Module
+Pattern analysis module for Project Orpheus.
 
-Analyzes listening patterns, obsessions, and temporal trends.
+Implements descriptive metrics and repeat-obsession detection logic.
+See 🔍 How It Works, step 2 in README for pattern detection methodology.
 """
-
+import logging
 import pandas as pd
 import numpy as np
+from typing import Dict, List, Any, Optional
 from collections import Counter
 
+logger = logging.getLogger(__name__)
 
-def analyze_patterns(df, threshold=5):
+
+def top_playlists(df: pd.DataFrame, n: int = 10) -> pd.DataFrame:
     """
-    Analyze listening patterns in the data
+    Get top N playlists by track count.
     
     Args:
-        df: Cleaned DataFrame
-        threshold: Minimum count to consider significant
+        df: Processed DataFrame with playlist data
+        n: Number of top playlists to return
         
     Returns:
-        dict: Pattern analysis results
+        DataFrame with playlist names and track counts, sorted by count
     """
-    patterns = {
-        'artist_patterns': {},
-        'track_patterns': {},
-        'temporal_patterns': {},
-        'obsessions': []
+    logger.info(f"Analyzing top {n} playlists by track count")
+    
+    # Try different possible playlist column names
+    playlist_cols = ['Playlist Name', 'playlist_name', 'playlist']
+    playlist_col = None
+    
+    for col in playlist_cols:
+        if col in df.columns:
+            playlist_col = col
+            break
+    
+    if playlist_col is None:
+        logger.warning("No playlist column found - creating mock data")
+        return pd.DataFrame({'playlist_name': ['Unknown'], 'track_count': [len(df)]})
+    else:
+        playlist_counts = df[playlist_col].value_counts().head(n).reset_index()
+        playlist_counts.columns = ['playlist_name', 'track_count']
+    
+    logger.info(f"Found {len(playlist_counts)} playlists")
+    return playlist_counts
+
+
+def playlist_stats(df: pd.DataFrame) -> Dict[str, Any]:
+    """
+    Compute comprehensive playlist statistics.
+    
+    Args:
+        df: Processed DataFrame with music data
+        
+    Returns:
+        Dictionary with various playlist statistics
+    """
+    logger.info("Computing playlist statistics")
+    
+    stats = {
+        'total_tracks': len(df),
+        'unique_artists': 0,
+        'unique_albums': 0,
+        'date_range': None,
+        'most_common_artist': None,
+        'most_common_album': None,
+        'average_popularity': None
     }
     
-    # Artist patterns
+    # Artist statistics
     if 'artist_name' in df.columns:
-        artist_counts = df['artist_name'].value_counts()
-        patterns['artist_patterns'] = {
-            'total_unique': len(artist_counts),
-            'top_10': artist_counts.head(10).to_dict(),
-            'above_threshold': len(artist_counts[artist_counts >= threshold])
-        }
+        unique_artists = df['artist_name'].nunique()
+        stats['unique_artists'] = unique_artists
+        most_common_artist = df['artist_name'].value_counts().index[0] if len(df) > 0 else None
+        stats['most_common_artist'] = most_common_artist
     
-    # Track patterns  
-    if 'track_name' in df.columns:
-        track_counts = df['track_name'].value_counts()
-        patterns['track_patterns'] = {
-            'total_unique': len(track_counts),
-            'top_10': track_counts.head(10).to_dict(),
-            'above_threshold': len(track_counts[track_counts >= threshold])
-        }
+    # Album statistics
+    if 'album_name' in df.columns:
+        unique_albums = df['album_name'].nunique()
+        stats['unique_albums'] = unique_albums
+        most_common_album = df['album_name'].value_counts().index[0] if len(df) > 0 else None
+        stats['most_common_album'] = most_common_album
     
-    # Temporal patterns
+    # Date range analysis
     if 'added_at' in df.columns:
-        try:
-            df_temp = df.copy()
-            df_temp['added_at'] = pd.to_datetime(df_temp['added_at'])
-            df_temp['month'] = df_temp['added_at'].dt.to_period('M')
-            df_temp['weekday'] = df_temp['added_at'].dt.day_name()
-            
-            monthly_counts = df_temp['month'].value_counts().sort_index()
-            weekday_counts = df_temp['weekday'].value_counts()
-            
-            patterns['temporal_patterns'] = {
-                'monthly_distribution': monthly_counts.to_dict(),
-                'weekday_distribution': weekday_counts.to_dict(),
-                'peak_month': monthly_counts.idxmax() if len(monthly_counts) > 0 else None,
-                'peak_weekday': weekday_counts.idxmax() if len(weekday_counts) > 0 else None
+        date_series = df['added_at'].dropna()
+        if len(date_series) > 0:
+            stats['date_range'] = {
+                'earliest': date_series.min(),
+                'latest': date_series.max(),
+                'span_days': (date_series.max() - date_series.min()).days
             }
-        except Exception as e:
-            print(f"Warning: Could not analyze temporal patterns: {e}")
     
-    # Find obsessions
-    patterns['obsessions'] = find_obsessions(df, threshold)
+    # Popularity analysis
+    popularity_cols = ['Popularity', 'popularity', 'play_count']
+    for col in popularity_cols:
+        if col in df.columns:
+            pop_values = df[col].dropna()
+            if len(pop_values) > 0:
+                stats['average_popularity'] = pop_values.mean()
+                break
     
-    return patterns
+    logger.info(f"Statistics computed for {stats['total_tracks']} tracks")
+    return stats
 
 
-def find_obsessions(df, threshold=5):
+def repeat_obsessions(df: pd.DataFrame, threshold: int = 10) -> pd.DataFrame:
     """
-    Find artists or tracks that appear frequently (obsessions)
+    Detect repeat obsessions - artists/tracks that exceed play threshold.
     
     Args:
-        df: Cleaned DataFrame
-        threshold: Minimum count to consider an obsession
+        df: Processed DataFrame with music data
+        threshold: Minimum occurrence count to be considered an obsession
         
     Returns:
-        pandas.DataFrame: Obsessions with metadata
+        DataFrame with obsession details (artist/track, count, type)
     """
+    logger.info(f"Detecting repeat obsessions with threshold: {threshold}")
+    
     obsessions = []
     
     # Artist obsessions
     if 'artist_name' in df.columns:
         artist_counts = df['artist_name'].value_counts()
-        for artist, count in artist_counts.items():
-            if count >= threshold:
-                obsessions.append({
-                    'name': artist,
-                    'count': count,
-                    'type': 'artist',
-                    'intensity': calculate_intensity(count, len(df)),
-                    'percentage': (count / len(df)) * 100
-                })
+        artist_obsessions = artist_counts[artist_counts >= threshold]
+        for artist, count in artist_obsessions.items():
+            obsessions.append({
+                'name': artist,
+                'count': count,
+                'type': 'artist',
+                'percentage': (count / len(df)) * 100
+            })
     
     # Track obsessions
     if 'track_name' in df.columns:
         track_counts = df['track_name'].value_counts()
-        for track, count in track_counts.items():
-            if count >= threshold:
-                obsessions.append({
-                    'name': track,
-                    'count': count,
-                    'type': 'track',
-                    'intensity': calculate_intensity(count, len(df)),
-                    'percentage': (count / len(df)) * 100
-                })
+        track_obsessions = track_counts[track_counts >= threshold]
+        for track, count in track_obsessions.items():
+            obsessions.append({
+                'name': track,
+                'count': count,
+                'type': 'track',
+                'percentage': (count / len(df)) * 100
+            })
     
-    # Convert to DataFrame and sort by count
-    if obsessions:
-        obsessions_df = pd.DataFrame(obsessions)
-        obsessions_df = obsessions_df.sort_values('count', ascending=False)
-        return obsessions_df
-    else:
-        return pd.DataFrame(columns=['name', 'count', 'type', 'intensity', 'percentage'])
-
-
-def calculate_intensity(count, total):
-    """
-    Calculate obsession intensity score
-    
-    Args:
-        count: Number of occurrences
-        total: Total items in dataset
-        
-    Returns:
-        str: Intensity level
-    """
-    percentage = (count / total) * 100
-    
-    if percentage >= 10:
-        return 'Extreme'
-    elif percentage >= 5:
-        return 'High'
-    elif percentage >= 2:
-        return 'Moderate'
-    else:
-        return 'Low'
-
-
-def analyze_temporal_trends(df):
-    """
-    Analyze temporal listening trends
-    
-    Args:
-        df: Cleaned DataFrame with date information
-        
-    Returns:
-        dict: Temporal analysis results
-    """
-    if 'added_at' not in df.columns:
-        return {'error': 'No date information available'}
-    
-    try:
-        df_temp = df.copy()
-        df_temp['added_at'] = pd.to_datetime(df_temp['added_at'])
-        
-        # Monthly trends
-        df_temp['month'] = df_temp['added_at'].dt.to_period('M')
-        monthly_counts = df_temp['month'].value_counts().sort_index()
-        
-        # Yearly trends
-        df_temp['year'] = df_temp['added_at'].dt.year
-        yearly_counts = df_temp['year'].value_counts().sort_index()
-        
-        # Day of week trends
-        df_temp['weekday'] = df_temp['added_at'].dt.day_name()
-        weekday_counts = df_temp['weekday'].value_counts()
-        
-        # Hour of day trends (if time info available)
-        df_temp['hour'] = df_temp['added_at'].dt.hour
-        hourly_counts = df_temp['hour'].value_counts().sort_index()
-        
-        trends = {
-            'monthly_trends': {
-                'data': monthly_counts.to_dict(),
-                'peak_month': monthly_counts.idxmax(),
-                'peak_count': monthly_counts.max(),
-                'average_monthly': monthly_counts.mean()
-            },
-            'yearly_trends': {
-                'data': yearly_counts.to_dict(),
-                'active_years': len(yearly_counts),
-                'peak_year': yearly_counts.idxmax(),
-                'peak_count': yearly_counts.max()
-            },
-            'weekday_trends': {
-                'data': weekday_counts.to_dict(),
-                'peak_day': weekday_counts.idxmax(),
-                'peak_count': weekday_counts.max()
-            },
-            'hourly_trends': {
-                'data': hourly_counts.to_dict(),
-                'peak_hour': hourly_counts.idxmax(),
-                'peak_count': hourly_counts.max()
-            },
-            'date_range': {
-                'start': df_temp['added_at'].min(),
-                'end': df_temp['added_at'].max(),
-                'span_days': (df_temp['added_at'].max() - df_temp['added_at'].min()).days
-            }
-        }
-        
-        return trends
-        
-    except Exception as e:
-        return {'error': f'Error analyzing temporal trends: {e}'}
-
-
-def find_artist_evolution(df):
-    """
-    Analyze how artist preferences evolve over time
-    
-    Args:
-        df: Cleaned DataFrame with date and artist information
-        
-    Returns:
-        dict: Artist evolution analysis
-    """
-    if 'added_at' not in df.columns or 'artist_name' not in df.columns:
-        return {'error': 'Missing required columns'}
-    
-    try:
-        df_temp = df.copy()
-        df_temp['added_at'] = pd.to_datetime(df_temp['added_at'])
-        df_temp['month'] = df_temp['added_at'].dt.to_period('M')
-        
-        # Artist discovery timeline
-        first_appearance = df_temp.groupby('artist_name')['added_at'].min()
-        
-        # Artists by discovery period
-        discovery_periods = {}
-        for artist, first_date in first_appearance.items():
-            period = first_date.to_period('Y')
-            if period not in discovery_periods:
-                discovery_periods[period] = []
-            discovery_periods[period].append(artist)
-        
-        # Artist consistency (how often they appear)
-        artist_monthly_counts = df_temp.groupby(['month', 'artist_name']).size().unstack(fill_value=0)
-        
-        evolution = {
-            'discovery_timeline': {str(k): v for k, v in discovery_periods.items()},
-            'first_appearances': {artist: str(date) for artist, date in first_appearance.items()},
-            'total_discovery_periods': len(discovery_periods),
-            'artists_per_period': {str(k): len(v) for k, v in discovery_periods.items()}
-        }
-        
-        return evolution
-        
-    except Exception as e:
-        return {'error': f'Error analyzing artist evolution: {e}'}
-
-
-def calculate_diversity_metrics(df):
-    """
-    Calculate diversity metrics for the music library
-    
-    Args:
-        df: Cleaned DataFrame
-        
-    Returns:
-        dict: Diversity metrics
-    """
-    metrics = {}
-    
-    # Artist diversity
-    if 'artist_name' in df.columns:
-        artist_counts = df['artist_name'].value_counts()
-        total_artists = len(artist_counts)
-        
-        # Simpson's diversity index for artists
-        n = len(df)
-        simpson_index = sum((count * (count - 1)) / (n * (n - 1)) for count in artist_counts)
-        simpson_diversity = 1 - simpson_index
-        
-        metrics['artist_diversity'] = {
-            'total_unique_artists': total_artists,
-            'simpson_diversity_index': simpson_diversity,
-            'most_common_percentage': (artist_counts.iloc[0] / len(df)) * 100,
-            'top_10_percentage': (artist_counts.head(10).sum() / len(df)) * 100
-        }
-    
-    # Album diversity
+    # Album obsessions
     if 'album_name' in df.columns:
         album_counts = df['album_name'].value_counts()
-        total_albums = len(album_counts)
+        album_obsessions = album_counts[album_counts >= threshold]
+        for album, count in album_obsessions.items():
+            obsessions.append({
+                'name': album,
+                'count': count,
+                'type': 'album',
+                'percentage': (count / len(df)) * 100
+            })
+    
+    obsessions_df = pd.DataFrame(obsessions)
+    
+    if len(obsessions_df) > 0:
+        obsessions_df = obsessions_df.sort_values('count', ascending=False)
+        logger.info(f"Found {len(obsessions_df)} obsessions above threshold {threshold}")
+    else:
+        logger.info("No obsessions found above threshold")
+    
+    return obsessions_df
+
+
+def temporal_patterns(df: pd.DataFrame) -> Dict[str, Any]:
+    """
+    Analyze temporal listening patterns.
+    
+    Args:
+        df: Processed DataFrame with timestamp data
         
-        metrics['album_diversity'] = {
-            'total_unique_albums': total_albums,
-            'most_common_percentage': (album_counts.iloc[0] / len(df)) * 100,
-            'single_track_albums': len(album_counts[album_counts == 1])
+    Returns:
+        Dictionary with temporal pattern analysis
+    """
+    logger.info("Analyzing temporal listening patterns")
+    
+    patterns = {
+        'monthly_distribution': None,
+        'weekly_distribution': None,
+        'listening_streaks': None,
+        'peak_periods': None
+    }
+    
+    if 'added_at' not in df.columns:
+        logger.warning("No timestamp column found for temporal analysis")
+        return patterns
+    
+    # Filter valid dates
+    df_with_dates = df[df['added_at'].notna()].copy()
+    
+    if len(df_with_dates) == 0:
+        logger.warning("No valid dates found for temporal analysis")
+        return patterns
+    
+    # Monthly distribution
+    df_with_dates['month'] = df_with_dates['added_at'].dt.to_period('M')
+    monthly_counts = df_with_dates['month'].value_counts().sort_index()
+    patterns['monthly_distribution'] = monthly_counts.to_dict()
+    
+    # Weekly distribution
+    df_with_dates['week'] = df_with_dates['added_at'].dt.to_period('W')
+    weekly_counts = df_with_dates['week'].value_counts().sort_index()
+    patterns['weekly_distribution'] = weekly_counts.to_dict()
+    
+    # Peak periods (months with highest activity)
+    if len(monthly_counts) > 0:
+        peak_month = monthly_counts.idxmax()
+        patterns['peak_periods'] = {
+            'peak_month': str(peak_month),
+            'peak_count': monthly_counts.max(),
+            'average_monthly': monthly_counts.mean()
         }
     
-    return metrics
+    logger.info("Temporal pattern analysis complete")
+    return patterns

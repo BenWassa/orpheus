@@ -1,168 +1,129 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
-🎵 Project Orpheus - Complete Analysis Runner
+Main test script for Project Orpheus
 
-Processes all CSV files in the data directory and generates comprehensive analysis.
-Run from project root: python 01_setup/run_analysis.py
+Runs the complete analysis pipeline on sample data and prints results to console.
+Use this to test that everything is working correctly.
 """
-
 import sys
 from pathlib import Path
-import pandas as pd
+import logging
 
-# Add core modules to path
-project_root = Path(__file__).parent.parent
-sys.path.insert(0, str(project_root / "02_core"))
+# Add src to path
+sys.path.append(str(Path(__file__).parent / "src"))
 
-try:
-    from data_processor import load_csv_data, clean_data, get_data_summary
-    from pattern_analyzer import analyze_patterns, find_obsessions, analyze_temporal_trends
-    from visualizer import save_all_visualizations, create_summary_stats
-except ImportError as e:
-    print(f"❌ Could not import core modules: {e}")
-    print("Ensure you're running from the project root directory")
-    sys.exit(1)
+from src.data_processing import load_exportify, clean, save_processed
+from src.pattern_analysis import playlist_stats, repeat_obsessions, temporal_patterns
+from src.emotion_analysis import add_spotify_audio_features, add_lyric_sentiment, compute_emotion_summary
+from src.visualization import save_all_visualizations, create_emotion_summary_text
+from src.config import DATA_DIR_RAW, DATA_DIR_PROCESSED, PROJECT_ROOT
+
+# Configure logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 
 def main():
-    """Main analysis runner"""
+    """Run complete analysis pipeline"""
     
-    print("🎵 Project Orpheus - Complete Music Analysis")
-    print("=" * 50)
-    
-    # Setup directories
-    data_dir = project_root / "04_data" / "raw"
-    output_dir = project_root / "05_output"
-    viz_dir = output_dir / "visualizations"
-    
-    # Create output directories
-    output_dir.mkdir(exist_ok=True)
-    viz_dir.mkdir(exist_ok=True)
-    
-    # Find CSV files
-    csv_files = list(data_dir.glob("*.csv"))
-    
-    if not csv_files:
-        print(f"❌ No CSV files found in {data_dir}")
-        print("💡 Add your Exportify CSV files to 04_data/raw/")
-        return
-    
-    print(f"📁 Found {len(csv_files)} CSV file(s):")
-    for file in csv_files:
-        print(f"  • {file.name}")
+    print("🎵" * 20)
+    print("PROJECT ORPHEUS - EMOTIONAL MUSIC ANALYSIS")
+    print("🎵" * 20)
     print()
     
-    # Process all files
-    all_data = []
-    
-    for csv_file in csv_files:
-        print(f"🔄 Processing {csv_file.name}...")
-        
-        try:
-            # Load and clean data
-            df_raw = load_csv_data(csv_file)
-            df_clean = clean_data(df_raw)
-            all_data.append(df_clean)
-            
-            print(f"  ✅ Processed {len(df_clean)} tracks")
-            
-        except Exception as e:
-            print(f"  ❌ Error processing {csv_file.name}: {e}")
-            continue
-    
-    if not all_data:
-        print("❌ No data could be processed")
-        return
-    
-    # Combine all data
-    print("\n🔗 Combining all datasets...")
-    combined_df = pd.concat(all_data, ignore_index=True)
-    print(f"📊 Total combined dataset: {len(combined_df)} tracks")
-    
-    # Run analysis
-    print("\n📈 Running pattern analysis...")
-    patterns = analyze_patterns(combined_df, threshold=3)
-    
-    print("\n🔍 Finding musical obsessions...")
-    obsessions = find_obsessions(combined_df, threshold=3)
-    
-    print("\n⏰ Analyzing temporal trends...")
-    temporal_trends = analyze_temporal_trends(combined_df)
-    
-    # Generate summary
-    print("\n📋 Generating summary statistics...")
-    data_summary = get_data_summary(combined_df)
-    summary_stats = create_summary_stats(combined_df)
-    
-    # Create visualizations
-    print("\n🎨 Creating visualizations...")
     try:
-        save_all_visualizations(combined_df, viz_dir)
-        print(f"  ✅ Visualizations saved to {viz_dir}")
+        # Step 1: Find and load data
+        print("📁 STEP 1: Loading data...")
+        csv_files = list(DATA_DIR_RAW.glob("*.csv"))
+        
+        if not csv_files:
+            print("❌ No CSV files found in data/raw/ directory")
+            print("Please add an Exportify CSV file to data/raw/ and try again")
+            return
+        
+        # Use first CSV file found
+        csv_file = csv_files[0]
+        print(f"Found CSV file: {csv_file.name}")
+        
+        # Load and clean data
+        df_raw = load_exportify(csv_file)
+        print(f"Loaded {len(df_raw)} raw rows")
+        
+        df_clean = clean(df_raw)
+        print(f"Cleaned to {len(df_clean)} rows")
+        
+        # Save processed data
+        processed_file = DATA_DIR_PROCESSED / f"{csv_file.stem}_processed.parquet"
+        save_processed(df_clean, processed_file)
+        print(f"Saved processed data to {processed_file}")
+        print()
+        
+        # Step 2: Basic statistics
+        print("📊 STEP 2: Computing statistics...")
+        stats = playlist_stats(df_clean)
+        
+        print(f"Total tracks: {stats['total_tracks']}")
+        print(f"Unique artists: {stats['unique_artists']}")
+        print(f"Unique albums: {stats['unique_albums']}")
+        print(f"Most common artist: {stats['most_common_artist']}")
+        print(f"Average popularity: {stats['average_popularity']}")
+        
+        if stats['date_range']:
+            date_range = stats['date_range']
+            print(f"Date range: {date_range['earliest']} to {date_range['latest']} ({date_range['span_days']} days)")
+        print()
+        
+        # Step 3: Pattern analysis
+        print("🔍 STEP 3: Analyzing patterns...")
+        obsessions_df = repeat_obsessions(df_clean, threshold=3)
+        
+        if len(obsessions_df) > 0:
+            print(f"Found {len(obsessions_df)} obsessions:")
+            for _, row in obsessions_df.head(5).iterrows():
+                print(f"  - {row['type'].title()}: {row['name']} ({row['count']} times, {row['percentage']:.1f}%)")
+        else:
+            print("No repeat obsessions found")
+        
+        # Temporal patterns
+        temporal_data = temporal_patterns(df_clean)
+        if temporal_data['peak_periods']:
+            peak = temporal_data['peak_periods']
+            print(f"Peak listening period: {peak['peak_month']} with {peak['peak_count']} tracks")
+        print()
+        
+        # Step 4: Emotion analysis
+        print("💭 STEP 4: Analyzing emotions...")
+        df_with_audio = add_spotify_audio_features(df_clean)
+        print(f"Added audio features for {df_with_audio['valence'].notna().sum()} tracks")
+        
+        df_with_sentiment = add_lyric_sentiment(df_with_audio)
+        print(f"Added sentiment analysis for {df_with_sentiment['lyric_polarity'].notna().sum()} tracks")
+        
+        emotion_summary = compute_emotion_summary(df_with_sentiment)
+        print("Computed emotion summary")
+        print()
+        
+        # Step 5: Generate visualizations
+        print("📈 STEP 5: Creating visualizations...")
+        output_dir = PROJECT_ROOT / "output" / "visualizations"
+        saved_files = save_all_visualizations(df_with_sentiment, emotion_summary, output_dir)
+        
+        print("Generated visualizations:")
+        for name, path in saved_files.items():
+            print(f"  - {name}: {path}")
+        print()
+        
+        # Step 6: Display summary
+        print("🔮 STEP 6: Emotional analysis summary")
+        print("-" * 60)
+        summary_text = create_emotion_summary_text(emotion_summary)
+        print(summary_text)
+        
+        print("\n✅ Analysis complete! Check the output/ directory for visualizations.")
+        
     except Exception as e:
-        print(f"  ⚠️  Warning: Could not create visualizations: {e}")
-    
-    # Save results
-    print("\n💾 Saving analysis results...")
-    
-    # Save processed data
-    processed_file = output_dir / "processed_music_data.csv"
-    combined_df.to_csv(processed_file, index=False)
-    print(f"  📁 Processed data: {processed_file}")
-    
-    # Save obsessions
-    if len(obsessions) > 0:
-        obsessions_file = output_dir / "musical_obsessions.csv"
-        obsessions.to_csv(obsessions_file, index=False)
-        print(f"  🔥 Obsessions: {obsessions_file}")
-    
-    # Save summary
-    summary_file = output_dir / "analysis_summary.csv"
-    summary_stats.to_csv(summary_file, index=False)
-    print(f"  📊 Summary: {summary_file}")
-    
-    # Print results to console
-    print("\n" + "=" * 50)
-    print("🎉 ANALYSIS COMPLETE - KEY INSIGHTS")
-    print("=" * 50)
-    
-    print(f"\n📊 DATASET OVERVIEW:")
-    print(f"  • Total tracks: {data_summary['total_tracks']:,}")
-    print(f"  • Unique artists: {data_summary['unique_artists']:,}")
-    print(f"  • Unique albums: {data_summary['unique_albums']:,}")
-    
-    if data_summary['date_range']:
-        dr = data_summary['date_range']
-        print(f"  • Date range: {dr['earliest'].strftime('%Y-%m-%d')} to {dr['latest'].strftime('%Y-%m-%d')}")
-        print(f"  • Span: {dr['span_days']} days")
-    
-    if data_summary['most_common_artist']:
-        print(f"  • Top artist: {data_summary['most_common_artist']}")
-    
-    print(f"\n🔥 MUSICAL OBSESSIONS (3+ plays):")
-    if len(obsessions) > 0:
-        for _, obs in obsessions.head(5).iterrows():
-            print(f"  • {obs['name']} ({obs['type']}): {obs['count']} plays ({obs['percentage']:.1f}%)")
-    else:
-        print("  • No obsessions found with 3+ plays")
-    
-    if 'temporal_trends' in locals() and 'monthly_trends' in temporal_trends:
-        mt = temporal_trends['monthly_trends']
-        print(f"\n📅 TEMPORAL PATTERNS:")
-        print(f"  • Peak month: {mt['peak_month']} ({mt['peak_count']} tracks)")
-        print(f"  • Average per month: {mt['average_monthly']:.1f} tracks")
-    
-    print(f"\n📁 OUTPUT LOCATION:")
-    print(f"  • Main results: {output_dir}")
-    print(f"  • Visualizations: {viz_dir}")
-    
-    print("\n🌐 NEXT STEPS:")
-    print("  • Run the Streamlit dashboard for interactive exploration")
-    print("  • Use: python 01_setup/launch_dashboard.bat")
-    print("  • Or: streamlit run 03_interface/streamlit_app.py")
-    
-    print("\n🎵 Happy music exploration!")
+        logger.error(f"Error during analysis: {e}")
+        print(f"\n❌ Error: {e}")
+        print("Check the logs above for more details.")
 
 
 if __name__ == "__main__":

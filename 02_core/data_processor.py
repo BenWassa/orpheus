@@ -1,225 +1,188 @@
 """
-🎵 Project Orpheus - Data Processor Module
+Data processing module for Project Orpheus.
 
-Handles loading and cleaning of Spotify playlist CSV data.
+Handles loading, cleaning, and validation of Exportify CSV files.
+See 🔍 How It Works, step 1 in README for data pipeline overview.
 """
-
+import logging
 import pandas as pd
 import numpy as np
 from pathlib import Path
-import warnings
+from typing import Optional, List, Dict, Any
 
-warnings.filterwarnings('ignore')
+from config import EXPORTIFY_REQUIRED_COLUMNS, DATA_DIR_PROCESSED
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
-def load_csv_data(file_path):
+def load_exportify(csv_path: Path) -> pd.DataFrame:
     """
-    Load CSV data from Exportify format
+    Load Exportify CSV file into pandas DataFrame.
     
     Args:
-        file_path: Path to CSV file
+        csv_path: Path to the Exportify CSV file
         
     Returns:
-        pandas.DataFrame: Raw loaded data
+        Raw DataFrame with original column names and data types
+        
+    Raises:
+        FileNotFoundError: If CSV file doesn't exist
+        pd.errors.EmptyDataError: If CSV is empty
+        pd.errors.ParserError: If CSV format is invalid
     """
+    logger.info(f"Loading Exportify CSV from: {csv_path}")
+    
+    if not csv_path.exists():
+        raise FileNotFoundError(f"CSV file not found: {csv_path}")
+    
     try:
-        # Handle both string and Path objects
-        file_path = Path(file_path)
-        
-        # Load with flexible encoding
-        try:
-            df = pd.read_csv(file_path, encoding='utf-8')
-        except UnicodeDecodeError:
-            df = pd.read_csv(file_path, encoding='latin-1')
-        
-        print(f"✅ Loaded {len(df)} rows from {file_path.name}")
-        
-        return df
-        
-    except Exception as e:
-        print(f"❌ Error loading {file_path}: {e}")
-        raise
+        df = pd.read_csv(csv_path, encoding='utf-8')
+    except UnicodeDecodeError:
+        logger.warning("UTF-8 encoding failed, trying latin-1")
+        df = pd.read_csv(csv_path, encoding='latin-1')
+    
+    logger.info(f"Successfully loaded {len(df)} rows from {csv_path.name}")
+    return df
 
 
-def clean_data(df):
+def clean(df: pd.DataFrame) -> pd.DataFrame:
     """
-    Clean and standardize the loaded data
+    Clean and validate Exportify DataFrame.
+    
+    Performs data type coercion, date parsing, duplicate removal,
+    and validates against expected Exportify schema.
     
     Args:
-        df: Raw DataFrame from load_csv_data
+        df: Raw DataFrame from load_exportify()
         
     Returns:
-        pandas.DataFrame: Cleaned data
+        Cleaned DataFrame with proper data types and no duplicates
+        
+    Raises:
+        ValueError: If required columns are missing
     """
+    logger.info("Starting data cleaning process")
+    
+    # Create a copy to avoid modifying original
+    df_clean = df.copy()
+    
+    # Validate required columns (flexible matching)
+    available_columns = set(df_clean.columns)
+    
+    # Check for essential columns (flexible naming)
+    essential_mappings = {
+        'track_name': ['Track Name', 'track_name', 'name', 'song'],
+        'artist_name': ['Artist Name(s)', 'artist_name', 'artist', 'Artist Name'],
+        'album_name': ['Album Name', 'album_name', 'album'],
+        'added_at': ['Added At', 'added_at', 'date_added', 'timestamp']
+    }
+    
+    # Map columns to standard names
+    column_mapping = {}
+    for standard_name, possible_names in essential_mappings.items():
+        for possible_name in possible_names:
+            if possible_name in available_columns:
+                column_mapping[possible_name] = standard_name
+                break
+    
+    # Rename columns
+    df_clean = df_clean.rename(columns=column_mapping)
+    
+    # Data type coercion
     try:
-        df_clean = df.copy()
+        # Parse dates
+        if 'added_at' in df_clean.columns:
+            df_clean['added_at'] = pd.to_datetime(df_clean['added_at'], errors='coerce')
         
-        # Standardize column names (handle different Exportify formats)
-        column_mapping = {
-            'Track Name': 'track_name',
-            'Artist Name(s)': 'artist_name',
-            'Album Name': 'album_name',
-            'Added At': 'added_at',
-            'Track URI': 'track_uri',
-            'Artist URI(s)': 'artist_uri',
-            'Album URI': 'album_uri',
-            'Duration (ms)': 'duration_ms',
-            'Popularity': 'popularity',
-            'Preview URL': 'preview_url',
-            'Spotify ID': 'spotify_id'
-        }
-        
-        # Apply column mapping
-        for old_name, new_name in column_mapping.items():
-            if old_name in df_clean.columns:
-                df_clean = df_clean.rename(columns={old_name: new_name})
-        
-        # Ensure essential columns exist
-        essential_columns = ['track_name', 'artist_name']
-        for col in essential_columns:
-            if col not in df_clean.columns:
-                # Try to find similar columns
-                similar_cols = [c for c in df_clean.columns if col.split('_')[0].lower() in c.lower()]
-                if similar_cols:
-                    df_clean = df_clean.rename(columns={similar_cols[0]: col})
-                else:
-                    df_clean[col] = 'Unknown'
-        
-        # Clean data quality issues
-        initial_count = len(df_clean)
-        
-        # Remove rows with missing essential data
-        df_clean = df_clean.dropna(subset=['track_name', 'artist_name'])
-        
-        # Remove duplicates based on track and artist
-        df_clean = df_clean.drop_duplicates(subset=['track_name', 'artist_name'])
-        
-        # Clean text fields
-        text_columns = ['track_name', 'artist_name', 'album_name']
-        for col in text_columns:
+        # Clean string columns
+        string_cols = ['track_name', 'artist_name', 'album_name']
+        for col in string_cols:
             if col in df_clean.columns:
                 df_clean[col] = df_clean[col].astype(str).str.strip()
-                df_clean[col] = df_clean[col].replace('nan', 'Unknown')
-        
-        # Handle date column
-        if 'added_at' in df_clean.columns:
-            try:
-                df_clean['added_at'] = pd.to_datetime(df_clean['added_at'], errors='coerce')
-            except:
-                pass
-        
-        # Handle numeric columns
-        if 'popularity' in df_clean.columns:
-            df_clean['popularity'] = pd.to_numeric(df_clean['popularity'], errors='coerce')
-        
-        if 'duration_ms' in df_clean.columns:
-            df_clean['duration_ms'] = pd.to_numeric(df_clean['duration_ms'], errors='coerce')
-        
-        cleaned_count = len(df_clean)
-        removed_count = initial_count - cleaned_count
-        
-        print(f"🧹 Cleaned data: {cleaned_count} rows remaining ({removed_count} removed)")
-        
-        return df_clean
-        
+    
     except Exception as e:
-        print(f"❌ Error cleaning data: {e}")
-        raise
-
-
-def validate_data_quality(df):
-    """
-    Validate data quality and return report
+        logger.warning(f"Data type coercion failed: {e}")
     
-    Args:
-        df: Cleaned DataFrame
-        
-    Returns:
-        dict: Quality report
-    """
-    report = {
-        'total_rows': len(df),
-        'columns': list(df.columns),
-        'missing_data': {},
-        'data_types': {},
-        'quality_score': 0
-    }
+    # Remove duplicates based on track and artist
+    initial_count = len(df_clean)
+    if 'track_name' in df_clean.columns and 'artist_name' in df_clean.columns:
+        df_clean = df_clean.drop_duplicates(subset=['track_name', 'artist_name'], keep='first')
+    else:
+        df_clean = df_clean.drop_duplicates()
     
-    # Check for missing data
-    for col in df.columns:
-        missing_count = df[col].isnull().sum()
-        missing_pct = (missing_count / len(df)) * 100
-        report['missing_data'][col] = {
-            'count': missing_count,
-            'percentage': missing_pct
-        }
+    duplicates_removed = initial_count - len(df_clean)
+    if duplicates_removed > 0:
+        logger.info(f"Removed {duplicates_removed} duplicate rows")
     
-    # Check data types
-    for col in df.columns:
-        report['data_types'][col] = str(df[col].dtype)
-    
-    # Calculate quality score
+    # Remove rows with missing essential data
     essential_cols = ['track_name', 'artist_name']
-    quality_score = 100
-    
     for col in essential_cols:
-        if col in df.columns:
-            missing_pct = report['missing_data'][col]['percentage']
-            quality_score -= missing_pct * 2  # Penalty for missing essential data
+        if col in df_clean.columns:
+            initial_len = len(df_clean)
+            df_clean = df_clean[df_clean[col].notna() & (df_clean[col] != '')]
+            removed = initial_len - len(df_clean)
+            if removed > 0:
+                logger.info(f"Removed {removed} rows with missing {col}")
     
-    report['quality_score'] = max(0, quality_score)
-    
-    return report
+    logger.info(f"Data cleaning complete. Final dataset: {len(df_clean)} rows")
+    return df_clean
 
 
-def get_data_summary(df):
+def save_processed(df: pd.DataFrame, out_path: Path) -> None:
     """
-    Generate a summary of the dataset
+    Save processed DataFrame to parquet format.
     
     Args:
-        df: Cleaned DataFrame
+        df: Cleaned DataFrame from clean()
+        out_path: Path where processed data should be saved
+    """
+    logger.info(f"Saving processed data to: {out_path}")
+    
+    # Ensure output directory exists
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    
+    # Save as parquet for efficient storage and fast loading
+    df.to_parquet(out_path, engine='pyarrow', index=False)
+    logger.info(f"Successfully saved {len(df)} rows to {out_path}")
+
+
+def validate_exportify_schema(df: pd.DataFrame) -> Dict[str, Any]:
+    """
+    Validate DataFrame against expected Exportify schema.
+    
+    Args:
+        df: DataFrame to validate
         
     Returns:
-        dict: Data summary
+        Dictionary with validation results and recommendations
     """
-    summary = {
-        'total_tracks': len(df),
-        'unique_artists': 0,
-        'unique_albums': 0,
-        'date_range': None,
-        'most_common_artist': None,
-        'most_common_album': None,
-        'average_popularity': None
+    validation_results = {
+        'is_valid': True,
+        'missing_columns': [],
+        'extra_columns': [],
+        'recommendations': []
     }
     
-    # Artist stats
-    if 'artist_name' in df.columns:
-        summary['unique_artists'] = df['artist_name'].nunique()
-        artist_counts = df['artist_name'].value_counts()
-        if len(artist_counts) > 0:
-            summary['most_common_artist'] = artist_counts.index[0]
+    available_columns = set(df.columns)
+    expected_columns = set(EXPORTIFY_REQUIRED_COLUMNS)
     
-    # Album stats  
-    if 'album_name' in df.columns:
-        summary['unique_albums'] = df['album_name'].nunique()
-        album_counts = df['album_name'].value_counts()
-        if len(album_counts) > 0:
-            summary['most_common_album'] = album_counts.index[0]
+    # Check for missing columns
+    missing = expected_columns - available_columns
+    if missing:
+        validation_results['missing_columns'] = list(missing)
+        validation_results['is_valid'] = False
+        validation_results['recommendations'].append(
+            f"Missing {len(missing)} expected columns. Check Exportify export settings."
+        )
     
-    # Date range
-    if 'added_at' in df.columns:
-        try:
-            dates = pd.to_datetime(df['added_at'])
-            summary['date_range'] = {
-                'earliest': dates.min(),
-                'latest': dates.max(),
-                'span_days': (dates.max() - dates.min()).days
-            }
-        except:
-            pass
+    # Check for extra columns
+    extra = available_columns - expected_columns
+    if extra:
+        validation_results['extra_columns'] = list(extra)
+        validation_results['recommendations'].append(
+            f"Found {len(extra)} unexpected columns. These will be preserved."
+        )
     
-    # Popularity
-    if 'popularity' in df.columns:
-        summary['average_popularity'] = df['popularity'].mean()
-    
-    return summary
+    return validation_results

@@ -10,9 +10,10 @@ from typing import Dict, Any
 
 # Base paths
 PROJECT_ROOT = Path(__file__).parent.parent
-DATA_DIR = PROJECT_ROOT / "data"
+DATA_DIR = PROJECT_ROOT / "04_data"
 DATA_DIR_RAW = DATA_DIR / "raw"
 DATA_DIR_PROCESSED = DATA_DIR / "processed"
+OUTPUT_DIR = PROJECT_ROOT / "05_output"
 
 # Ensure data directories exist
 DATA_DIR_RAW.mkdir(parents=True, exist_ok=True)

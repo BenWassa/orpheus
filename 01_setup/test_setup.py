@@ -6,27 +6,28 @@ A quick validation that all modules load correctly and basic functionality works
 import sys
 from pathlib import Path
 
-# Add src to path
-sys.path.append(str(Path(__file__).parent / "src"))
+# Add core modules to path
+project_root = Path(__file__).parent.parent
+sys.path.append(str(project_root / "02_core"))
 
 def test_imports():
     """Test that all main modules can be imported"""
     print("🧪 Testing module imports...")
     
     try:
-        from src.config import PROJECT_ROOT, DATA_DIR_RAW, DATA_DIR_PROCESSED
+        from config import PROJECT_ROOT, DATA_DIR_RAW, DATA_DIR_PROCESSED
         print("✅ Config module loaded")
         
-        from src.data_processing import load_exportify, clean, save_processed
+        from data_processor import load_exportify, clean
         print("✅ Data processing module loaded")
         
-        from src.pattern_analysis import playlist_stats, repeat_obsessions
+        from pattern_analyzer import playlist_stats, repeat_obsessions
         print("✅ Pattern analysis module loaded")
         
-        from src.emotion_analysis import add_spotify_audio_features, compute_emotion_summary
+        from emotion_analyzer import add_spotify_audio_features, compute_emotion_summary
         print("✅ Emotion analysis module loaded")
         
-        from src.visualization import plot_emotion_timeline, create_emotion_summary_text
+        from visualizer import plot_emotion_timeline, create_emotion_summary_text
         print("✅ Visualization module loaded")
         
         return True
@@ -40,8 +41,8 @@ def test_data_loading():
     print("\n📊 Testing data loading...")
     
     try:
-        from src.data_processing import load_exportify, clean
-        from src.config import DATA_DIR_RAW
+        from data_processor import load_exportify, clean
+        from config import DATA_DIR_RAW
         
         # Find CSV files
         csv_files = list(DATA_DIR_RAW.glob("*.csv"))
@@ -83,9 +84,9 @@ def test_analysis():
     print("\n🔍 Testing analysis functions...")
     
     try:
-        from src.data_processing import load_exportify, clean
-        from src.pattern_analysis import playlist_stats
-        from src.config import DATA_DIR_RAW
+        from data_processor import load_exportify, clean
+        from pattern_analyzer import playlist_stats
+        from config import DATA_DIR_RAW
         
         # Load and clean data
         csv_files = list(DATA_DIR_RAW.glob("*.csv"))
@@ -96,15 +97,13 @@ def test_analysis():
         df_raw = load_exportify(csv_files[0])
         df_clean = clean(df_raw)
         
-        # Run playlist stats
+        # Run pattern analysis
         stats = playlist_stats(df_clean)
         print(f"📊 Analysis complete - {stats['total_tracks']} tracks processed")
         
         if stats.get('unique_artists', 0) > 0 and stats.get('most_common_artist'):
             artist_name = stats['most_common_artist']
-            # Count how many tracks this artist has
-            artist_count = df_clean[df_clean['artist_name'] == artist_name].shape[0] if 'artist_name' in df_clean.columns else 0
-            print(f"🎤 Most common artist: {artist_name} ({artist_count} tracks)")
+            print(f"🎤 Most common artist: {artist_name}")
         
         return True
         

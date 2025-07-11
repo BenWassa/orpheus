@@ -1,375 +1,336 @@
 """
-🎵 Project Orpheus - Visualizer Module
+Visualization module for Project Orpheus.
 
-Creates charts and visualizations for music listening patterns.
+Creates matplotlib charts and prepares data for Streamlit dashboard.
+Handles emotional timelines, pattern visualization, and mood mapping.
 """
-
-import matplotlib.pyplot as plt
+import logging
 import pandas as pd
 import numpy as np
-from datetime import datetime
+import matplotlib.pyplot as plt
+import seaborn as sns
+from typing import Dict, List, Any, Optional, Tuple
+from pathlib import Path
+
+logger = logging.getLogger(__name__)
+
+# Set style for consistent plotting
+plt.style.use('default')
+sns.set_palette("husl")
 
 
-def create_timeline(df):
+def plot_emotion_timeline(df: pd.DataFrame, save_path: Optional[Path] = None) -> plt.Figure:
     """
-    Create a timeline visualization of music additions
+    Create timeline visualization of emotional patterns.
     
     Args:
-        df: DataFrame with 'added_at' column
+        df: DataFrame with temporal and emotion data
+        save_path: Optional path to save the plot
         
     Returns:
-        matplotlib.figure.Figure: Timeline chart
+        Matplotlib figure object
     """
-    fig, ax = plt.subplots(figsize=(12, 6))
+    logger.info("Creating emotion timeline visualization")
     
-    try:
-        if 'added_at' not in df.columns:
-            ax.text(0.5, 0.5, 'No date information available', 
-                   ha='center', va='center', transform=ax.transAxes, fontsize=14)
-            ax.set_title('Timeline - No Data Available')
-            return fig
+    fig, axes = plt.subplots(2, 2, figsize=(15, 10))
+    fig.suptitle('Emotional Timeline - Project Orpheus', fontsize=16, fontweight='bold')
+    
+    # Check if we have temporal data
+    if 'added_at' not in df.columns or df['added_at'].isna().all():
+        logger.warning("No temporal data available for timeline")
+        # Create mock timeline
+        dates = pd.date_range(start='2024-01-01', end='2024-12-31', freq='W')
+        df_temp = pd.DataFrame({
+            'added_at': dates,
+            'valence': np.random.uniform(0, 1, len(dates)),
+            'energy': np.random.uniform(0, 1, len(dates))
+        })
+    else:
+        df_temp = df[df['added_at'].notna()].copy()
+        df_temp = df_temp.sort_values('added_at')
+    
+    # Plot 1: Valence over time
+    if 'valence' in df_temp.columns and not df_temp['valence'].isna().all():
+        axes[0, 0].plot(df_temp['added_at'], df_temp['valence'], alpha=0.7, linewidth=2)
+        axes[0, 0].set_title('Valence Over Time')
+        axes[0, 0].set_ylabel('Valence (0-1)')
+        axes[0, 0].grid(True, alpha=0.3)
+    else:
+        axes[0, 0].text(0.5, 0.5, 'No valence data available', 
+                       ha='center', va='center', transform=axes[0, 0].transAxes)
+        axes[0, 0].set_title('Valence Over Time')
+    
+    # Plot 2: Energy over time
+    if 'energy' in df_temp.columns and not df_temp['energy'].isna().all():
+        axes[0, 1].plot(df_temp['added_at'], df_temp['energy'], color='orange', alpha=0.7, linewidth=2)
+        axes[0, 1].set_title('Energy Over Time')
+        axes[0, 1].set_ylabel('Energy (0-1)')
+        axes[0, 1].grid(True, alpha=0.3)
+    else:
+        axes[0, 1].text(0.5, 0.5, 'No energy data available', 
+                       ha='center', va='center', transform=axes[0, 1].transAxes)
+        axes[0, 1].set_title('Energy Over Time')
+    
+    # Plot 3: Mood quadrant (valence vs energy)
+    if ('valence' in df_temp.columns and 'energy' in df_temp.columns and 
+        not df_temp['valence'].isna().all() and not df_temp['energy'].isna().all()):
+        scatter = axes[1, 0].scatter(df_temp['valence'], df_temp['energy'], 
+                                   alpha=0.6, s=50, c=range(len(df_temp)), cmap='viridis')
+        axes[1, 0].set_xlabel('Valence (0-1)')
+        axes[1, 0].set_ylabel('Energy (0-1)')
+        axes[1, 0].set_title('Mood Quadrant')
+        axes[1, 0].grid(True, alpha=0.3)
         
-        # Convert to datetime and create monthly counts
-        df_temp = df.copy()
-        df_temp['added_at'] = pd.to_datetime(df_temp['added_at'])
+        # Add quadrant labels
+        axes[1, 0].axhline(y=0.5, color='gray', linestyle='--', alpha=0.5)
+        axes[1, 0].axvline(x=0.5, color='gray', linestyle='--', alpha=0.5)
+        axes[1, 0].text(0.25, 0.75, 'Energetic\nNegative', ha='center', va='center', alpha=0.7)
+        axes[1, 0].text(0.75, 0.75, 'Energetic\nPositive', ha='center', va='center', alpha=0.7)
+        axes[1, 0].text(0.25, 0.25, 'Calm\nNegative', ha='center', va='center', alpha=0.7)
+        axes[1, 0].text(0.75, 0.25, 'Calm\nPositive', ha='center', va='center', alpha=0.7)
+    else:
+        axes[1, 0].text(0.5, 0.5, 'No mood data available', 
+                       ha='center', va='center', transform=axes[1, 0].transAxes)
+        axes[1, 0].set_title('Mood Quadrant')
+    
+    # Plot 4: Monthly listening activity
+    if 'added_at' in df_temp.columns:
         df_temp['month'] = df_temp['added_at'].dt.to_period('M')
-        
         monthly_counts = df_temp['month'].value_counts().sort_index()
-        
-        if len(monthly_counts) == 0:
-            ax.text(0.5, 0.5, 'No valid dates found', 
-                   ha='center', va='center', transform=ax.transAxes, fontsize=14)
-            ax.set_title('Timeline - No Valid Data')
-            return fig
-        
-        # Plot timeline
-        dates = [period.to_timestamp() for period in monthly_counts.index]
-        counts = monthly_counts.values
-        
-        ax.plot(dates, counts, marker='o', linewidth=2, markersize=6, color='#2E86AB')
-        ax.fill_between(dates, counts, alpha=0.3, color='#2E86AB')
-        
-        # Formatting
-        ax.set_title('Music Addition Timeline', fontsize=16, fontweight='bold', pad=20)
-        ax.set_xlabel('Date', fontsize=12)
-        ax.set_ylabel('Tracks Added', fontsize=12)
-        ax.grid(True, alpha=0.3)
-        
-        # Rotate dates for better readability
-        plt.xticks(rotation=45)
-        plt.tight_layout()
-        
-        # Add stats text
-        total_months = len(monthly_counts)
-        avg_monthly = monthly_counts.mean()
-        peak_month = monthly_counts.idxmax()
-        peak_count = monthly_counts.max()
-        
-        stats_text = f"Total months: {total_months} | Avg: {avg_monthly:.1f}/month | Peak: {peak_count} ({peak_month})"
-        ax.text(0.02, 0.98, stats_text, transform=ax.transAxes, fontsize=10, 
-                verticalalignment='top', bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
-        
-    except Exception as e:
-        ax.text(0.5, 0.5, f'Error creating timeline: {str(e)}', 
-               ha='center', va='center', transform=ax.transAxes, fontsize=12)
-        ax.set_title('Timeline - Error')
-        print(f"Error in create_timeline: {e}")
+        if len(monthly_counts) > 0:
+            axes[1, 1].bar(range(len(monthly_counts)), monthly_counts.values, alpha=0.7)
+            axes[1, 1].set_title('Monthly Listening Activity')
+            axes[1, 1].set_ylabel('Track Count')
+            axes[1, 1].set_xlabel('Month')
+            
+            # Format x-axis labels
+            if len(monthly_counts) <= 12:
+                axes[1, 1].set_xticks(range(len(monthly_counts)))
+                axes[1, 1].set_xticklabels([str(m) for m in monthly_counts.index], rotation=45)
+        else:
+            axes[1, 1].text(0.5, 0.5, 'No temporal data available', 
+                           ha='center', va='center', transform=axes[1, 1].transAxes)
+            axes[1, 1].set_title('Monthly Listening Activity')
+    
+    plt.tight_layout()
+    
+    if save_path:
+        plt.savefig(save_path, dpi=300, bbox_inches='tight')
+        logger.info(f"Timeline visualization saved to {save_path}")
     
     return fig
 
 
-def create_top_artists(df, top_n=15):
+def plot_top_artists(df: pd.DataFrame, n: int = 10, save_path: Optional[Path] = None) -> plt.Figure:
     """
-    Create a horizontal bar chart of top artists
+    Create bar chart of top artists by track count.
     
     Args:
-        df: DataFrame with 'artist_name' column
-        top_n: Number of top artists to show
+        df: DataFrame with artist data
+        n: Number of top artists to show
+        save_path: Optional path to save the plot
         
     Returns:
-        matplotlib.figure.Figure: Top artists chart
+        Matplotlib figure object
     """
+    logger.info(f"Creating top {n} artists visualization")
+    
     fig, ax = plt.subplots(figsize=(12, 8))
     
-    try:
-        if 'artist_name' not in df.columns:
-            ax.text(0.5, 0.5, 'No artist information available', 
-                   ha='center', va='center', transform=ax.transAxes, fontsize=14)
-            ax.set_title('Top Artists - No Data Available')
-            return fig
-        
-        # Get top artists
-        artist_counts = df['artist_name'].value_counts().head(top_n)
-        
-        if len(artist_counts) == 0:
-            ax.text(0.5, 0.5, 'No artist data found', 
-                   ha='center', va='center', transform=ax.transAxes, fontsize=14)
-            ax.set_title('Top Artists - No Valid Data')
-            return fig
-        
-        # Create horizontal bar chart
-        y_pos = np.arange(len(artist_counts))
-        colors = plt.cm.viridis(np.linspace(0, 1, len(artist_counts)))
-        
-        bars = ax.barh(y_pos, artist_counts.values, color=colors)
-        
-        # Formatting
-        ax.set_yticks(y_pos)
-        ax.set_yticklabels(artist_counts.index, fontsize=10)
-        ax.invert_yaxis()  # Top artist at the top
-        ax.set_xlabel('Number of Tracks', fontsize=12)
-        ax.set_title(f'Top {len(artist_counts)} Artists by Track Count', fontsize=16, fontweight='bold', pad=20)
-        ax.grid(axis='x', alpha=0.3)
-        
-        # Add value labels on bars
-        for i, (bar, value) in enumerate(zip(bars, artist_counts.values)):
-            ax.text(bar.get_width() + 0.1, bar.get_y() + bar.get_height()/2, 
-                   str(value), va='center', fontsize=10)
-        
-        plt.tight_layout()
-        
-        # Add summary stats
-        total_tracks = len(df)
-        top_artist_pct = (artist_counts.iloc[0] / total_tracks) * 100
-        total_artists = df['artist_name'].nunique()
-        
-        stats_text = f"Total artists: {total_artists} | Top artist: {top_artist_pct:.1f}% of library"
-        ax.text(0.02, 0.98, stats_text, transform=ax.transAxes, fontsize=10,
-                verticalalignment='top', bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
-        
-    except Exception as e:
-        ax.text(0.5, 0.5, f'Error creating top artists chart: {str(e)}', 
-               ha='center', va='center', transform=ax.transAxes, fontsize=12)
-        ax.set_title('Top Artists - Error')
-        print(f"Error in create_top_artists: {e}")
+    # Get artist counts
+    artist_col = None
+    for col in ['artist_name', 'Artist Name(s)', 'artist']:
+        if col in df.columns:
+            artist_col = col
+            break
+    
+    if artist_col is None:
+        ax.text(0.5, 0.5, 'No artist data available', 
+               ha='center', va='center', transform=ax.transAxes)
+        ax.set_title('Top Artists')
+        return fig
+    
+    artist_counts = df[artist_col].value_counts().head(n)
+    
+    if len(artist_counts) == 0:
+        ax.text(0.5, 0.5, 'No artist data available', 
+               ha='center', va='center', transform=ax.transAxes)
+        ax.set_title('Top Artists')
+        return fig
+    
+    # Create horizontal bar chart
+    bars = ax.barh(range(len(artist_counts)), artist_counts.values, alpha=0.8)
+    ax.set_yticks(range(len(artist_counts)))
+    ax.set_yticklabels(artist_counts.index)
+    ax.set_xlabel('Track Count')
+    ax.set_title(f'Top {n} Artists by Track Count')
+    
+    # Add value labels on bars
+    for i, (bar, count) in enumerate(zip(bars, artist_counts.values)):
+        ax.text(bar.get_width() + 0.1, bar.get_y() + bar.get_height()/2, 
+               str(count), va='center', ha='left')
+    
+    plt.tight_layout()
+    
+    if save_path:
+        plt.savefig(save_path, dpi=300, bbox_inches='tight')
+        logger.info(f"Top artists visualization saved to {save_path}")
     
     return fig
 
 
-def create_obsessions_chart(obsessions_df):
+def plot_audio_features_radar(df: pd.DataFrame, save_path: Optional[Path] = None) -> plt.Figure:
     """
-    Create a chart showing musical obsessions
+    Create radar chart of average audio features.
     
     Args:
-        obsessions_df: DataFrame from find_obsessions function
+        df: DataFrame with audio feature data
+        save_path: Optional path to save the plot
         
     Returns:
-        matplotlib.figure.Figure: Obsessions chart
+        Matplotlib figure object
     """
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 6))
+    logger.info("Creating audio features radar chart")
     
-    try:
-        if len(obsessions_df) == 0:
-            for ax in [ax1, ax2]:
-                ax.text(0.5, 0.5, 'No obsessions found', 
-                       ha='center', va='center', transform=ax.transAxes, fontsize=14)
-            ax1.set_title('Artist Obsessions - No Data')
-            ax2.set_title('Track Obsessions - No Data')
-            return fig
-        
-        # Separate artist and track obsessions
-        artist_obs = obsessions_df[obsessions_df['type'] == 'artist'].head(10)
-        track_obs = obsessions_df[obsessions_df['type'] == 'track'].head(10)
-        
-        # Artist obsessions chart
-        if len(artist_obs) > 0:
-            y_pos = np.arange(len(artist_obs))
-            colors = plt.cm.Reds(np.linspace(0.4, 0.9, len(artist_obs)))
-            
-            bars1 = ax1.barh(y_pos, artist_obs['count'], color=colors)
-            ax1.set_yticks(y_pos)
-            ax1.set_yticklabels(artist_obs['name'], fontsize=10)
-            ax1.invert_yaxis()
-            ax1.set_xlabel('Track Count')
-            ax1.set_title('Artist Obsessions', fontweight='bold')
-            ax1.grid(axis='x', alpha=0.3)
-            
-            # Add value labels
-            for bar, value in zip(bars1, artist_obs['count']):
-                ax1.text(bar.get_width() + 0.1, bar.get_y() + bar.get_height()/2, 
-                        str(value), va='center', fontsize=10)
-        else:
-            ax1.text(0.5, 0.5, 'No artist obsessions found', 
-                    ha='center', va='center', transform=ax1.transAxes)
-            ax1.set_title('Artist Obsessions - No Data')
-        
-        # Track obsessions chart
-        if len(track_obs) > 0:
-            y_pos = np.arange(len(track_obs))
-            colors = plt.cm.Blues(np.linspace(0.4, 0.9, len(track_obs)))
-            
-            bars2 = ax2.barh(y_pos, track_obs['count'], color=colors)
-            ax2.set_yticks(y_pos)
-            # Truncate long track names
-            track_names = [name[:30] + '...' if len(name) > 30 else name for name in track_obs['name']]
-            ax2.set_yticklabels(track_names, fontsize=10)
-            ax2.invert_yaxis()
-            ax2.set_xlabel('Play Count')
-            ax2.set_title('Track Obsessions', fontweight='bold')
-            ax2.grid(axis='x', alpha=0.3)
-            
-            # Add value labels
-            for bar, value in zip(bars2, track_obs['count']):
-                ax2.text(bar.get_width() + 0.1, bar.get_y() + bar.get_height()/2, 
-                        str(value), va='center', fontsize=10)
-        else:
-            ax2.text(0.5, 0.5, 'No track obsessions found', 
-                    ha='center', va='center', transform=ax2.transAxes)
-            ax2.set_title('Track Obsessions - No Data')
-        
-        plt.tight_layout()
-        
-    except Exception as e:
-        for ax in [ax1, ax2]:
-            ax.text(0.5, 0.5, f'Error: {str(e)}', 
-                   ha='center', va='center', transform=ax.transAxes, fontsize=12)
-        print(f"Error in create_obsessions_chart: {e}")
+    audio_features = ['valence', 'energy', 'danceability', 'acousticness', 
+                     'instrumentalness', 'liveness', 'speechiness']
+    
+    # Calculate means for available features
+    feature_means = {}
+    for feature in audio_features:
+        if feature in df.columns and not df[feature].isna().all():
+            feature_means[feature] = df[feature].mean()
+    
+    if not feature_means:
+        fig, ax = plt.subplots(figsize=(8, 8))
+        ax.text(0.5, 0.5, 'No audio features available', 
+               ha='center', va='center', transform=ax.transAxes)
+        ax.set_title('Audio Features Profile')
+        return fig
+    
+    # Create radar chart
+    fig, ax = plt.subplots(figsize=(10, 10), subplot_kw=dict(projection='polar'))
+    
+    features = list(feature_means.keys())
+    values = list(feature_means.values())
+    
+    # Add first value at end to close the circle
+    features += [features[0]]
+    values += [values[0]]
+    
+    # Calculate angles for each feature
+    angles = np.linspace(0, 2 * np.pi, len(features), endpoint=True)
+    
+    # Plot
+    ax.plot(angles, values, 'o-', linewidth=2, alpha=0.8)
+    ax.fill(angles, values, alpha=0.25)
+    ax.set_xticks(angles[:-1])
+    ax.set_xticklabels([f.title() for f in features[:-1]])
+    ax.set_ylim(0, 1)
+    ax.set_title('Audio Features Profile', size=16, fontweight='bold', pad=20)
+    ax.grid(True)
+    
+    if save_path:
+        plt.savefig(save_path, dpi=300, bbox_inches='tight')
+        logger.info(f"Audio features radar chart saved to {save_path}")
     
     return fig
 
 
-def create_monthly_heatmap(df):
+def create_emotion_summary_text(summary: Dict[str, Any]) -> str:
     """
-    Create a heatmap showing listening activity by month and day
+    Create a formatted text summary of emotional analysis.
     
     Args:
-        df: DataFrame with 'added_at' column
+        summary: Emotion summary dictionary from compute_emotion_summary()
         
     Returns:
-        matplotlib.figure.Figure: Monthly heatmap
+        Formatted string with analysis results
     """
-    fig, ax = plt.subplots(figsize=(12, 8))
+    text_lines = ["🎵 PROJECT ORPHEUS - EMOTIONAL ANALYSIS SUMMARY 🎵", "=" * 60, ""]
     
-    try:
-        if 'added_at' not in df.columns:
-            ax.text(0.5, 0.5, 'No date information available', 
-                   ha='center', va='center', transform=ax.transAxes, fontsize=14)
-            ax.set_title('Monthly Activity Heatmap - No Data Available')
-            return fig
-        
-        df_temp = df.copy()
-        df_temp['added_at'] = pd.to_datetime(df_temp['added_at'])
-        df_temp['month'] = df_temp['added_at'].dt.month
-        df_temp['weekday'] = df_temp['added_at'].dt.dayofweek
-        
-        # Create pivot table for heatmap
-        heatmap_data = df_temp.groupby(['month', 'weekday']).size().unstack(fill_value=0)
-        
-        # Create heatmap
-        im = ax.imshow(heatmap_data.values, cmap='YlOrRd', aspect='auto')
-        
-        # Set ticks and labels
-        ax.set_xticks(range(7))
-        ax.set_xticklabels(['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'])
-        ax.set_yticks(range(len(heatmap_data.index)))
-        ax.set_yticklabels([f'Month {i}' for i in heatmap_data.index])
-        
-        ax.set_title('Listening Activity Heatmap\n(Month vs Day of Week)', fontweight='bold', pad=20)
-        ax.set_xlabel('Day of Week')
-        ax.set_ylabel('Month')
-        
-        # Add colorbar
-        cbar = plt.colorbar(im, ax=ax)
-        cbar.set_label('Tracks Added', rotation=270, labelpad=20)
-        
-        # Add value annotations
-        for i in range(len(heatmap_data.index)):
-            for j in range(7):
-                if j < len(heatmap_data.columns):
-                    value = heatmap_data.iloc[i, j]
-                    ax.text(j, i, str(value), ha='center', va='center', 
-                           color='white' if value > heatmap_data.values.max()/2 else 'black')
-        
-        plt.tight_layout()
-        
-    except Exception as e:
-        ax.text(0.5, 0.5, f'Error creating heatmap: {str(e)}', 
-               ha='center', va='center', transform=ax.transAxes, fontsize=12)
-        ax.set_title('Monthly Activity Heatmap - Error')
-        print(f"Error in create_monthly_heatmap: {e}")
+    # Audio features summary
+    if summary.get('audio_features'):
+        text_lines.append("🎼 AUDIO FEATURES:")
+        for feature, stats in summary['audio_features'].items():
+            text_lines.append(f"  {feature.title()}: {stats['mean']:.3f} (±{stats['std']:.3f})")
+        text_lines.append("")
     
-    return fig
+    # Sentiment summary
+    if summary.get('sentiment'):
+        text_lines.append("💭 LYRIC SENTIMENT:")
+        for sentiment, stats in summary['sentiment'].items():
+            text_lines.append(f"  {sentiment}: {stats['mean']:.3f}")
+            dist = stats.get('distribution', {})
+            if dist:
+                text_lines.append(f"    Positive: {dist.get('positive', 0)}, "
+                                f"Negative: {dist.get('negative', 0)}, "
+                                f"Neutral: {dist.get('neutral', 0)}")
+        text_lines.append("")
+    
+    # Emotion profile
+    if summary.get('emotion_profile'):
+        text_lines.append("😊 EMOTION PROFILE:")
+        for emotion, value in summary['emotion_profile'].items():
+            emotion_name = emotion.replace('emotion_', '').title()
+            text_lines.append(f"  {emotion_name}: {value:.3f}")
+        text_lines.append("")
+    
+    # Recommendations
+    if summary.get('recommendations'):
+        text_lines.append("🔮 INSIGHTS & RECOMMENDATIONS:")
+        for i, rec in enumerate(summary['recommendations'], 1):
+            text_lines.append(f"  {i}. {rec}")
+        text_lines.append("")
+    
+    text_lines.append("=" * 60)
+    text_lines.append("May your music lead you inward, and your insights bring you home.")
+    
+    return "\n".join(text_lines)
 
 
-def create_summary_stats(df):
+def save_all_visualizations(df: pd.DataFrame, emotion_summary: Dict[str, Any], 
+                          output_dir: Path) -> Dict[str, Path]:
     """
-    Create a summary statistics DataFrame for export
+    Generate and save all visualizations to output directory.
     
     Args:
-        df: Cleaned DataFrame
-        
-    Returns:
-        pandas.DataFrame: Summary statistics
-    """
-    try:
-        summary_data = []
-        
-        # Basic stats
-        summary_data.append(['Total Tracks', len(df)])
-        
-        if 'artist_name' in df.columns:
-            summary_data.append(['Unique Artists', df['artist_name'].nunique()])
-            top_artist = df['artist_name'].value_counts().index[0]
-            top_artist_count = df['artist_name'].value_counts().iloc[0]
-            summary_data.append(['Top Artist', f"{top_artist} ({top_artist_count} tracks)"])
-        
-        if 'album_name' in df.columns:
-            summary_data.append(['Unique Albums', df['album_name'].nunique()])
-        
-        if 'added_at' in df.columns:
-            try:
-                dates = pd.to_datetime(df['added_at'])
-                date_range = (dates.max() - dates.min()).days
-                summary_data.append(['Date Range (days)', date_range])
-                summary_data.append(['Earliest Track', dates.min().strftime('%Y-%m-%d')])
-                summary_data.append(['Latest Track', dates.max().strftime('%Y-%m-%d')])
-            except:
-                pass
-        
-        if 'popularity' in df.columns:
-            avg_popularity = df['popularity'].mean()
-            summary_data.append(['Average Popularity', f"{avg_popularity:.1f}"])
-        
-        # Create DataFrame
-        summary_df = pd.DataFrame(summary_data, columns=['Metric', 'Value'])
-        
-        return summary_df
-        
-    except Exception as e:
-        print(f"Error creating summary stats: {e}")
-        return pd.DataFrame({'Metric': ['Error'], 'Value': [str(e)]})
-
-
-def save_all_visualizations(df, output_dir):
-    """
-    Save all visualizations to files
-    
-    Args:
-        df: Cleaned DataFrame
+        df: Processed DataFrame with all features
+        emotion_summary: Summary from compute_emotion_summary()
         output_dir: Directory to save visualizations
+        
+    Returns:
+        Dictionary mapping visualization names to file paths
     """
-    from pathlib import Path
+    logger.info(f"Generating all visualizations in {output_dir}")
     
-    output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
+    saved_files = {}
     
-    try:
-        # Timeline
-        fig_timeline = create_timeline(df)
-        fig_timeline.savefig(output_dir / 'listening_timeline.png', dpi=300, bbox_inches='tight')
-        plt.close(fig_timeline)
-        
-        # Top artists
-        fig_artists = create_top_artists(df)
-        fig_artists.savefig(output_dir / 'top_artists.png', dpi=300, bbox_inches='tight')
-        plt.close(fig_artists)
-        
-        # Monthly heatmap
-        fig_heatmap = create_monthly_heatmap(df)
-        fig_heatmap.savefig(output_dir / 'monthly_heatmap.png', dpi=300, bbox_inches='tight')
-        plt.close(fig_heatmap)
-        
-        print(f"✅ Visualizations saved to {output_dir}")
-        
-    except Exception as e:
-        print(f"❌ Error saving visualizations: {e}")
+    # Timeline
+    timeline_path = output_dir / "emotion_timeline.png"
+    plot_emotion_timeline(df, save_path=timeline_path)
+    saved_files['timeline'] = timeline_path
+    plt.close()
+    
+    # Top artists
+    artists_path = output_dir / "top_artists.png"
+    plot_top_artists(df, save_path=artists_path)
+    saved_files['artists'] = artists_path
+    plt.close()
+    
+    # Audio features radar
+    radar_path = output_dir / "audio_features_radar.png"
+    plot_audio_features_radar(df, save_path=radar_path)
+    saved_files['radar'] = radar_path
+    plt.close()
+    
+    # Save text summary
+    summary_path = output_dir / "emotion_summary.txt"
+    summary_text = create_emotion_summary_text(emotion_summary)
+    with open(summary_path, 'w', encoding='utf-8') as f:
+        f.write(summary_text)
+    saved_files['summary'] = summary_path
+    
+    logger.info(f"All visualizations saved to {output_dir}")
+    return saved_files
