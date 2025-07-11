@@ -1,0 +1,23 @@
+🎵 PROJECT ORPHEUS - EMOTIONAL ANALYSIS SUMMARY 🎵
+============================================================
+
+🎼 AUDIO FEATURES:
+  Valence: 0.477 (±0.299)
+  Energy: 0.485 (±0.287)
+  Danceability: 0.503 (±0.292)
+  Acousticness: 0.519 (±0.318)
+
+💭 LYRIC SENTIMENT:
+  lyric_polarity: 0.046
+    Positive: 17, Negative: 8, Neutral: 94
+  lyric_subjectivity: 0.171
+    Positive: 35, Negative: 0, Neutral: 84
+
+😊 EMOTION PROFILE:
+  Joy: 0.060
+  Sadness: 0.038
+  Anger: 0.020
+  Fear: 0.039
+
+============================================================
+May your music lead you inward, and your insights bring you home.

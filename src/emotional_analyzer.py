@@ -1,19 +1,19 @@
 # Project Structure
-orpheus/
-├── data/
-│   ├── raw/                # user drops Exportify CSVs here
-│   └── processed/          # pipeline writes parquet/feather here
-├── src/
-│   ├── __init__.py
-│   ├── config.py           # paths, environment variables
-│   ├── data_processing.py  # load / clean / validate
-│   ├── pattern_analysis.py # descriptive metrics & repeat-obsession logic
-│   ├── emotion_analysis.py # valence & lyric sentiment tagging
-│   └── visualization.py    # matplotlib helpers & streamlit hooks
-├── ui/
-│   └── app.py              # minimal Streamlit dashboard
-├── requirements.txt
-└── .gitignore
+#orpheus/
+#├── data/
+#│   ├── raw/                # user drops Exportify CSVs here
+#│   └── processed/          # pipeline writes parquet/feather here
+#├── src/
+#│   ├── __init__.py
+#│   ├── config.py           # paths, environment variables
+#│   ├── data_processing.py  # load / clean / validate
+#│   ├── pattern_analysis.py # descriptive metrics & repeat-obsession logic
+#│   ├── emotion_analysis.py # valence & lyric sentiment tagging
+#│   └── visualization.py    # matplotlib helpers & streamlit hooks
+#├── ui/
+#│   └── app.py              # minimal Streamlit dashboard
+#├── requirements.txt
+#└── .gitignore
 
 # requirements.txt
 pandas>=2.0
