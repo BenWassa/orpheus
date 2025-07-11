@@ -10,9 +10,13 @@ import numpy as np
 from pathlib import Path
 import sys
 import logging
+import matplotlib
+matplotlib.use('Agg')  # Use non-interactive backend for Streamlit
+import matplotlib.pyplot as plt
 
-# Add src to path for imports
-sys.path.append(str(Path(__file__).parent.parent / "src"))
+# Add project root to path for imports
+project_root = Path(__file__).parent.parent
+sys.path.insert(0, str(project_root))
 
 try:
     from src.data_processing import load_exportify, clean
@@ -22,6 +26,8 @@ try:
     from src.config import DATA_DIR_RAW, DATA_DIR_PROCESSED
 except ImportError as e:
     st.error(f"Import error: {e}")
+    st.error(f"Project root: {project_root}")
+    st.error(f"Current working directory: {Path.cwd()}")
     st.error("Make sure you're running this from the project root directory")
     st.stop()
 
@@ -81,8 +87,10 @@ def main():
         help="Export your Spotify playlists using Exportify and upload the CSV here"
     )
     
-    # Main content
-    if uploaded_file is not None:
+    # Check for existing processed data in session state
+    if 'df_processed' in st.session_state:
+        show_analysis_results(st.session_state.df_processed)
+    elif uploaded_file is not None:
         analyze_uploaded_data(uploaded_file)
     else:
         show_welcome_page()
@@ -122,6 +130,14 @@ def show_welcome_page():
         st.markdown("### 🎮 Try with Sample Data")
         if st.button("Load Sample Dataset", type="secondary"):
             load_sample_data()
+            
+        # Debug info in expander
+        with st.expander("🔧 Debug Information", expanded=False):
+            st.text(f"Project root: {Path(__file__).parent.parent}")
+            st.text(f"Current working directory: {Path.cwd()}")
+            st.text(f"Data directory: {DATA_DIR_RAW}")
+            sample_files = list(DATA_DIR_RAW.glob("*.csv"))
+            st.text(f"Available CSV files: {[f.name for f in sample_files]}")
 
 
 def load_sample_data():

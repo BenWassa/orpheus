@@ -100,8 +100,11 @@ def test_analysis():
         stats = playlist_stats(df_clean)
         print(f"📊 Analysis complete - {stats['total_tracks']} tracks processed")
         
-        if stats.get('unique_artists', 0) > 0:
-            print(f"🎤 Most common artist: {stats['most_common_artist']['name']} ({stats['most_common_artist']['count']} tracks)")
+        if stats.get('unique_artists', 0) > 0 and stats.get('most_common_artist'):
+            artist_name = stats['most_common_artist']
+            # Count how many tracks this artist has
+            artist_count = df_clean[df_clean['artist_name'] == artist_name].shape[0] if 'artist_name' in df_clean.columns else 0
+            print(f"🎤 Most common artist: {artist_name} ({artist_count} tracks)")
         
         return True
         
