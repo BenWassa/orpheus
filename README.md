@@ -29,9 +29,30 @@ Project Orpheus is an introspective exploration of the self through music. By an
 
 ## ⚙️ Project Structure
 
-- **Pilot:** Small dataset — test methods, refine insights.
-- **Main Study:** Full listening history — deeper dive, richer visualizations.
-- **Future:** Develop frameworks or tools for ongoing self-reflection.
+```
+orpheus/
+├── data/                    # All data files
+│   ├── raw/                # Original exports (Exportify CSV, etc.)
+│   └── processed/          # Cleaned data ready for analysis
+├── src/                    # Core Python modules
+├── notebooks/              # Jupyter notebooks for analysis
+├── docs/                   # Documentation and references
+├── output/                 # Generated visualizations and reports
+│   ├── visualizations/     # Charts and timelines
+│   ├── reports/           # Analysis summaries
+│   └── exports/           # Processed data exports
+└── README.md              # This file
+```
+
+**Current Data:**
+- Sample playlist: `x_rap_x` (37 tracks, hip-hop/rap focus)
+- Timeframe: Various releases from 2013-2022, added January 2025
+- Data source: Spotify via Exportify tool
+
+**Pilot Phase:**
+- Small dataset testing with single playlist
+- Method refinement and insight validation
+- Foundation for larger listening history analysis
 
 ---
 
@@ -41,14 +62,42 @@ Just as Orpheus journeyed into the underworld with music as his guide, Project O
 
 ---
 
-## 🚧 Status
+## � Getting Started
+
+### Prerequisites
+- Python 3.8+
+- Jupyter Lab or Jupyter Notebook
+- Music streaming data (Spotify export recommended)
+
+### Data Collection
+1. **Spotify Data**: Use [Exportify](https://github.com/watsonbox/exportify) to export playlists as CSV
+2. **Place raw data** in `data/raw/` directory
+3. **Reference** `docs/exportify_data_dictionary.md` for column definitions
+
+### Next Steps
+1. Set up Python environment with required packages
+2. Run initial data exploration notebook
+3. Begin pattern analysis on pilot dataset
+4. Develop emotional mapping framework
+
+---
+
+## �🚧 Status
 
 **Currently:**  
-- [ ] Repository initialized  
+- [x] Repository initialized  
+- [x] Project structure organized
+- [x] Sample data collected (x_rap_x playlist)
+- [x] Data dictionary documented  
 - [ ] Local environment setup  
 - [ ] Core modules scoped  
-- [ ] Pilot data test pending  
+- [ ] Pilot data analysis pending  
 - [ ] Initial mapping tool in design
+
+**Recent Progress:**
+- ✅ Organized file structure with dedicated directories
+- ✅ Added sample Spotify playlist data (37 tracks)
+- ✅ Created comprehensive data dictionary for Exportify CSV format
 
 ---
 
