@@ -35,14 +35,17 @@ sys.path.insert(0, str(project_root / "02_core"))
 
 # Import core modules with error handling
 try:
-    from data_processor import load_csv_data, clean_data
-    from pattern_analyzer import analyze_patterns, find_obsessions
-    from visualizer import create_timeline, create_top_artists, create_summary_stats
+    from data_processor import load_exportify, clean
+    from pattern_analyzer import playlist_stats, repeat_obsessions, temporal_patterns
+    from emotion_analyzer import add_spotify_audio_features, add_lyric_sentiment, compute_emotion_summary
+    from visualizer import plot_emotion_timeline, plot_top_artists, plot_audio_features_radar
     from config import DATA_DIR_RAW, DATA_DIR_PROCESSED
     MODULES_LOADED = True
 except ImportError as e:
     MODULES_LOADED = False
     st.error(f"❌ Could not import core modules: {e}")
+    st.error("🔧 Ensure you're running from the project root directory")
+    st.stop()
     st.error("🔧 Ensure you're running from the project root directory")
     st.stop()
 
@@ -144,8 +147,8 @@ def load_sample_data():
             st.success(f"Loading sample data: {sample_file.name}")
             
             # Load and process
-            df_raw = load_csv_data(sample_file)
-            df_clean = clean_data(df_raw)
+            df_raw = load_exportify(sample_file)
+            df_clean = clean(df_raw)
             
             # Store in session state
             st.session_state.df_processed = df_clean
@@ -171,8 +174,8 @@ def analyze_uploaded_data(uploaded_file):
         
         # Load and process
         with st.spinner("Loading and cleaning data..."):
-            df_raw = load_csv_data(temp_path)
-            df_clean = clean_data(df_raw)
+            df_raw = load_exportify(temp_path)
+            df_clean = clean(df_raw)
         
         st.success(f"Successfully processed {len(df_clean)} tracks")
         
