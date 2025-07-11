@@ -135,11 +135,13 @@ def main():
     if tests_passed == total_tests:
         print("🎉 All tests passed! Orpheus is ready to analyze your music!")
         print("\nNext steps:")
-        print("1. Run: python main.py (for complete analysis)")
-        print("2. Run: streamlit run ui/app.py (for web dashboard)")
-        print("3. Add your own CSV files to data/raw/ directory")
+        print("1. Run: .\\launch_orpheus.bat (quick start)")
+        print("2. Run: .\\orpheus_venv\\Scripts\\streamlit.exe run 03_interface\\streamlit_app.py (dashboard)")
+        print("3. Add your own CSV files to 04_data/raw/ directory")
+        print("4. Read: 06_docs/QUICK_START.md for complete guide")
     else:
         print("⚠️  Some tests failed. Check the error messages above.")
+        print("💡 Try: .\\orpheus_venv\\Scripts\\pip.exe install -r 01_setup/requirements.txt")
     
     print("="*50)
 

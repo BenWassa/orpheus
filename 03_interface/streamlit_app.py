@@ -46,8 +46,6 @@ except ImportError as e:
     st.error(f"❌ Could not import core modules: {e}")
     st.error("🔧 Ensure you're running from the project root directory")
     st.stop()
-    st.error("🔧 Ensure you're running from the project root directory")
-    st.stop()
 
 # Page configuration
 st.set_page_config(
@@ -249,14 +247,14 @@ def show_pattern_analysis(df: pd.DataFrame):
     st.header("🎵 Listening Patterns")
     
     try:
-        # Get patterns
-        patterns = analyze_patterns(df)
+        # Get basic stats
+        stats = playlist_stats(df)
         
         # Obsessions
         st.subheader("🔥 Musical Obsessions")
         threshold = st.slider("Obsession Threshold", min_value=2, max_value=20, value=5)
         
-        obsessions_df = find_obsessions(df, threshold=threshold)
+        obsessions_df = repeat_obsessions(df, threshold=threshold)
         
         if len(obsessions_df) > 0:
             st.dataframe(obsessions_df, use_container_width=True)
@@ -282,19 +280,19 @@ def show_visualizations(df: pd.DataFrame):
     try:
         # Timeline
         st.subheader("📅 Music Timeline")
-        fig_timeline = create_timeline(df)
+        fig_timeline = plot_emotion_timeline(df)
         st.pyplot(fig_timeline)
         
         # Top artists
         st.subheader("🎤 Top Artists")
         n_artists = st.slider("Number of artists to show", min_value=5, max_value=25, value=10)
-        fig_artists = create_top_artists(df, top_n=n_artists)
+        fig_artists = plot_top_artists(df, n=n_artists)
         st.pyplot(fig_artists)
         
-        # Summary stats
-        st.subheader("📊 Summary Statistics")
-        fig_stats = create_summary_stats(df)
-        st.pyplot(fig_stats)
+        # Audio features radar
+        st.subheader("🎵 Audio Features")
+        fig_radar = plot_audio_features_radar(df)
+        st.pyplot(fig_radar)
         
     except Exception as e:
         st.error(f"Error creating visualizations: {e}")

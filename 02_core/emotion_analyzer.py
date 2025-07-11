@@ -39,7 +39,7 @@ except ImportError:
     NRCLEX_AVAILABLE = False
     logger.warning("NRCLex not available - emotion analysis will be mocked")
 
-from .config import SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET
+from config import SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET
 
 
 def _get_spotify_client() -> Optional[spotipy.Spotify]:

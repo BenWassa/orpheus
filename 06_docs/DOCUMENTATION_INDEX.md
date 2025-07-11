@@ -1,32 +1,43 @@
-# 🎵 Project Orpheus - Documentation Index
+# 📚 Project Orpheus - Documentation Index
 
-**Your complete guide to musical emotional analysis**
-
----
-
-## 📚 **Documentation Overview**
-
-This project now includes comprehensive documentation for all aspects of Project Orpheus. Here's your complete guide to finding what you need:
+**Complete guide to all documentation for the new organized structure**
 
 ---
 
-## 🚀 **Getting Started**
+## 🏠 **Documentation Overview**
 
-### **📖 Start Here**
-1. **`README.md`** - Main project overview with usage walkthrough
-2. **`QUICK_START.md`** - 30-second start guide and command reference
-3. **`SETUP_COMPLETE.md`** - Detailed installation guide and troubleshooting
+Project Orpheus documentation is organized into clear categories for different user needs:
 
-### **🎯 First Steps**
+- **🚀 Getting Started** - Quick setup and first steps
+- **� User Guides** - Complete feature walkthroughs  
+- **🔧 Technical Reference** - Architecture and development
+- **📊 Data Reference** - Format specifications
+
+---
+
+## 📖 **Quick Reference Card**
+
+| Need Help With... | Read This Document |
+|-------------------|-------------------|
+| **First time setup** | `QUICK_START.md` |
+| **Using all features** | `USER_GUIDE.md` |
+| **Understanding the code** | `TECHNICAL_SUMMARY.md` |
+| **How data flows** | `PROCESS_FLOWS.md` |
+| **CSV file format** | `exportify_data_dictionary.md` |
+| **Project overview** | `README.md` |
+
+---
+
+## 🎯 **First Steps**
 ```powershell
 # 1. Quick health check
-.\orpheus_venv\Scripts\python.exe test_setup.py
+.\orpheus_venv\Scripts\python.exe 01_setup\test_setup.py
 
-# 2. Analyze your music
-.\orpheus_venv\Scripts\python.exe main.py
+# 2. Launch dashboard quickly
+.\launch_orpheus.bat
 
-# 3. Launch web dashboard  
-.\orpheus_venv\Scripts\streamlit.exe run ui/app.py
+# 3. Manual dashboard launch
+.\orpheus_venv\Scripts\streamlit.exe run 03_interface\streamlit_app.py
 ```
 
 ---
