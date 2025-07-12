@@ -1,10 +1,60 @@
-# 🔄 Project Orpheus - Process Flows & Architecture
+# 🎵 Project Orpheus - Process Flows & New Architecture (Updated)
 
-**Complete guide to how data flows through the organized system**
+**Complete guide to the reorganized system with numbered folders**
 
 ---
 
-## 🏗️ **System Architecture Overview**
+## 📁 **Current Repository Structure (Post-Cleanup)**
+
+```
+📂 Project Orpheus/
+├── 📁 01_setup/          # 🔧 Installation, testing, launch scripts
+│   ├── 📄 requirements.txt       # Python dependencies
+│   ├── 📄 test_setup.py         # Validation & health check ✅ WORKING
+│   ├── 📄 run_analysis.py       # Batch analysis script  
+│   ├── 📄 test_imports.py       # Import testing
+│   ├── 📄 launch_dashboard.bat  # Windows launcher
+│   └── 📄 .env.template         # Environment variables template
+│
+├── 📁 02_core/           # 🧠 Core analysis modules (CLEANED UP)
+│   ├── 📄 config.py             # Configuration & paths
+│   ├── 📄 data_processor.py     # CSV loading & cleaning
+│   ├── 📄 pattern_analyzer.py   # Pattern detection & stats
+│   ├── 📄 emotion_analyzer.py   # Sentiment & audio features
+│   └── 📄 visualizer.py         # Charts & visualizations
+│
+├── 📁 03_interface/      # 🌐 Web dashboard (CONSOLIDATED)
+│   └── 📄 streamlit_app.py      # Single Streamlit app ✅ WORKING
+│
+├── 📁 04_data/          # 📊 Data storage
+│   ├── 📁 raw/                  # Original Exportify CSV files
+│   └── 📁 processed/            # Cleaned data (Parquet format)
+│
+├── 📁 05_output/        # 📈 Analysis results
+│   ├── 📁 reports/              # HTML analysis reports
+│   ├── 📁 visualizations/       # Generated charts (PNG)
+│   └── 📁 exports/              # Data exports
+│
+├── 📁 06_docs/          # 📚 Documentation (ORGANIZED)
+│   ├── 📄 QUICK_START.md        # 30-second start guide
+│   ├── 📄 USER_GUIDE.md         # Complete user manual
+│   ├── 📄 TECHNICAL_SUMMARY.md  # Technical architecture
+│   ├── 📄 PROCESS_FLOWS.md      # This file - workflows
+│   ├── 📄 DOCUMENTATION_INDEX.md # All docs index
+│   └── 📁 archive/              # Old documentation versions
+│
+├── 📁 orpheus_venv/     # 🐍 Python virtual environment
+├── 📄 launch_orpheus.bat        # 🚀 Quick launch script ✅ WORKING
+├── 📄 README.md                 # Clean project overview
+└── 📄 __init__.py               # Python package marker
+```
+
+**✅ MAJOR CLEANUP COMPLETED:**
+- ❌ Removed: `src/` folder → ✅ Moved to `02_core/`
+- ❌ Removed: `ui/` folder → ✅ Moved to `03_interface/`  
+- ❌ Removed: Duplicate streamlit files → ✅ Single `streamlit_app.py`
+- ❌ Removed: Old virtual environments → ✅ Keep only `orpheus_venv/`
+- ❌ Removed: Cleanup scripts → ✅ Clean repository
 
 ```
 📥 Data Input (CSV) 
