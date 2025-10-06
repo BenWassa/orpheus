@@ -37,11 +37,29 @@ def load_exportify(csv_path: Path) -> pd.DataFrame:
     if not csv_path.exists():
         raise FileNotFoundError(f"CSV file not found: {csv_path}")
     
+    def _read_csv_with_chunks(encoding: str) -> pd.DataFrame:
+        """Helper to read CSV files in manageable chunks."""
+
+        try:
+            chunk_reader = pd.read_csv(
+                csv_path,
+                encoding=encoding,
+                chunksize=5000,
+                low_memory=False
+            )
+            chunks = list(chunk_reader)
+            if not chunks:
+                return pd.DataFrame()
+            return pd.concat(chunks, ignore_index=True)
+        except ValueError:
+            # Fallback for engines that don't support chunking
+            return pd.read_csv(csv_path, encoding=encoding, low_memory=False)
+
     try:
-        df = pd.read_csv(csv_path, encoding='utf-8')
+        df = _read_csv_with_chunks('utf-8')
     except UnicodeDecodeError:
         logger.warning("UTF-8 encoding failed, trying latin-1")
-        df = pd.read_csv(csv_path, encoding='latin-1')
+        df = _read_csv_with_chunks('latin-1')
     
     logger.info(f"Successfully loaded {len(df)} rows from {csv_path.name}")
     return df
