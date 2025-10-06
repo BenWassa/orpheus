@@ -17,7 +17,7 @@ import shutil
 import sys
 from collections import Counter
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from statistics import mean, median, pstdev
 from typing import Dict, Iterable, List, Optional, Sequence, Tuple
@@ -53,6 +53,12 @@ STYLES_PY = PROJECT_ROOT / "03_interface" / "components" / "styles.py"
 
 ASSETS_SUBDIR = "assets"
 CSS_FILENAME = "styles.css"
+TEMPLATE_DIRNAME = "_templates"
+INDEX_TEMPLATE_FILENAME = "index.html"
+
+IMAGE_SUBDIR = "images"
+THUMBNAIL_SUBDIR = "thumbnails"
+DEFAULT_THUMBNAIL_FILENAME = "dataset-default.svg"
 
 AUDIO_FEATURE_COLUMNS = [
     "valence",
@@ -268,35 +274,277 @@ def extract_css_from_styles() -> str:
     style_block = match.group(1)
     style_match = re.search(r"<style>(.*?)</style>", style_block, re.DOTALL)
     css = style_match.group(1) if style_match else style_block
+    css_lines = [line for line in css.splitlines() if "fonts.googleapis" not in line]
+    css = "\n".join(css_lines)
     css = re.sub(r"^\s+", "", css, flags=re.MULTILINE)
     additional_css = """
 body {
     margin: 0;
+    min-height: 100vh;
     background: var(--color-muted, #f5f6ff);
     color: var(--color-text, #1f1f2e);
-    font-family: 'Manrope', sans-serif;
+    font-family: 'Manrope', 'Inter', 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
 }
 
 a {
     color: var(--color-primary, #6c63ff);
+    text-decoration: none;
+}
+
+a:hover,
+a:focus {
+    text-decoration: underline;
+}
+
+img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+}
+
+.site-header {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(108, 99, 255, 0.08);
+}
+
+.site-header__inner {
+    margin: 0 auto;
+    max-width: 1200px;
+    padding: 1rem 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+}
+
+.site-brand {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: var(--color-text, #1f1f2e);
+}
+
+.site-brand__icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, rgba(108, 99, 255, 0.12), rgba(255, 101, 132, 0.12));
+    display: grid;
+    place-items: center;
+    color: var(--color-primary, #6c63ff);
+    font-size: 1.35rem;
+    box-shadow: inset 0 0 0 1px rgba(108, 99, 255, 0.18);
+}
+
+.site-nav {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.site-nav a {
+    font-weight: 600;
+    color: var(--color-text, #1f1f2e);
+}
+
+.site-nav a.site-nav__cta {
+    padding: 0.5rem 1.1rem;
+    border-radius: 999px;
+    background: var(--color-primary, #6c63ff);
+    color: #ffffff;
+    box-shadow: var(--shadow-soft, 0 20px 45px rgba(76, 70, 180, 0.12));
 }
 
 .page {
     max-width: 1100px;
     margin: 0 auto;
-    padding: 2rem 1.5rem 4rem;
+    padding: 2.5rem 1.5rem 4rem;
 }
 
-.page__header {
+.page__header,
+.hero {
     text-align: center;
-    margin-bottom: 2rem;
+    margin-bottom: 2.5rem;
+}
+
+.hero__note {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.4rem 0.8rem;
+    border-radius: 999px;
+    background: rgba(108, 99, 255, 0.1);
+    color: var(--color-primary, #6c63ff);
+    font-weight: 600;
+    font-size: 0.95rem;
+    margin-bottom: 1rem;
+}
+
+.hero__actions {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-top: 1.75rem;
+}
+
+.hero__actions a {
+    padding: 0.75rem 1.5rem;
+    border-radius: 999px;
+    font-weight: 600;
+    box-shadow: var(--shadow-soft, 0 20px 45px rgba(76, 70, 180, 0.12));
+}
+
+.hero__actions a.primary {
+    background: var(--color-primary, #6c63ff);
+    color: #ffffff;
+}
+
+.hero__actions a.secondary {
+    background: rgba(255, 255, 255, 0.9);
+    color: var(--color-text, #1f1f2e);
+    border: 1px solid rgba(108, 99, 255, 0.16);
+}
+
+.search-card {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.search-field {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 0.5rem 0.9rem;
+    border: 1px solid rgba(108, 99, 255, 0.12);
+}
+
+.search-field input[type="search"] {
+    flex: 1;
+    border: none;
+    background: transparent;
+    font-size: 1rem;
+    outline: none;
+}
+
+.search-field svg {
+    width: 20px;
+    height: 20px;
+    color: var(--color-subtle, #6b7280);
+}
+
+.dataset-grid {
+    display: grid;
+    gap: 1.75rem;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    margin-top: 2.5rem;
+}
+
+.dataset-card {
+    background: var(--color-surface, #ffffff);
+    border-radius: 1.25rem;
+    overflow: hidden;
+    box-shadow: var(--shadow-soft, 0 20px 45px rgba(76, 70, 180, 0.12));
+    border: 1px solid rgba(108, 99, 255, 0.08);
+    display: flex;
+    flex-direction: column;
+    transition: transform 200ms ease, box-shadow 200ms ease;
+}
+
+.dataset-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 24px 45px rgba(76, 70, 180, 0.18);
+}
+
+.dataset-card__thumbnail {
+    position: relative;
+    aspect-ratio: 16 / 9;
+    background: linear-gradient(135deg, rgba(108, 99, 255, 0.2), rgba(255, 101, 132, 0.2));
+}
+
+.dataset-card__thumbnail img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.dataset-card__body {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.dataset-card__title {
+    font-size: 1.35rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+.dataset-card__meta {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+}
+
+.dataset-card__meta span {
+    display: block;
+    font-size: 0.95rem;
+    color: var(--color-subtle, #6b7280);
+}
+
+.dataset-card__meta strong {
+    display: block;
+    color: var(--color-text, #1f1f2e);
+    font-size: 1.05rem;
+}
+
+.dataset-card__footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    font-size: 0.95rem;
+}
+
+.dataset-card__links {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+.dataset-card__links a {
+    font-weight: 600;
+}
+
+.dataset-card__links a.summary-link {
+    font-size: 0.9rem;
+    color: var(--color-subtle, #6b7280);
+}
+
+.empty-state {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 3rem 2rem;
+    border-radius: 1.25rem;
+    border: 1px dashed rgba(108, 99, 255, 0.25);
+    background: rgba(255, 255, 255, 0.6);
+    color: var(--color-subtle, #6b7280);
 }
 
 .dataset-meta {
     display: grid;
     gap: 1.5rem;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    margin-bottom: 2rem;
+    margin-bottom: 2.5rem;
 }
 
 .card {
@@ -309,10 +557,25 @@ a {
 
 .card h3 {
     margin-top: 0;
+    margin-bottom: 0.4rem;
 }
 
-.recommendations {
-    margin-top: 2rem;
+.metric {
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+.callout {
+    background: rgba(108, 99, 255, 0.1);
+    border: 1px solid rgba(108, 99, 255, 0.2);
+    border-radius: 1rem;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.callout strong {
+    color: var(--color-primary, #6c63ff);
 }
 
 .chart-section {
@@ -326,7 +589,6 @@ a {
 .index-table {
     width: 100%;
     border-collapse: collapse;
-    margin-top: 2rem;
 }
 
 .index-table th,
@@ -348,6 +610,47 @@ a {
 .plotly-chart {
     width: 100%;
     min-height: 420px;
+}
+
+.site-footer {
+    max-width: 1100px;
+    margin: 0 auto 3rem;
+    padding: 0 1.5rem;
+    color: var(--color-subtle, #6b7280);
+    text-align: center;
+    font-size: 0.9rem;
+}
+
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    border: 0;
+}
+
+@media (max-width: 720px) {
+    .site-header__inner {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .site-nav {
+        flex-wrap: wrap;
+        justify-content: flex-start;
+    }
+
+    .dataset-card__meta {
+        grid-template-columns: 1fr;
+    }
+
+    .dataset-card__footer {
+        flex-direction: column;
+        align-items: flex-start;
+    }
 }
 """.strip()
     return css.strip() + "\n\n" + additional_css + "\n"
@@ -410,13 +713,38 @@ def compute_metadata(rows: List[Dict[str, object]], summary: Dict[str, object]) 
             if isinstance(stats, dict) and "zero_fraction" in stats:
                 zero_fraction[feature] = stats["zero_fraction"]
 
+    generated_at = datetime.now(timezone.utc).replace(microsecond=0)
+
     return {
         "track_count": track_count,
         "unique_artists": unique_artists,
         "date_range": date_range,
-        "generated_at": datetime.utcnow().isoformat(),
+        "generated_at": generated_at.isoformat().replace("+00:00", "Z"),
         "zero_fraction": zero_fraction,
     }
+
+
+def resolve_thumbnail(slug: str, out_dir: Path) -> str:
+    assets_dir = out_dir / ASSETS_SUBDIR
+    thumbnails_dir = assets_dir / IMAGE_SUBDIR / THUMBNAIL_SUBDIR
+    for ext in ("png", "jpg", "jpeg", "svg", "webp"):
+        candidate = thumbnails_dir / f"{slug}.{ext}"
+        if candidate.exists():
+            return candidate.relative_to(out_dir).as_posix()
+    default_thumb = assets_dir / IMAGE_SUBDIR / DEFAULT_THUMBNAIL_FILENAME
+    if default_thumb.exists():
+        return default_thumb.relative_to(out_dir).as_posix()
+    return ""
+
+
+def apply_index_template(template_text: str, context: Dict[str, str]) -> str:
+    pattern = re.compile(r"{{\s*([a-zA-Z0-9_]+)\s*}}")
+
+    def replacer(match: re.Match[str]) -> str:
+        key = match.group(1)
+        return context.get(key, match.group(0))
+
+    return pattern.sub(replacer, template_text)
 
 
 def render_plotly_script(div_id: str, data: Dict[str, object], layout: Dict[str, object], include_cdn: bool) -> str:
@@ -571,6 +899,22 @@ def render_dataset_page(result: DatasetResult, chart_html_blocks: Iterable[str])
         else ""
     )
 
+    generated_display = ""
+    generated_at = meta.get("generated_at")
+    if isinstance(generated_at, str):
+        try:
+            cleaned = generated_at.replace("Z", "+00:00") if generated_at.endswith("Z") else generated_at
+            generated_dt = datetime.fromisoformat(cleaned)
+            generated_display = generated_dt.strftime("%Y-%m-%d %H:%M UTC")
+        except ValueError:
+            generated_display = generated_at
+
+    footer_html = (
+        f"<footer class=\"site-footer\"><p>Generated on {generated_display}</p></footer>"
+        if generated_display
+        else ""
+    )
+
     return f"""<!DOCTYPE html>
 <html lang=\"en\">
 <head>
@@ -580,12 +924,27 @@ def render_dataset_page(result: DatasetResult, chart_html_blocks: Iterable[str])
     <link rel=\"stylesheet\" href=\"assets/{CSS_FILENAME}\" />
 </head>
 <body>
+    <header class=\"site-header\">
+        <div class=\"site-header__inner\">
+            <a class=\"site-brand\" href=\"index.html\">
+                <span class=\"site-brand__icon\" aria-hidden=\"true\">♪</span>
+                <span>Project Orpheus</span>
+            </a>
+            <nav class=\"site-nav\">
+                <a href=\"index.html\">Datasets</a>
+                <a href=\"README.html\">Static guide</a>
+            </nav>
+        </div>
+    </header>
     <main class=\"page\">
         <header class=\"page__header\">
-            <p><a href=\"index.html\">← Back to index</a></p>
             <h1 class=\"main-header\">{result.name}</h1>
             <p class=\"subtitle\">Static emotional analysis generated with Project Orpheus</p>
         </header>
+
+        <section class=\"callout\">
+            <strong>Static export:</strong> This page is read-only and reflects a snapshot of your dataset. For fresh analyses or to upload new CSV files, launch the interactive app following the <a href=\"README.html#regenerating-the-site\">regeneration guide</a>.
+        </section>
 
         <section class=\"dataset-meta\">
             <div class=\"card\">
@@ -610,19 +969,55 @@ def render_dataset_page(result: DatasetResult, chart_html_blocks: Iterable[str])
         {recommendations_list}
         {charts_html}
     </main>
+    {footer_html}
 </body>
 </html>
 """
 
 
-def render_index_page(results: Sequence[DatasetResult]) -> str:
+def render_index_page(results: Sequence[DatasetResult], out_dir: Path) -> str:
+    template_path = out_dir / TEMPLATE_DIRNAME / INDEX_TEMPLATE_FILENAME
+    dataset_entries: List[Dict[str, object]] = []
+    for result in results:
+        meta = result.metadata
+        date_range = meta.get("date_range") or {}
+        start = date_range.get("start") if isinstance(date_range, dict) else None
+        end = date_range.get("end") if isinstance(date_range, dict) else None
+        dataset_entries.append(
+            {
+                "name": result.name,
+                "href": result.page_href,
+                "summaryHref": result.summary_href,
+                "trackCount": int(meta.get("track_count", 0) or 0),
+                "uniqueArtists": int(meta.get("unique_artists", 0) or 0),
+                "dateRange": {
+                    "start": start or "—",
+                    "end": end or "—",
+                },
+                "thumbnail": resolve_thumbnail(result.slug, out_dir),
+                "generatedAt": meta.get("generated_at"),
+            }
+        )
+
+    if template_path.exists():
+        dataset_json = json.dumps(dataset_entries, indent=2, ensure_ascii=False)
+        dataset_count = len(results)
+        context = {
+            "dataset_json": dataset_json,
+            "dataset_count": str(dataset_count),
+            "dataset_label": "dataset" if dataset_count == 1 else "datasets",
+            "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
+        }
+        template_text = template_path.read_text(encoding="utf-8")
+        return apply_index_template(template_text, context)
+
     rows_html = "".join(
-        f"<tr><td><a href=\"{result.page_href}\">{result.name}</a></td>"
-        f"<td>{result.metadata.get('track_count', 0)}</td>"
-        f"<td>{result.metadata.get('unique_artists', 0)}</td>"
-        f"<td>{(result.metadata.get('date_range') or {}).get('start', '—')} → {(result.metadata.get('date_range') or {}).get('end', '—')}</td>"
-        f"<td><a href=\"{result.summary_href}\">summary</a></td></tr>"
-        for result in results
+        f"<tr><td><a href=\"{entry['href']}\">{entry['name']}</a></td>"
+        f"<td>{entry['trackCount']}</td>"
+        f"<td>{entry['uniqueArtists']}</td>"
+        f"<td>{entry['dateRange']['start']} → {entry['dateRange']['end']}</td>"
+        f"<td><a href=\"{entry['summaryHref']}\">summary</a></td></tr>"
+        for entry in dataset_entries
     )
     return f"""<!DOCTYPE html>
 <html lang=\"en\">
@@ -631,7 +1026,6 @@ def render_index_page(results: Sequence[DatasetResult]) -> str:
     <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />
     <title>Project Orpheus — Dataset index</title>
     <link rel=\"stylesheet\" href=\"assets/{CSS_FILENAME}\" />
-    <script src=\"https://cdn.plot.ly/plotly-2.27.0.min.js\"></script>
 </head>
 <body>
     <main class=\"page\">
@@ -732,7 +1126,7 @@ def main(argv: Optional[Sequence[str]] = None) -> None:
     if not results:
         raise RuntimeError("No datasets were successfully processed.")
 
-    index_html = render_index_page(results)
+    index_html = render_index_page(results, args.out_dir)
     index_path = args.out_dir / "index.html"
     index_path.write_text(index_html, encoding="utf-8")
     logger.info("Wrote index to %s", index_path)

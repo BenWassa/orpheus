@@ -7,12 +7,27 @@
     <link rel="stylesheet" href="assets/styles.css" />
 </head>
 <body>
+    <header class="site-header">
+        <div class="site-header__inner">
+            <a class="site-brand" href="index.html">
+                <span class="site-brand__icon" aria-hidden="true">♪</span>
+                <span>Project Orpheus</span>
+            </a>
+            <nav class="site-nav">
+                <a href="index.html">Datasets</a>
+                <a href="README.html">Static guide</a>
+            </nav>
+        </div>
+    </header>
     <main class="page">
         <header class="page__header">
-            <p><a href="index.html">← Back to index</a></p>
             <h1 class="main-header">Ben Rap X</h1>
             <p class="subtitle">Static emotional analysis generated with Project Orpheus</p>
         </header>
+
+        <section class="callout">
+            <strong>Static export:</strong> This page is read-only and reflects a snapshot of your dataset. For fresh analyses or to upload new CSV files, launch the interactive app following the <a href="README.html#regenerating-the-site">regeneration guide</a>.
+        </section>
 
         <section class="dataset-meta">
             <div class="card">
@@ -41,5 +56,6 @@
 <script>Plotly.newPlot('top-artists', [{"type": "bar", "orientation": "h", "x": [2, 2, 2, 2, 2, 3, 4, 4, 11, 15], "y": ["Bex", "Yatta Bandz", "Lil Tjay", "SAINt JHN", "Post Malone", "MBNel", "Juice WRLD", "Scorey", "Fresco Trey", "Polo G"], "marker": {"color": "#6c63ff"}}], {"title": "Top artists", "margin": {"l": 160, "r": 40, "t": 60, "b": 60}, "xaxis": {"title": "Track count"}}, {responsive: true});</script></section><section class="chart-section card"><div id="audio-radar" class="plotly-chart"></div>
 <script>Plotly.newPlot('audio-radar', [{"type": "scatterpolar", "r": [0.4788706927688335, 0.5078044667922246, 0.5064549969207509, 0.4916763574888445, 0.5392455002978994, 0.5199997938225964, 0.5230138054953682, 0.4788706927688335], "theta": ["Valence", "Energy", "Danceability", "Acousticness", "Instrumentalness", "Liveness", "Speechiness", "Valence"], "fill": "toself", "name": "Audio features", "line": {"color": "#ff6584"}}], {"title": "Average audio feature profile", "polar": {"radialaxis": {"visible": true, "range": [0, 1]}}, "margin": {"l": 60, "r": 60, "t": 60, "b": 40}}, {responsive: true});</script></section>
     </main>
+    <footer class="site-footer"><p>Generated on 2025-10-06 20:10 UTC</p></footer>
 </body>
 </html>

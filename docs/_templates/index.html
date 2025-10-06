@@ -23,12 +23,12 @@
         <section class="hero">
             <span class="hero__note">Static snapshot</span>
             <h1 class="main-header">Explore your exported playlists</h1>
-            <p class="subtitle">Browse 2 curated datasets generated with the Project Orpheus pipeline.</p>
+            <p class="subtitle">Browse {{ dataset_count }} curated {{ dataset_label }} generated with the Project Orpheus pipeline.</p>
             <div class="hero__actions">
                 <a class="primary" href="README.html">Learn how the export works</a>
                 <a class="secondary" href="README.html#regenerating-the-site">Regenerate this site</a>
             </div>
-            <p class="subtitle" style="margin-top:1.5rem; font-size:0.95rem; color: var(--color-subtle, #6b7280);">Last generated 2025-10-06 20:10 UTC</p>
+            <p class="subtitle" style="margin-top:1.5rem; font-size:0.95rem; color: var(--color-subtle, #6b7280);">Last generated {{ generated_at }}</p>
         </section>
 
         <section class="card search-card" aria-labelledby="dataset-search-label">
@@ -51,34 +51,7 @@
     </footer>
 
     <script>
-        const DATASETS = [
-  {
-    "name": "Ben Rap X",
-    "href": "ben-rap-x.html",
-    "summaryHref": "ben-rap-x.summary.json",
-    "trackCount": 116,
-    "uniqueArtists": 79,
-    "dateRange": {
-      "start": "2022-09-07",
-      "end": "2024-11-20"
-    },
-    "thumbnail": "assets/images/dataset-default.svg",
-    "generatedAt": "2025-10-06T20:10:13Z"
-  },
-  {
-    "name": "X Rap X",
-    "href": "x-rap-x.html",
-    "summaryHref": "x-rap-x.summary.json",
-    "trackCount": 119,
-    "uniqueArtists": 82,
-    "dateRange": {
-      "start": "2025-01-28",
-      "end": "2025-03-01"
-    },
-    "thumbnail": "assets/images/dataset-default.svg",
-    "generatedAt": "2025-10-06T20:10:13Z"
-  }
-];
+        const DATASETS = {{ dataset_json }};
         const grid = document.getElementById('dataset-grid');
         const searchInput = document.getElementById('dataset-search');
         const emptyState = document.getElementById('dataset-empty');

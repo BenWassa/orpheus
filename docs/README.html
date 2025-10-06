@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Project Orpheus — Static site guide</title>
+    <link rel="stylesheet" href="assets/styles.css" />
+</head>
+<body>
+    <header class="site-header">
+        <div class="site-header__inner">
+            <a class="site-brand" href="index.html">
+                <span class="site-brand__icon" aria-hidden="true">♪</span>
+                <span>Project Orpheus</span>
+            </a>
+            <nav class="site-nav">
+                <a href="index.html">Datasets</a>
+                <a href="README.html" aria-current="page">Static guide</a>
+            </nav>
+        </div>
+    </header>
+    <main class="page">
+        <header class="page__header">
+            <h1 class="main-header">Understanding the static export</h1>
+            <p class="subtitle">This GitHub Pages build is a read-only snapshot of Project Orpheus results.</p>
+        </header>
+
+        <section class="card" id="about">
+            <h2>Why this site exists</h2>
+            <p>The exporter script in <code>01_setup/export_static_site.py</code> transforms your Spotify Exportify CSV files into accessible HTML pages that you can host on GitHub Pages. It reuses the same data-cleaning and emotion analysis pipeline as the interactive Streamlit app, but the charts and summaries are pre-generated.</p>
+        </section>
+
+        <section class="card" id="limitations">
+            <h2>What you can and cannot do here</h2>
+            <ul>
+                <li><strong>✅ Browse existing datasets:</strong> Every CSV exported through the pipeline gets a dedicated analysis page with charts, metrics, and a downloadable <code>.summary.json</code>.</li>
+                <li><strong>✅ Share read-only insights:</strong> Friends and collaborators can explore your listening trends without installing Python.</li>
+                <li><strong>❌ Upload new files:</strong> This site does not include file upload, authentication, or live Spotify integrations. All data is generated ahead of time.</li>
+                <li><strong>❌ Refresh analytics automatically:</strong> Regenerate the static files whenever you have new playlists to analyse.</li>
+            </ul>
+        </section>
+
+        <section class="card" id="regenerating-the-site">
+            <h2>Regenerating the site</h2>
+            <ol>
+                <li>Activate the Python environment that ships with the project.</li>
+                <li>Place new Exportify CSV files inside <code>04_data/raw/</code>.</li>
+                <li>Run <code>python 01_setup/export_static_site.py --input-dir 04_data/raw --out-dir docs --force</code> to rebuild the HTML pages.</li>
+                <li>Commit the updated <code>docs/</code> folder and push to the GitHub branch powering Pages.</li>
+            </ol>
+            <p>Need the detailed setup steps? Open <code>06_docs/QUICK_START.md</code> in your local clone or on GitHub for the full walkthrough.</p>
+        </section>
+
+        <section class="card" id="tips">
+            <h2>Tips for a better experience</h2>
+            <ul>
+                <li>Keep dataset names concise—the index page search matches on the title.</li>
+                <li>Add custom thumbnails in <code>docs/assets/images/thumbnails/</code> using the dataset slug (for example, <code>ben-rap-x.svg</code>).</li>
+                <li>For a richer write-up, embed the summary JSON files into blog posts or notebooks.</li>
+                <li>Want interactivity? Launch the full Streamlit dashboard following the quick-start guide.</li>
+            </ul>
+        </section>
+
+        <section class="callout" id="support">
+            <strong>Questions?</strong> Check <code>06_docs/QUICK_START.md</code> and the rest of the <code>06_docs/</code> folder locally for troubleshooting steps, or open an issue in the project repository.
+        </section>
+    </main>
+    <footer class="site-footer">
+        <p>Project Orpheus — emotion-driven music analytics.</p>
+    </footer>
+</body>
+</html>
