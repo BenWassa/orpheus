@@ -47,11 +47,18 @@ GLOBAL_STYLE = """
     }
 
     .insight-card {
-        background: linear-gradient(135deg, rgba(108, 99, 255, 0.1), rgba(255, 101, 132, 0.1));
+        /* slightly stronger background and lighter text for better contrast and readability */
+        background: linear-gradient(135deg, rgba(108, 99, 255, 0.14), rgba(255, 101, 132, 0.12));
         padding: 1.5rem;
         border-radius: var(--card-radius);
-        border: 1px solid rgba(108, 99, 255, 0.15);
-        color: var(--color-text);
+        border: 1px solid rgba(108, 99, 255, 0.12);
+        color: var(--color-subtle);
+    }
+
+    .insight-card p {
+        margin: 0;
+        font-size: 1.1rem;
+        color: inherit; /* inherit the softer color from the card */
     }
 
     .emotion-summary {
