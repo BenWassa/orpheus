@@ -9,7 +9,7 @@ import logging
 import warnings
 import pandas as pd
 import numpy as np
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any, Optional, TYPE_CHECKING
 
 # Suppress warnings for cleaner output
 warnings.filterwarnings('ignore')
@@ -39,10 +39,17 @@ except ImportError:
     NRCLEX_AVAILABLE = False
     logger.warning("NRCLex not available - emotion analysis will be mocked")
 
+# Conditional imports for type hints
+if TYPE_CHECKING:
+    try:
+        import spotipy
+    except ImportError:
+        pass
+
 from config import SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET
 
 
-def _get_spotify_client() -> Optional[spotipy.Spotify]:
+def _get_spotify_client() -> Optional["spotipy.Spotify"]:
     """
     Get authenticated Spotify client.
     
