@@ -1,0 +1,99 @@
+{
+  "dataset": "Ben Rap X",
+  "source_csv": "ben_rap_x.csv",
+  "metadata": {
+    "track_count": 116,
+    "unique_artists": 79,
+    "date_range": {
+      "start": "2022-09-07",
+      "end": "2024-11-20"
+    },
+    "generated_at": "2025-10-06T19:49:59.468060",
+    "zero_fraction": {
+      "valence": 0.0,
+      "energy": 0.0,
+      "danceability": 0.0,
+      "acousticness": 0.0,
+      "instrumentalness": 0.0,
+      "liveness": 0.0,
+      "speechiness": 0.0
+    }
+  },
+  "summary": {
+    "audio_features": {
+      "valence": {
+        "mean": 0.4788706927688335,
+        "std": 0.28564786897322203,
+        "min": 0.0016912782186294661,
+        "max": 0.9999078285092092,
+        "median": 0.44012994160965574,
+        "count": 116,
+        "zero_fraction": 0.0,
+        "trend_index": 0.0
+      },
+      "energy": {
+        "mean": 0.5078044667922246,
+        "std": 0.28709860324391323,
+        "min": 0.0058960835839930725,
+        "max": 0.987892453066448,
+        "median": 0.5252070789635596,
+        "count": 116,
+        "zero_fraction": 0.0,
+        "trend_index": 0.0
+      },
+      "danceability": {
+        "mean": 0.5064549969207509,
+        "std": 0.2743442307931913,
+        "min": 0.0004059396972875273,
+        "max": 0.9881192147817541,
+        "median": 0.5119592700604094,
+        "count": 116,
+        "zero_fraction": 0.0,
+        "trend_index": 0.0
+      },
+      "acousticness": {
+        "mean": 0.4916763574888445,
+        "std": 0.2899669859597478,
+        "min": 0.00554481813803176,
+        "max": 0.9989023332293387,
+        "median": 0.4846579090848204,
+        "count": 116,
+        "zero_fraction": 0.0,
+        "trend_index": 0.0
+      },
+      "instrumentalness": {
+        "mean": 0.5392455002978994,
+        "std": 0.28784020021086615,
+        "min": 0.0005718961279435053,
+        "max": 0.9926920436268976,
+        "median": 0.5727625836311931,
+        "count": 116,
+        "zero_fraction": 0.0,
+        "trend_index": 0.0
+      },
+      "liveness": {
+        "mean": 0.5199997938225964,
+        "std": 0.28506480707117643,
+        "min": 0.007823107152157949,
+        "max": 0.9995724168774514,
+        "median": 0.5476969413502331,
+        "count": 116,
+        "zero_fraction": 0.0,
+        "trend_index": 0.0
+      },
+      "speechiness": {
+        "mean": 0.5230138054953682,
+        "std": 0.2971608907219373,
+        "min": 0.010151114438677111,
+        "max": 0.9992824684127266,
+        "median": 0.5325285102067155,
+        "count": 116,
+        "zero_fraction": 0.0,
+        "trend_index": 0.0
+      }
+    },
+    "sentiment": {},
+    "emotion_profile": {},
+    "recommendations": []
+  }
+}
