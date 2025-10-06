@@ -171,6 +171,12 @@ cd "c:\Users\benjamin.haddon\Documents\orpheus"
 .\orpheus_venv\Scripts\streamlit.exe run 03_interface\streamlit_app.py --server.port 8502
 ```
 
+### **🛡️ Disable Streamlit telemetry (corporate / offline use)**
+If you're seeing outbound POSTs (analytics/telemetry) and want to stop them when running locally, a project-level Streamlit config has been added at `.streamlit/config.toml`.
+
+This file sets `gatherUsageStats = false` to disable usage reporting. You can customize or remove the file if you prefer a different behavior.
+
+
 ### **❌ Import path errors**
 - Always run from project root: `c:\Users\benjamin.haddon\Documents\orpheus`
 - Check working directory: `echo %CD%`

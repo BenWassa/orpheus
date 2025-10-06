@@ -1,0 +1,14 @@
+# Streamlit configuration for local development
+# Disable Streamlit telemetry and usage statistics to prevent outbound POSTs
+# See: https://docs.streamlit.io/library/advanced-features/configuration
+[global]
+gatherUsageStats = false
+
+[browser]
+# Force browser server address to localhost to reduce chance of external callbacks
+serverAddress = "localhost"
+
+[server]
+# Bind only to localhost for safety
+headless = true
+enableCORS = false
