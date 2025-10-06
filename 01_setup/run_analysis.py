@@ -8,14 +8,16 @@ import sys
 from pathlib import Path
 import logging
 
-# Add src to path
-sys.path.append(str(Path(__file__).parent / "src"))
+project_root = Path(__file__).parent.parent
+# Add project root and core modules directory so imports work when run from project root
+sys.path.insert(0, str(project_root))
+sys.path.insert(0, str(project_root / "02_core"))
 
-from src.data_processing import load_exportify, clean, save_processed
-from src.pattern_analysis import playlist_stats, repeat_obsessions, temporal_patterns
-from src.emotion_analysis import add_spotify_audio_features, add_lyric_sentiment, compute_emotion_summary
-from src.visualization import save_all_visualizations, create_emotion_summary_text
-from src.config import DATA_DIR_RAW, DATA_DIR_PROCESSED, PROJECT_ROOT
+from data_processor import load_exportify, clean, save_processed
+from pattern_analyzer import playlist_stats, repeat_obsessions, temporal_patterns
+from emotion_analyzer import add_spotify_audio_features, add_lyric_sentiment, compute_emotion_summary
+from visualizer import save_all_visualizations, create_emotion_summary_text
+from config import DATA_DIR_RAW, DATA_DIR_PROCESSED, PROJECT_ROOT
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')

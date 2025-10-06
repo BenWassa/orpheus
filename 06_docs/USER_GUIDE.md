@@ -46,7 +46,7 @@ cd "c:\Users\benjamin.haddon\Documents\orpheus"
 
 ### **Step 3: Launch Web Dashboard**
 ```powershell
-.\orpheus_venv\Scripts\streamlit.exe run ui/app.py
+.\orpheus_venv\Scripts\streamlit.exe run 03_interface\streamlit_app.py
 ```
 **Access at:** http://localhost:8501
 - Interactive charts and filters
@@ -64,73 +64,43 @@ cd "c:\Users\benjamin.haddon\Documents\orpheus"
 - Cleans and validates data
 - Handles missing/malformed entries
 - Standardizes column names
-
-**Manual Usage:**
-```python
-from src.data_processing import load_exportify, clean
-from src.config import DATA_DIR_RAW
+from data_processor import load_exportify, clean
 
 # Load a specific CSV
 csv_file = DATA_DIR_RAW / "your_playlist.csv"
 df_raw = load_exportify(csv_file)
 df_clean = clean(df_raw)
-
+.\orpheus_venv\Scripts\streamlit.exe run 03_interface\streamlit_app.py
 print(f"Loaded {len(df_clean)} tracks")
 ```
 
 **Output Information:**
 - Total tracks loaded
-- Duplicates removed
-- Data quality issues found
-- Final dataset size
 
 ### **2. Pattern Analysis Module**
-
-**Available Functions:**
-
 **a) Playlist Statistics**
 ```python
-from src.pattern_analysis import playlist_stats
-
-stats = playlist_stats(df_clean)
-print(f"Total tracks: {stats['total_tracks']}")
 print(f"Unique artists: {stats['unique_artists']}")
 print(f"Date range: {stats['date_range']['span_days']} days")
-```
-
-**b) Repeat Obsessions**
 ```python
-from src.pattern_analysis import repeat_obsessions
+from pattern_analyzer import repeat_obsessions
 
 # Find artists/tracks played 5+ times
-obsessions = repeat_obsessions(df_clean, threshold=5)
-print(f"Found {len(obsessions)} obsessions")
-print(obsessions[['item', 'count', 'type', 'intensity']])
 ```
 
-**c) Temporal Patterns**
-```python
-from src.pattern_analysis import temporal_patterns
 
 patterns = temporal_patterns(df_clean)
-print("Monthly distribution:", patterns['monthly_distribution'])
-print("Peak period:", patterns['peak_periods'])
-```
 
 ### **3. Emotion Analysis Module**
-
-**Audio Features (requires Spotify API):**
-```python
-from src.emotion_analysis import add_spotify_audio_features
-
+from emotion_analyzer import add_spotify_audio_features
 # Add valence, energy, danceability, etc.
 df_with_features = add_spotify_audio_features(df_clean)
 print("Audio features added:", df_with_features['valence'].notna().sum())
-```
+.\orpheus_venv\Scripts\streamlit.exe run 03_interface\streamlit_app.py --server.port 8502
 
 **Sentiment Analysis:**
 ```python
-from src.emotion_analysis import add_lyric_sentiment, compute_emotion_summary
+from emotion_analyzer import add_lyric_sentiment, compute_emotion_summary
 
 # Add sentiment columns
 df_with_sentiment = add_lyric_sentiment(df_clean)
@@ -146,8 +116,8 @@ for rec in summary['recommendations']:
 
 **Create Charts:**
 ```python
-from src.visualization import plot_emotion_timeline, save_all_visualizations
-from src.config import PROJECT_ROOT
+from visualizer import plot_emotion_timeline, save_all_visualizations
+from config import PROJECT_ROOT
 
 # Create all visualizations
 output_dir = PROJECT_ROOT / "output" / "visualizations"

@@ -7,25 +7,23 @@ import sys
 from pathlib import Path
 
 # Add project root to path
-project_root = Path(__file__).parent
+project_root = Path(__file__).parent.parent
+# Insert project root so Python can import modules
 sys.path.insert(0, str(project_root))
-sys.path.insert(0, str(project_root / "src"))
+# Add core modules directory (02_core) so imports work when run from project root
+sys.path.insert(0, str(project_root / "02_core"))
 
 try:
     print("Testing imports...")
-    from src.data_processing import load_exportify, clean
+    from data_processor import load_exportify, clean
     print("✅ data_processing imports OK")
-    
-    from src.pattern_analysis import playlist_stats, repeat_obsessions, temporal_patterns
+    from pattern_analyzer import playlist_stats, repeat_obsessions, temporal_patterns
     print("✅ pattern_analysis imports OK")
-    
-    from src.emotion_analysis import add_spotify_audio_features, add_lyric_sentiment, compute_emotion_summary
+    from emotion_analyzer import add_spotify_audio_features, add_lyric_sentiment, compute_emotion_summary
     print("✅ emotion_analysis imports OK")
-    
-    from src.visualization import plot_emotion_timeline, plot_top_artists, plot_audio_features_radar
+    from visualizer import plot_emotion_timeline, plot_top_artists, plot_audio_features_radar
     print("✅ visualization imports OK")
-    
-    from src.config import DATA_DIR_RAW, DATA_DIR_PROCESSED
+    from config import DATA_DIR_RAW, DATA_DIR_PROCESSED
     print("✅ config imports OK")
     
     print(f"✅ All imports successful!")
