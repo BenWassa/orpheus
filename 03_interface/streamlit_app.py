@@ -73,6 +73,10 @@ def main() -> None:
         unsafe_allow_html=True,
     )
 
+    # Apply pending navigation choice (set by callbacks) before widgets are created
+    if 'nav_choice_pending' in st.session_state:
+        st.session_state['nav_choice'] = st.session_state.pop('nav_choice_pending')
+
     if 'nav_choice' not in st.session_state:
         st.session_state['nav_choice'] = 'Overview'
 
@@ -116,7 +120,6 @@ def show_welcome_screen() -> None:
 
 def load_sample_data() -> None:
     """Load and analyze bundled sample data."""
-
     try:
         sample_files = list(DATA_DIR_RAW.glob("*.csv"))
         if not sample_files:
@@ -130,9 +133,11 @@ def load_sample_data() -> None:
             df_raw = cached_load_exportify(str(sample_file))
             df_clean = cached_clean(df_raw)
 
+        # Persist processed data and schedule nav change for next run
         st.session_state.df_processed = df_clean
         st.session_state.sample_data = True
-        st.session_state.nav_choice = 'Overview'
+        # Defer changing the widget-backed nav_choice until the next run
+        st.session_state['nav_choice_pending'] = 'Overview'
         st.rerun()
     except Exception as exc:  # pragma: no cover - runtime feedback
         st.error(f"Error loading sample data: {exc}")
@@ -140,7 +145,6 @@ def load_sample_data() -> None:
 
 def analyze_uploaded_data(uploaded_file) -> None:
     """Persist and analyze the uploaded Exportify CSV."""
-
     try:
         temp_path = DATA_DIR_RAW / uploaded_file.name
         with open(temp_path, "wb") as handle:
@@ -153,7 +157,8 @@ def analyze_uploaded_data(uploaded_file) -> None:
         st.success(f"Successfully processed {len(df_clean)} tracks")
         st.session_state.df_processed = df_clean
         st.session_state.sample_data = False
-        st.session_state.nav_choice = 'Overview'
+        # Defer changing the widget-backed nav_choice until the next run
+        st.session_state['nav_choice_pending'] = 'Overview'
         st.rerun()
     except Exception as exc:  # pragma: no cover - runtime feedback
         st.error(f"Error processing file: {exc}")

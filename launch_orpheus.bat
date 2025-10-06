@@ -20,7 +20,9 @@ if errorlevel 1 (
 echo 🚀 Launching Streamlit dashboard... 
 echo 🌐 Opening at: http://localhost:8501 
 echo 💡 Press Ctrl+C to stop the server 
- 
+
+REM Disable Streamlit usage stats for this session
+set STREAMLIT_GATHER_USAGE_STATS=false
 .\orpheus_venv\Scripts\streamlit.exe run 03_interface\streamlit_app.py --server.address localhost --server.port 8501 
  
 pause 
