@@ -1,0 +1,48 @@
+name: Deploy static docs
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: deploy-docs
+  cancel-in-progress: false
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f 01_setup/requirements-light.txt ]; then
+            pip install -r 01_setup/requirements-light.txt
+          else
+            pip install -r 01_setup/requirements.txt
+          fi
+
+      - name: Build static site
+        run: |
+          python 01_setup/export_static_site.py --input-dir 04_data/raw --out-dir docs --force
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages
+          publish_dir: docs
+          force_orphan: true

@@ -1,0 +1,6 @@
+# Minimal dependencies required to build the static docs site in CI
+pandas>=1.5.0
+numpy>=1.24.0
+plotly>=5.17.0
+pyarrow>=12.0.0
+python-dotenv>=1.0.0
