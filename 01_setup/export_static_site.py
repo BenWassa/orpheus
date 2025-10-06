@@ -664,6 +664,17 @@ def write_css(assets_dir: Path) -> Path:
     return css_path
 
 
+def copy_docs(out_dir: Path) -> None:
+    """Copy 06_docs/ content to docs/docs/ for static site."""
+    docs_src = PROJECT_ROOT / "06_docs"
+    docs_dest = out_dir / "docs"
+    if docs_src.exists():
+        shutil.copytree(docs_src, docs_dest, dirs_exist_ok=True)
+        logger.info("Copied docs from %s to %s", docs_src, docs_dest)
+    else:
+        logger.warning("06_docs/ not found, skipping docs copy")
+
+
 def pipeline_process(csv_path: Path) -> Tuple[List[Dict[str, object]], Dict[str, object]]:
     if PIPELINE_AVAILABLE:
         logger.info("Using pandas-based pipeline for %s", csv_path.name)
@@ -1050,6 +1061,15 @@ def render_index_page(results: Sequence[DatasetResult], out_dir: Path) -> str:
                 {rows_html}
             </tbody>
         </table>
+        <section class=\"card\">
+            <h2>📖 Documentation</h2>
+            <ul>
+                <li><a href=\"docs/QUICK_START.html\">Quick Start Guide</a></li>
+                <li><a href=\"docs/USER_GUIDE.html\">User Guide</a></li>
+                <li><a href=\"docs/TECHNICAL_SUMMARY.html\">Technical Summary</a></li>
+                <li><a href=\"docs/PROCESS_FLOWS.html\">Process Flows</a></li>
+            </ul>
+        </section>
     </main>
 </body>
 </html>
@@ -1112,6 +1132,7 @@ def main(argv: Optional[Sequence[str]] = None) -> None:
     csv_files = discover_csv_files(args.input_dir)
     assets_dir = prepare_output_directory(args.out_dir, force=args.force)
     write_css(assets_dir)
+    copy_docs(args.out_dir)
 
     results: List[DatasetResult] = []
     include_cdn = True
