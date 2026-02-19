@@ -1,0 +1,88 @@
+{
+  "dataset": "Ben Rap X",
+  "source_csv": "ben_rap_x.csv",
+  "metadata": {
+    "track_count": 116,
+    "unique_artists": 79,
+    "date_range": {
+      "start": "2022-09-07",
+      "end": "2024-11-20"
+    },
+    "generated_at": "2026-02-19T03:31:42Z",
+    "zero_fraction": {
+      "valence": 0.0,
+      "energy": 0.0,
+      "danceability": 0.0,
+      "acousticness": 0.0,
+      "instrumentalness": 0.0,
+      "liveness": 0.0
+    }
+  },
+  "summary": {
+    "audio_features": {
+      "valence": {
+        "mean": 0.4726816083255124,
+        "std": 0.2976090128377409,
+        "min": 0.005522117123602399,
+        "max": 0.9868869366005173,
+        "median": 0.4641424546894926,
+        "count": 116,
+        "zero_fraction": 0.0,
+        "trend_7d": 0.4969204713403552
+      },
+      "energy": {
+        "mean": 0.49416624889964544,
+        "std": 0.28980000042657766,
+        "min": 0.005061583846218687,
+        "max": 0.9856504541106007,
+        "median": 0.5114201804384233,
+        "count": 116,
+        "zero_fraction": 0.0,
+        "trend_7d": -0.30103498379392235
+      },
+      "danceability": {
+        "mean": 0.5022484069074258,
+        "std": 0.2913987982449772,
+        "min": 0.014393488629755868,
+        "max": 0.9900538501042633,
+        "median": 0.5202864562092706,
+        "count": 116,
+        "zero_fraction": 0.0,
+        "trend_7d": -0.5315998748543146
+      },
+      "acousticness": {
+        "mean": 0.5050889744526998,
+        "std": 0.30872254623429896,
+        "min": 0.01083765148029836,
+        "max": 0.9905051420006733,
+        "median": 0.5254345808818961,
+        "count": 116,
+        "zero_fraction": 0.0,
+        "trend_7d": 0.2087561504706884
+      },
+      "instrumentalness": {
+        "mean": 0.5640994158302886,
+        "std": 0.30050064797301745,
+        "min": 0.012154474689816341,
+        "max": 0.9997176732861306,
+        "median": 0.5839852118869862,
+        "count": 116,
+        "zero_fraction": 0.0,
+        "trend_7d": -0.7039281601755836
+      },
+      "liveness": {
+        "mean": 0.422612790784405,
+        "std": 0.27149165157346145,
+        "min": 0.02007119777772637,
+        "max": 0.9865152487929797,
+        "median": 0.3696928711805772,
+        "count": 116,
+        "zero_fraction": 0.0,
+        "trend_7d": 0.1514842862033713
+      }
+    },
+    "sentiment": {},
+    "emotion_profile": {},
+    "recommendations": []
+  }
+}
