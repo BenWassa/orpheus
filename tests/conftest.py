@@ -1,34 +1,44 @@
-import sys
-from pathlib import Path
+from __future__ import annotations
 
-# Ensure project root is on sys.path for imports during tests
-# project_root points to repository root
-project_root = Path(__file__).resolve().parent.parent
-# Ensure repo root is on sys.path
-sys.path.insert(0, str(project_root))
-# Also add interface and core folders so imports like `components` and `visualizer`
-# resolve during tests (app normally mutates sys.path at runtime).
-sys.path.insert(0, str(project_root / "03_interface"))
-sys.path.insert(0, str(project_root / "02_core"))
+import shutil
+from pathlib import Path
 
 import pytest
 
+from orpheus.config import load_config
+from orpheus.db import ensure_schema, get_db
 
-@pytest.fixture(autouse=True)
-def isolate_session_state(monkeypatch):
-    """Provide a clean Streamlit session_state for tests that import streamlit.
-    We monkeypatch streamlit.session_state if Streamlit is imported.
-    """
-    try:
-        import streamlit as st
+FIXTURES_DIR = Path(__file__).parent / "fixtures"
 
-        # Provide a poppable dict-like session_state for tests
-        class _DummySession(dict):
-            def __getattr__(self, item):
-                return self.get(item)
 
-        dummy = _DummySession()
-        monkeypatch.setattr(st, "session_state", dummy, raising=False)
-    except Exception:
-        # Streamlit not installed in this environment; tests will mock further as needed
-        pass
+@pytest.fixture
+def tmp_project(tmp_path):
+    """Create a temporary project directory with config and data dirs."""
+    for d in ["data/raw", "data/cache", "data/output/reports"]:
+        (tmp_path / d).mkdir(parents=True)
+
+    template = Path(__file__).parent.parent / "config.yaml.template"
+    shutil.copy(template, tmp_path / "config.yaml")
+
+    return tmp_path
+
+
+@pytest.fixture
+def tmp_config(tmp_project):
+    """Load config from a temporary project directory."""
+    return load_config(project_root=tmp_project)
+
+
+@pytest.fixture
+def tmp_db(tmp_config):
+    """Create and return a connection to a temporary database with schema applied."""
+    conn = get_db(tmp_config.db_path)
+    ensure_schema(conn)
+    yield conn
+    conn.close()
+
+
+@pytest.fixture
+def sample_export_path():
+    """Path to the sample Spotify export fixture."""
+    return FIXTURES_DIR / "sample_export.json"

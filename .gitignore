@@ -84,3 +84,10 @@ output/exports/*.json
 **/personal_*
 **/private_*
 **/*_secret*
+
+# Orpheus v2
+config.yaml
+data/cache/orpheus.db
+data/cache/spotify_tokens.json
+orpheus/score/models/
+data/output/reports/*.json

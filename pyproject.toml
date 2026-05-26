@@ -1,0 +1,44 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "orpheus"
+version = "2.0.0-alpha"
+description = "Personal music listening analysis — surfaces emotional and thematic patterns in Spotify history"
+requires-python = ">=3.11"
+dependencies = [
+    "click>=8.0",
+    "pyyaml>=6.0",
+    "requests>=2.28",
+    "transformers>=4.30",
+    "torch>=2.0",
+    "sentence-transformers>=2.2",
+    "scikit-learn>=1.3",
+    "numpy>=1.24",
+    "lyricsgenius>=3.0",
+    "tqdm>=4.65",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov>=4.0",
+    "ruff>=0.1",
+]
+
+[project.scripts]
+orpheus = "orpheus.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["orpheus*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "slow: marks tests requiring transformer model loading",
+]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
