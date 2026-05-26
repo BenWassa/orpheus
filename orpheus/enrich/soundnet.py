@@ -1,0 +1,81 @@
+from __future__ import annotations
+
+import logging
+import time
+
+import requests
+
+logger = logging.getLogger(__name__)
+
+_MAX_RETRIES = 5
+_BACKOFF_BASE = 1
+
+
+class SoundNetClient:
+    def __init__(self, api_key: str, rate_limit_per_minute: int = 60):
+        self._api_key = api_key
+        self._min_interval = 60.0 / rate_limit_per_minute
+        self._last_request_time = 0.0
+        self._session = requests.Session()
+
+    def fetch_audio_features(self, track_uri: str) -> dict | None:
+        spotify_id = track_uri.split(":")[-1] if ":" in track_uri else track_uri
+
+        self._rate_limit()
+
+        for attempt in range(_MAX_RETRIES):
+            try:
+                resp = self._session.get(
+                    f"https://soundnet-api.p.rapidapi.com/v1/tracks/{spotify_id}/features",
+                    headers={
+                        "X-RapidAPI-Key": self._api_key,
+                        "X-RapidAPI-Host": "soundnet-api.p.rapidapi.com",
+                    },
+                    timeout=30,
+                )
+
+                if resp.status_code == 200:
+                    data = resp.json()
+                    return self._normalize(data)
+                elif resp.status_code == 404:
+                    logger.debug("Track not found in SoundNet: %s", spotify_id)
+                    return None
+                elif resp.status_code in (429, 503):
+                    wait = _BACKOFF_BASE * (2 ** attempt)
+                    logger.warning("SoundNet %d, retrying in %ds (attempt %d/%d)",
+                                   resp.status_code, wait, attempt + 1, _MAX_RETRIES)
+                    time.sleep(wait)
+                else:
+                    logger.warning("SoundNet returned %d for %s", resp.status_code, spotify_id)
+                    return None
+
+            except requests.RequestException as e:
+                wait = _BACKOFF_BASE * (2 ** attempt)
+                logger.warning("SoundNet request error: %s, retrying in %ds", e, wait)
+                time.sleep(wait)
+
+        logger.error("SoundNet exhausted retries for %s", spotify_id)
+        return None
+
+    def _rate_limit(self):
+        elapsed = time.time() - self._last_request_time
+        if elapsed < self._min_interval:
+            time.sleep(self._min_interval - elapsed)
+        self._last_request_time = time.time()
+
+    def _normalize(self, data: dict) -> dict:
+        return {
+            "valence": data.get("valence"),
+            "arousal": data.get("arousal", data.get("energy")),
+            "tempo": data.get("tempo"),
+            "key": data.get("key"),
+            "mode": data.get("mode"),
+            "energy": data.get("energy"),
+            "danceability": data.get("danceability"),
+            "acousticness": data.get("acousticness"),
+            "instrumentalness": data.get("instrumentalness"),
+            "loudness": data.get("loudness"),
+            "spectral_centroid": data.get("spectral_centroid"),
+            "spectral_complexity": data.get("spectral_complexity"),
+            "source": "soundnet",
+        }
