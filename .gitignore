@@ -84,6 +84,8 @@ output/exports/*.json
 **/personal_*
 **/private_*
 **/*_secret*
+Spotify Extended Streaming History/
+my_spotify_data.zip
 
 # Orpheus v2
 config.yaml

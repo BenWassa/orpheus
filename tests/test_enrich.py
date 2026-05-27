@@ -8,7 +8,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from orpheus.enrich.enrich import _has_audio_features, _insert_audio_features, enrich_audio_features
-from orpheus.enrich.genius import clean_lyrics
+from orpheus.enrich.genius import clean_lyrics, enrich_lyrics
 from orpheus.ingest.spotify_export import ingest_export
 
 
@@ -55,6 +55,15 @@ def test_enrich_idempotent(tmp_db, tmp_config, sample_export_path):
         _insert_audio_features(tmp_db, uri, features)
     # This track should be skipped on enrich since it already has features
     assert _has_audio_features(tmp_db, "spotify:track:3DK6m7It6Pw857FcQftMds")
+
+
+def test_enrich_lyrics_without_token_does_not_cache_misses(tmp_db, sample_export_path):
+    _setup_tracks(tmp_db, sample_export_path)
+
+    stats = enrich_lyrics(tmp_db, "")
+
+    assert stats == {"total": 0, "fetched": 0, "no_lyrics": 0, "failed": 0}
+    assert tmp_db.execute("SELECT COUNT(*) FROM lyrics").fetchone()[0] == 0
 
 
 def test_clean_lyrics_strips_sections():

@@ -55,14 +55,7 @@ def clean_lyrics(raw_text: str) -> str:
 
 
 def enrich_lyrics(conn: sqlite3.Connection, access_token: str) -> dict:
-    tracks = conn.execute(
-        """SELECT t.track_uri, t.track_name, t.primary_artist
-           FROM tracks t
-           LEFT JOIN lyrics l ON t.track_uri = l.track_uri
-           WHERE l.track_uri IS NULL AND t.enriched_at IS NULL"""
-    ).fetchall()
-
-    if not tracks and not access_token:
+    if not access_token:
         return {"total": 0, "fetched": 0, "no_lyrics": 0, "failed": 0}
 
     tracks_needing_lyrics = conn.execute(
@@ -75,15 +68,13 @@ def enrich_lyrics(conn: sqlite3.Connection, access_token: str) -> dict:
     if not tracks_needing_lyrics:
         return {"total": 0, "fetched": 0, "no_lyrics": 0, "failed": 0}
 
-    client = GeniusClient(access_token) if access_token else None
+    client = GeniusClient(access_token)
     stats = {"total": len(tracks_needing_lyrics), "fetched": 0, "no_lyrics": 0, "failed": 0}
 
     for i, track in enumerate(tracks_needing_lyrics):
         track_uri = track["track_uri"]
 
-        result = None
-        if client:
-            result = client.fetch_lyrics(track["track_name"], track["primary_artist"])
+        result = client.fetch_lyrics(track["track_name"], track["primary_artist"])
 
         if result is None:
             stats["failed"] += 1
