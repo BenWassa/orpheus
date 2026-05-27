@@ -1,0 +1,70 @@
+LICENSE.md
+README.md
+archive/v1/LLM_CONTEXT.md
+archive/v1/SPRINTS.md
+archive/v1/tree.txt
+archive/v1/01_setup/requirements-light.txt
+archive/v1/01_setup/requirements.txt
+archive/v1/docs_site/index.html
+archive/v1/docs_site/ben-rap-x.html
+archive/v1/docs_site/x-rap-x.html
+archive/v1/docs_site/docs/USER_GUIDE.md
+archive/v1/docs_site/docs/CHANGELOG.md
+archive/v1/docs_site/docs/exportify_data_dictionary.md
+archive/v1/docs_site/docs/PROCESS_FLOWS.md
+archive/v1/docs_site/docs/README.md
+archive/v1/docs_site/docs/DOCUMENTATION_INDEX.md
+archive/v1/docs_site/docs/TECHNICAL_SUMMARY.md
+archive/v1/docs_site/docs/QUICK_START.md
+archive/v1/docs_site/docs/archive/QUICK_START_OLD.md
+archive/v1/docs_site/docs/archive/SETUP_COMPLETE.md
+archive/v1/docs_site/docs/archive/DOCUMENTATION_INDEX_ORIGINAL.md
+archive/v1/docs_site/docs/archive/README_ORIGINAL.md
+archive/v1/docs_site/docs/archive/QUICK_START_NEW.md
+archive/v1/docs_site/docs/archive/README_OLD.md
+archive/v1/docs_site/docs/Research Runs/Deep Research_Practical Integration Playbooks for Personal Music Mood Pipelines.md
+archive/v1/docs_site/docs/Research Runs/Deep Research_DIY Personal Dashboards for Music Mood Tracking.md
+archive/v1/docs_site/docs/Research Runs/Deep Research_Local Performance & Scalability Benchmarks for Music Emotion Inference.md
+archive/v1/docs_site/docs/Research Runs/Deep Research_Inference Tuning & Early Clustering for Mood Patterns.md
+archive/v1/docs_site/docs/Research Runs/Concise Findings — Lightweight Music Mood Inference Pipelines (Open-Source Examples).md
+archive/v1/docs_site/docs/Research Runs/Precedent_Inferring Emotional, Mental, and Behavioral States from Passive User Behavior Data (Cross-Domain).md
+archive/v1/docs_site/docs/Research Runs/Concise Findings - Current Best Embeddings for music emotion and mood inference.md
+archive/v1/docs_site/docs/Research Runs/Precedent_Inferring Emotional, Mental, and Behavioral States from Music Listening Data.md
+archive/v1/06_docs/USER_GUIDE.md
+archive/v1/06_docs/CHANGELOG.md
+archive/v1/06_docs/exportify_data_dictionary.md
+archive/v1/06_docs/PROCESS_FLOWS.md
+archive/v1/06_docs/README.md
+archive/v1/06_docs/DOCUMENTATION_INDEX.md
+archive/v1/06_docs/TECHNICAL_SUMMARY.md
+archive/v1/06_docs/QUICK_START.md
+archive/v1/06_docs/archive/QUICK_START_OLD.md
+archive/v1/06_docs/archive/SETUP_COMPLETE.md
+archive/v1/06_docs/archive/DOCUMENTATION_INDEX_ORIGINAL.md
+archive/v1/06_docs/archive/README_ORIGINAL.md
+archive/v1/06_docs/archive/QUICK_START_NEW.md
+archive/v1/06_docs/archive/README_OLD.md
+archive/v1/06_docs/Research Runs/Deep Research_Practical Integration Playbooks for Personal Music Mood Pipelines.md
+archive/v1/06_docs/Research Runs/Deep Research_DIY Personal Dashboards for Music Mood Tracking.md
+archive/v1/06_docs/Research Runs/Deep Research_Local Performance & Scalability Benchmarks for Music Emotion Inference.md
+archive/v1/06_docs/Research Runs/Deep Research_Inference Tuning & Early Clustering for Mood Patterns.md
+archive/v1/06_docs/Research Runs/Concise Findings — Lightweight Music Mood Inference Pipelines (Open-Source Examples).md
+archive/v1/06_docs/Research Runs/Precedent_Inferring Emotional, Mental, and Behavioral States from Passive User Behavior Data (Cross-Domain).md
+archive/v1/06_docs/Research Runs/Concise Findings - Current Best Embeddings for music emotion and mood inference.md
+archive/v1/06_docs/Research Runs/Precedent_Inferring Emotional, Mental, and Behavioral States from Music Listening Data.md
+archive/v1/05_output/visualizations/emotion_summary.txt
+archive/v1/05_output/reports/Gemini qucik Ben rapx.html
+archive/v1/05_output/reports/Gemini Update Vision Ben Rap X.html
+archive/v1/05_output/reports/Gemini Quick run.html
+docs/PRD.md
+docs/C2_methodology_spec.md
+docs/C3_data_pipeline_spec.md
+docs/T1_taxonomy_v1.md
+docs/R2_theme_research.pdf
+docs/R3_methodology_research.pdf
+docs/R1_emotion_research.pdf
+archive/v1/05_output/visualizations/listening_timeline.png
+archive/v1/05_output/visualizations/monthly_heatmap.png
+archive/v1/05_output/visualizations/top_artists.png
+archive/v1/05_output/visualizations/audio_features_radar.png
+archive/v1/05_output/visualizations/emotion_timeline.png
