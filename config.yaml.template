@@ -1,0 +1,53 @@
+# Orpheus v2 Configuration
+# Copy to config.yaml and fill in API credentials before running.
+
+spotify:
+  client_id: ""
+  client_secret: ""
+  redirect_uri: "http://localhost:8080/callback"
+
+soundnet:
+  api_key: ""
+  rate_limit_per_minute: 60
+
+genius:
+  access_token: ""
+
+windows:
+  state_half_life_days: 3
+  trait_half_life_days: 90
+
+engagement_weights:
+  full_play: 1.0
+  partial_play: 0.7
+  early_skip: -0.5
+  boundary_skip: -0.25
+  repeat_session: 0.3
+  shuffle_source: -0.1
+  library_play: 0.1
+
+clustering:
+  dbscan_min_pts: 5
+  gmm_components: 3
+
+depth_labels:
+  - threshold: 0.33
+    label: "surface"
+  - threshold: 0.66
+    label: "engaged"
+  - threshold: 1.0
+    label: "immersive"
+
+safety:
+  active: false
+  rumination_density_threshold: 0.7
+  rumination_duration_hours: 48
+
+models:
+  emotion_classifier: "facebook/bart-large-mnli"
+  semantic_embedding: "sentence-transformers/all-mpnet-base-v2"
+
+paths:
+  data_dir: "data"
+  db_path: "data/cache/orpheus.db"
+  reports_dir: "data/output/reports"
