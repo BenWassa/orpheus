@@ -20,7 +20,7 @@ def test_schema_version_after_init(tmp_db):
 
 
 def test_migrations_idempotent(tmp_db):
-    applied_first = run_migrations(tmp_db)
+    run_migrations(tmp_db)
     applied_second = run_migrations(tmp_db)
     assert applied_second == []
 

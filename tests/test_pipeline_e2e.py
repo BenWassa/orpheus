@@ -6,10 +6,7 @@ from __future__ import annotations
 
 import json
 from datetime import datetime, timezone
-from pathlib import Path
-from unittest.mock import patch
 
-import pytest
 
 from orpheus.aggregate.windows import compute_state_and_trait
 from orpheus.config import load_config
@@ -135,7 +132,7 @@ def test_full_pipeline_e2e(tmp_project, sample_export_path):
     # Step 7: Output assembly
     report_data = assemble_report(
         state=windows["state"], trait=windows["trait"],
-        shifts=shifts, co_occurrences=co_occurrences,
+        shifts=shifts, trends=trends, co_occurrences=co_occurrences,
         clusters=clusters, config=cfg, safety_flags=safety_flags,
     )
 

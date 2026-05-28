@@ -1,9 +1,7 @@
 from __future__ import annotations
 
 import json
-from pathlib import Path
 
-import pytest
 
 from orpheus.output.assemble import assemble_report, prevalence_label, write_report
 from orpheus.score.emotion import EMOTION_CATEGORIES

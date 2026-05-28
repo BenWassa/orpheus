@@ -224,7 +224,7 @@ def report(ctx, out):
 
     report_data = assemble_report(
         state=windows["state"], trait=windows["trait"],
-        shifts=shifts, co_occurrences=co_occurrences,
+        shifts=shifts, trends=trends, co_occurrences=co_occurrences,
         clusters=clusters, config=cfg, safety_flags=safety_flags,
     )
 
@@ -294,7 +294,7 @@ def run_all(ctx, source):
     click.echo("Assembling report...")
     report_data = assemble_report(
         state=windows["state"], trait=windows["trait"],
-        shifts=shifts, co_occurrences=co_occurrences,
+        shifts=shifts, trends=trends, co_occurrences=co_occurrences,
         clusters=clusters, config=cfg, safety_flags=safety_flags,
     )
 

@@ -9,7 +9,6 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from orpheus.config import OrpheusConfig
-from orpheus.score.depth import score_depth
 
 logger = logging.getLogger(__name__)
 
@@ -43,6 +42,7 @@ def assemble_report(
     co_occurrences: list[dict],
     clusters: list[dict],
     config: OrpheusConfig,
+    trends: list[dict] | None = None,
     safety_flags: list[dict] | None = None,
 ) -> dict:
     report = {
@@ -53,6 +53,7 @@ def assemble_report(
             "trait": _format_window(trait, config),
         },
         "shifts": shifts,
+        "trends": trends or [],
         "co_occurrences": co_occurrences,
         "clusters": clusters,
         "safety_flags": safety_flags or [],

@@ -1,11 +1,9 @@
 from __future__ import annotations
 
-import math
 
-import pytest
 
 from orpheus.score.depth import _count_syllables, _lexical_density, _acoustic_complexity, _topic_depth, score_depth
-from orpheus.score.emotion import EmotionScorer, EMOTION_CATEGORIES, _VA_ANCHORS
+from orpheus.score.emotion import EmotionScorer, EMOTION_CATEGORIES
 from orpheus.score.theme import ThemeScorer, THEME_CATEGORIES
 
 
