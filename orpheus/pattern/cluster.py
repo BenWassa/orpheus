@@ -28,6 +28,20 @@ def clusters_status(conn: sqlite3.Connection, clusters: list[dict], n_clean_poin
     return "ok"
 
 
+_QUALIFIED_LISTEN_MS = 30_000
+
+
+def _qualified_play_counts(conn: sqlite3.Connection) -> dict[str, int]:
+    rows = conn.execute(
+        """SELECT track_uri, COUNT(*) AS n
+           FROM plays
+           WHERE COALESCE(ms_played, 0) >= ?
+           GROUP BY track_uri""",
+        (_QUALIFIED_LISTEN_MS,),
+    ).fetchall()
+    return {row["track_uri"]: row["n"] for row in rows}
+
+
 def _load_avd_data(conn: sqlite3.Connection) -> tuple[np.ndarray, list[dict]]:
     rows = conn.execute(
         """SELECT ts.track_uri, ts.emotion_scores, ts.theme_scores, ts.depth_score,
@@ -35,6 +49,8 @@ def _load_avd_data(conn: sqlite3.Connection) -> tuple[np.ndarray, list[dict]]:
            FROM track_scores ts
            JOIN audio_features af ON ts.track_uri = af.track_uri"""
     ).fetchall()
+
+    play_counts = _qualified_play_counts(conn)
 
     tracks = []
     points = []
@@ -50,6 +66,9 @@ def _load_avd_data(conn: sqlite3.Connection) -> tuple[np.ndarray, list[dict]]:
             "emotion_scores": json.loads(row["emotion_scores"]),
             "theme_scores": json.loads(row["theme_scores"]),
             "depth_score": d,
+            # Qualified plays — used to express cluster prominence as a share of
+            # listening rather than a share of the catalog.
+            "play_count": play_counts.get(row["track_uri"], 0),
         })
 
     return np.array(points) if points else np.empty((0, 3)), tracks
@@ -105,23 +124,31 @@ def cluster_gmm(
     gmm.fit(points)
     probs = gmm.predict_proba(points)
 
+    # Play counts weight membership so cluster prominence and mood reflect how
+    # much each track was actually listened to, not just how many tracks fall in
+    # the region. Tracks never played still shape the GMM fit but contribute no
+    # listening share.
+    play_counts = np.array([max(t.get("play_count", 0), 0) for t in tracks], dtype=float)
+    total_listening = float(play_counts.sum())
+
     clusters = []
     for k in range(n_components):
         member_weights = probs[:, k]
+        listen_weights = member_weights * play_counts
         centroid = gmm.means_[k].tolist()
 
         emotion_agg = {cat: 0.0 for cat in EMOTION_CATEGORIES}
         theme_agg = {cat: 0.0 for cat in THEME_CATEGORIES}
         total_w = 0.0
 
-        for i, w in enumerate(member_weights):
-            if w < 0.1:
+        for i, lw in enumerate(listen_weights):
+            if member_weights[i] < 0.1 or lw <= 0:
                 continue
             for cat in EMOTION_CATEGORIES:
-                emotion_agg[cat] += w * tracks[i]["emotion_scores"].get(cat, 0.0)
+                emotion_agg[cat] += lw * tracks[i]["emotion_scores"].get(cat, 0.0)
             for cat in THEME_CATEGORIES:
-                theme_agg[cat] += w * tracks[i]["theme_scores"].get(cat, 0.0)
-            total_w += w
+                theme_agg[cat] += lw * tracks[i]["theme_scores"].get(cat, 0.0)
+            total_w += lw
 
         if total_w > 0:
             emotion_agg = {k: v / total_w for k, v in emotion_agg.items()}
@@ -130,7 +157,9 @@ def cluster_gmm(
         dom_emotions = sorted(emotion_agg.items(), key=lambda x: x[1], reverse=True)[:3]
         dom_themes = sorted(theme_agg.items(), key=lambda x: x[1], reverse=True)[:3]
 
-        share = float(np.mean(member_weights))
+        # True share of listening: this cluster's play-weighted membership over
+        # all listening. Memberships sum to 1 per track, so shares sum to ~100%.
+        share = float(listen_weights.sum() / total_listening) if total_listening > 0 else 0.0
         label = _label_cluster(centroid)
 
         clusters.append({
@@ -138,7 +167,7 @@ def cluster_gmm(
             "centroid_avd": [round(c, 3) for c in centroid],
             "dominant_emotions": [{"category": c, "weight": round(w, 3)} for c, w in dom_emotions],
             "dominant_themes": [{"category": c, "weight": round(w, 3)} for c, w in dom_themes],
-            "share_of_listening": f"approximately {int(share * 100)}%",
+            "share_of_listening": f"approximately {int(round(share * 100))}%",
             "track_count": int(np.sum(member_weights > 0.3)),
         })
 
