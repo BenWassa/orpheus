@@ -11,6 +11,13 @@ interface EmotionMapProps {
 }
 
 export function EmotionMap({ report, activeWindow, comparisonWindow, selected, onSelect }: EmotionMapProps) {
+  function handleKeyDown(e: React.KeyboardEvent<SVGGElement>, category: EmotionCategory) {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      onSelect(selected === category ? null : category);
+    }
+  }
+
   return (
     <section className="panel emotion-panel" aria-labelledby="emotion-title">
       <div className="section-heading">
@@ -21,10 +28,9 @@ export function EmotionMap({ report, activeWindow, comparisonWindow, selected, o
         <span className="depth-pill">{activeWindow.depth_label}</span>
       </div>
 
-      <div className="emotion-plot" role="img" aria-label="Emotion categories plotted by feeling and energy">
-        <svg viewBox="-112 -112 224 224">
+      <div className="emotion-plot" role="group" aria-label="Emotion categories — select to inspect">
+        <svg viewBox="-112 -112 224 224" aria-hidden="true" focusable="false">
           <defs>
-            {/* Quadrant washes — stronger opacity so colour reads clearly, fade stops at ~55% radius so centre stays neutral */}
             <radialGradient id="grad-tr" cx="100%" cy="0%" r="100%" gradientUnits="objectBoundingBox">
               <stop offset="0%"  stopColor="rgb(255,204,0)"  stopOpacity="0.28" />
               <stop offset="55%" stopColor="rgb(255,204,0)"  stopOpacity="0.06" />
@@ -63,7 +69,7 @@ export function EmotionMap({ report, activeWindow, comparisonWindow, selected, o
           <text x="0" y="-104" textAnchor="middle" className="axis-label">high energy</text>
           <text x="0" y="112" textAnchor="middle" className="axis-label">low energy</text>
 
-        {EMOTION_ORDER.map((category) => {
+          {EMOTION_ORDER.map((category) => {
             const emotion = EMOTIONS[category];
             const score = activeWindow.emotion[category] ?? 0;
             const comparisonScore = comparisonWindow.emotion[category] ?? 0;
@@ -71,20 +77,29 @@ export function EmotionMap({ report, activeWindow, comparisonWindow, selected, o
             const cx = emotion.valence * 92;
             const cy = -emotion.arousal * 92;
             const isSelected = selected === category;
-
             const { solid } = moodColorRGBA(emotion.valence, emotion.arousal, 0.22);
+
             return (
-              <g key={category}>
+              <g
+                key={category}
+                role="button"
+                tabIndex={0}
+                aria-pressed={isSelected}
+                aria-label={`${emotion.label}: ${(score * 100).toFixed(0)}%`}
+                onClick={() => onSelect(isSelected ? null : category)}
+                onKeyDown={(e) => handleKeyDown(e, category)}
+                style={{ cursor: 'pointer' }}
+              >
                 <circle className="comparison-dot" cx={cx + comparisonScore * 12} cy={cy} r={3 + comparisonScore * 14} />
-                <button onClick={() => onSelect(isSelected ? null : category)} aria-label={`Inspect ${emotion.label}`}>
-                  <circle
-                    className={isSelected ? 'emotion-dot selected' : 'emotion-dot'}
-                    cx={cx}
-                    cy={cy}
-                    r={radius}
-                    style={{ fill: solid } as React.CSSProperties}
-                  />
-                </button>
+                <circle
+                  className={isSelected ? 'emotion-dot selected' : 'emotion-dot'}
+                  cx={cx}
+                  cy={cy}
+                  r={radius}
+                  style={{ fill: solid } as React.CSSProperties}
+                />
+                {/* Invisible hit-area so small dots are easier to tap */}
+                <circle cx={cx} cy={cy} r={Math.max(radius, 14)} fill="transparent" />
                 <text className="dot-label" x={cx} y={cy - radius - 5} textAnchor="middle">
                   {emotion.short}
                 </text>
@@ -118,7 +133,7 @@ export function EmotionMap({ report, activeWindow, comparisonWindow, selected, o
               ))}
           </>
         ) : (
-          <p>The larger marks show which feelings were most present in this report.</p>
+          <p>Select an emotion above to inspect it. The larger marks show which feelings were most present in this report.</p>
         )}
       </div>
     </section>

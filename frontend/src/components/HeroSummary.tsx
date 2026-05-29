@@ -1,3 +1,4 @@
+import { type RefObject } from 'react';
 import { CalendarClock, Download, RotateCcw, PlusSquare } from 'lucide-react';
 import { categoryLabel } from '../taxonomy';
 import type { OrpheusReport } from '../types';
@@ -7,9 +8,10 @@ interface HeroSummaryProps {
   onExport: () => void;
   onReset: () => void;
   onAddData?: () => void;
+  addDataTriggerRef?: RefObject<HTMLButtonElement | null>;
 }
 
-export function HeroSummary({ report, onExport, onReset, onAddData }: HeroSummaryProps) {
+export function HeroSummary({ report, onExport, onReset, onAddData, addDataTriggerRef }: HeroSummaryProps) {
   const topEmotion = report.state.top_emotions[0]?.category;
   const topTheme = report.state.top_themes[0]?.category;
   const headline =
@@ -23,8 +25,8 @@ export function HeroSummary({ report, onExport, onReset, onAddData }: HeroSummar
     <header className="hero-summary">
       <div className="hero-actions">
         {onAddData && (
-          <button type="button" onClick={onAddData} className="accent">
-            <PlusSquare size={16} />
+          <button ref={addDataTriggerRef} type="button" onClick={onAddData} className="accent">
+            <PlusSquare size={16} aria-hidden="true" />
             Add data
           </button>
         )}

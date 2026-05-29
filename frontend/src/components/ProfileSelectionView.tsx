@@ -1,4 +1,4 @@
-import { Music2, Plus } from 'lucide-react';
+import { Music2, Plus, AlertCircle } from 'lucide-react';
 import type { ProfileInfo } from '../types';
 import { ProfileCard } from './ProfileCard';
 
@@ -6,9 +6,10 @@ interface ProfileSelectionViewProps {
   profiles: ProfileInfo[];
   onSelect: (profile: ProfileInfo) => void;
   loadingProfile: string | null;
+  loadError: string | null;
 }
 
-export function ProfileSelectionView({ profiles, onSelect, loadingProfile }: ProfileSelectionViewProps) {
+export function ProfileSelectionView({ profiles, onSelect, loadingProfile, loadError }: ProfileSelectionViewProps) {
   return (
     <main className="profiles-shell">
       <header className="brand-header">
@@ -21,6 +22,13 @@ export function ProfileSelectionView({ profiles, onSelect, loadingProfile }: Pro
           <p>Select a profile to explore its latest reports.</p>
         </div>
       </header>
+
+      {loadError && (
+        <div className="inline-error" role="alert" aria-live="polite">
+          <AlertCircle size={16} aria-hidden="true" />
+          <span>{loadError}</span>
+        </div>
+      )}
 
       <div className="profile-grid">
         {profiles.map((profile) => (
