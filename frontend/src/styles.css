@@ -92,10 +92,13 @@ button {
 }
 
 .detail-scope-note {
-  margin: 0 0 16px;
-  color: var(--muted);
+  margin: 0 0 24px;
+  padding: 10px 16px;
+  border-left: 2px solid var(--plum);
+  border-radius: 0 4px 4px 0;
+  background: var(--paper-strong);
+  color: var(--plum);
   font-size: 0.82rem;
-  font-style: italic;
 }
 
 .hero-actions button,
@@ -537,63 +540,241 @@ button {
   color: var(--danger);
 }
 
-.matrix-layout {
-  display: grid;
-  grid-template-columns: minmax(0, 1.35fr) minmax(280px, 0.65fr);
-  gap: 20px;
+.editorial-matrix-section {
+  padding: 32px 0;
+  border-top: 1px dashed var(--line);
+  margin-top: 24px;
 }
 
-.matrix-grid {
+.matrix-editorial-header {
+  margin-bottom: 28px;
+}
+
+.serif-subhead {
+  margin: 6px 0 12px;
+  color: var(--ink);
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 1.65rem;
+  font-weight: 400;
+}
+
+.matrix-context-description {
+  max-width: 65ch;
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.matrix-context-description strong {
+  color: var(--ink);
+  font-weight: 650;
+}
+
+.matrix-layout-surface {
   display: grid;
-  grid-template-columns: 92px repeat(8, minmax(42px, 1fr));
-  gap: 6px;
+  grid-template-columns: minmax(0, 1.4fr) minmax(300px, 0.6fr);
+  gap: 40px;
+  align-items: start;
+}
+
+.matrix-interactive-grid {
+  display: grid;
+  grid-template-columns: 100px repeat(8, minmax(44px, 1fr));
+  gap: 4px;
   overflow-x: auto;
-  padding-bottom: 6px;
+  padding-bottom: 12px;
 }
 
-.matrix-row {
+.matrix-grid-contents-row {
   display: contents;
 }
 
-.matrix-label {
-  color: var(--muted);
-  font-size: 0.72rem;
-  font-weight: 750;
-  text-align: center;
-  align-self: center;
+.grid-corner-blank {
+  min-width: 0;
 }
 
-.theme-axis {
+.matrix-column-axis-label,
+.matrix-row-axis-label {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.matrix-column-axis-label {
+  align-self: end;
+  padding-bottom: 12px;
+  text-align: center;
+}
+
+.matrix-row-axis-label {
+  display: flex;
+  align-items: center;
+  padding-right: 12px;
   text-align: left;
 }
 
-.matrix-cell {
-  min-height: 42px;
+.matrix-node-cell {
+  aspect-ratio: 1;
   border: 1px solid var(--line);
-  border-radius: 6px;
-  color: var(--ink);
-  background: var(--panel-soft);
+  border-radius: 4px;
+  background: var(--paper-strong);
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    background-color 240ms cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 240ms cubic-bezier(0.16, 1, 0.3, 1),
+    transform 180ms ease;
 }
 
-.matrix-cell.strong {
-  background: var(--accent-strong);
-  color: var(--paper);
+.matrix-node-cell .node-value-indicator {
+  color: var(--ink);
+  font-size: 0.8rem;
+  font-weight: 500;
 }
 
-.matrix-cell.moderate {
+.matrix-node-cell.moderate {
+  border-color: color-mix(in oklch, var(--accent) 20%, var(--line));
+  background: color-mix(in oklch, var(--accent-soft) 40%, var(--paper));
+}
+
+.matrix-node-cell.strong {
+  border-color: color-mix(in oklch, var(--accent) 50%, var(--line));
   background: var(--accent-soft);
+}
+
+.matrix-node-cell.has-high-lift .node-value-indicator {
+  color: var(--accent-strong);
+  font-weight: 750;
+}
+
+.matrix-node-cell.is-barren {
+  border-color: color-mix(in oklch, var(--line) 40%, transparent);
+  background: transparent;
+  cursor: not-allowed;
+  opacity: 0.25;
+}
+
+.matrix-node-cell.is-focused {
+  border-color: var(--accent-strong);
+  background: var(--accent);
+  box-shadow: 0 4px 12px color-mix(in oklch, var(--accent) 15%, transparent);
+  transform: scale(1.05);
+}
+
+.matrix-node-cell.is-focused .node-value-indicator {
+  color: var(--paper);
+  font-weight: 700;
+}
+
+.matrix-empty-canvas {
+  max-width: 600px;
+  padding: 48px;
+  border: 1px dashed var(--line);
+  border-radius: 8px;
+  text-align: center;
+}
+
+.matrix-empty-canvas p {
+  margin: 0 auto;
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-style: italic;
+  line-height: 1.6;
+}
+
+.matrix-side-annotation-drawer {
+  position: sticky;
+  top: 80px;
+  padding: 24px;
+  border-radius: 8px;
+  background: var(--paper-strong);
+}
+
+.annotation-eyebrow {
   color: var(--accent);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
-.matrix-cell.empty {
-  cursor: default;
-  opacity: 0.45;
+.matrix-side-annotation-drawer h4 {
+  margin: 6px 0 16px;
+  color: var(--ink);
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 1.3rem;
+  font-weight: 400;
 }
 
-.matrix-cell.selected {
-  outline: 2px solid var(--ink);
-  outline-offset: 2px;
+.matrix-side-annotation-drawer .conjunction {
+  color: var(--muted);
+  font-family:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 1rem;
+}
+
+.annotation-narrative-prose {
+  margin: 0 0 24px;
+  color: var(--ink);
+  font-size: 0.88rem;
+  line-height: 1.6;
+}
+
+.annotation-stats-strip {
+  display: grid;
+  gap: 12px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+
+.stat-datapoint {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.82rem;
+}
+
+.stat-label {
+  color: var(--muted);
+}
+
+.stat-value {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.highlighted-lift {
+  padding: 6px 8px;
+  border-radius: 4px;
+  background: var(--accent-soft);
+}
+
+.highlighted-lift .stat-label,
+.highlighted-lift .stat-value {
+  color: var(--accent-strong);
+}
+
+.highlighted-lift .stat-label {
+  font-weight: 600;
+}
+
+.highlighted-lift .stat-value {
+  font-weight: 750;
+}
+
+.annotation-placeholder-card p {
+  margin: 0;
+  padding: 32px 0;
+  color: var(--muted);
+  font-size: 0.86rem;
+  line-height: 1.5;
+  text-align: center;
 }
 
 .event-row {
@@ -792,8 +973,12 @@ button {
   }
 
   .reader-layout,
-  .matrix-layout {
+  .matrix-layout-surface {
     grid-template-columns: 1fr;
+  }
+
+  .matrix-side-annotation-drawer {
+    position: static;
   }
 
   .emotion-plot {
@@ -862,12 +1047,12 @@ button {
     min-height: 280px;
   }
 
-  .matrix-grid {
+  .matrix-interactive-grid {
     grid-template-columns: 82px repeat(8, minmax(40px, 46px));
   }
 
-  .matrix-cell {
-    min-height: 40px;
+  .matrix-node-cell {
+    min-width: 40px;
   }
 
   .insight-list li {
