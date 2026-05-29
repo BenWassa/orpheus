@@ -89,9 +89,15 @@ output/exports/*.json
 Spotify Extended Streaming History/
 my_spotify_data.zip
 
+# Claude Code runtime artifacts (settings.json is intentionally tracked)
+.claude/scheduled_tasks.lock
+
 # Orpheus v2
 config.yaml
 data/cache/orpheus.db
+# SQLite WAL/SHM sidecars — meaningless without their .db and churn on every access
+data/cache/*.db-shm
+data/cache/*.db-wal
 data/cache/spotify_tokens.json
 orpheus/score/models/
 # Generated report JSON is local output; the curated Markdown sample report is intentionally tracked.
