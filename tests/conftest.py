@@ -10,12 +10,6 @@ from orpheus.db import ensure_schema, get_db
 
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
 
-collect_ignore = [
-    "test_streamlit_app.py",
-    "test_streamlit_app_clean.py",
-    "test_navigation.py",
-]
-
 
 @pytest.fixture
 def tmp_project(tmp_path):

@@ -133,6 +133,16 @@ See [CLAUDE.md](CLAUDE.md) for the full architecture reference and design notes.
 
 ---
 
+## Docs map
+
+- **Root docs** — entry points and operating guides: this README, [SETUP.md](SETUP.md), [PRODUCT.md](PRODUCT.md), [UI_UPGRADE_TODO.md](UI_UPGRADE_TODO.md), [CLAUDE.md](CLAUDE.md), and [AGENTS.md](AGENTS.md).
+- **[`docs/`](docs/)** — durable product, methodology, data-pipeline, and implementation specs.
+- **[`frontend/*.md`](frontend/)** — frontend build commission, QA notes, and numbered implementation briefs.
+- **[`orpheus/enrich/README.md`](orpheus/enrich/README.md)** — enrichment-specific setup and behavior notes.
+- **[`archive/v1/`](archive/v1/)** — historical Streamlit implementation retained for reference, not live architecture.
+
+---
+
 ## Documentation
 
 - **[SETUP.md](SETUP.md)** — installation, API credentials, troubleshooting.

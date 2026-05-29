@@ -94,5 +94,9 @@ config.yaml
 data/cache/orpheus.db
 data/cache/spotify_tokens.json
 orpheus/score/models/
+# Generated report JSON is local output; the curated Markdown sample report is intentionally tracked.
 data/output/reports/*.json
 graphify-out/
+.graphify_*.json
+.graphify_python
+.graphify_uncached.txt

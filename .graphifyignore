@@ -1,0 +1,7 @@
+# Historical v1 implementation is kept in the repo but excluded from the live code graph.
+archive/v1/
+
+# Removed archived-app tests; keep excluded if present in old checkouts or branches.
+tests/test_streamlit_app.py
+tests/test_streamlit_app_clean.py
+tests/test_navigation.py
