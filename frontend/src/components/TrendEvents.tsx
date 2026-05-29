@@ -12,12 +12,12 @@ export function TrendEvents({ trends }: TrendEventsProps) {
       <div className="section-heading">
         <div>
           <p className="eyebrow">Recent movement</p>
-          <h2 id="trend-title">Trend events</h2>
+          <h2 id="trend-title">What changed</h2>
         </div>
       </div>
       <div className="event-list">
         {trends.length === 0 ? (
-          <p className="muted-copy">No recent movement events were generated for this report.</p>
+          <p className="muted-copy">This report did not find a clear recent shift.</p>
         ) : (
           trends.map((trend) => {
             const isRising = trend.direction === 'rising' || trend.direction === 'spiking';

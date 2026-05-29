@@ -9,12 +9,12 @@ export function ViewToggle({ value, onChange }: ViewToggleProps) {
   return (
     <section className="view-toggle" aria-label="Report window">
       <button className={value === 'state' ? 'active' : ''} type="button" onClick={() => onChange('state')}>
-        Current state
+        Recent window
       </button>
       <button className={value === 'trait' ? 'active' : ''} type="button" onClick={() => onChange('trait')}>
-        Baseline trait
+        Usual pattern
       </button>
-      <span>{value === 'state' ? 'Recent and contextual' : 'Longer-range pattern'}</span>
+      <span>{value === 'state' ? 'Last listening window' : 'Longer-range baseline'}</span>
     </section>
   );
 }

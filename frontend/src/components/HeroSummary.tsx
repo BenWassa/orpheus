@@ -13,8 +13,8 @@ export function HeroSummary({ report, onExport, onReset }: HeroSummaryProps) {
   const topTheme = report.state.top_themes[0]?.category;
   const headline =
     report.narrative?.headline ??
-    `Your listening centers around ${topEmotion ? categoryLabel(topEmotion) : 'recent emotion'} and ${
-      topTheme ? categoryLabel(topTheme) : 'life themes'
+    `Your recent listening circles around ${topEmotion ? categoryLabel(topEmotion) : 'a dominant feeling'} and ${
+      topTheme ? categoryLabel(topTheme) : 'a recurring theme'
     }.`;
   const insights = report.narrative?.key_insights ?? report.shifts.map((shift) => shift.narrative).slice(0, 3);
 
@@ -23,18 +23,18 @@ export function HeroSummary({ report, onExport, onReset }: HeroSummaryProps) {
       <div className="hero-actions">
         <button type="button" onClick={onExport}>
           <Download size={16} />
-          Export JSON
+          Download report
         </button>
         <button type="button" onClick={onReset}>
           <RotateCcw size={16} />
-          Reset
+          Open another
         </button>
       </div>
-      <p className="eyebrow">Introspection synthesis</p>
+      <p className="eyebrow">Project Orpheus</p>
       <h1>{headline}</h1>
       <div className="metadata-line">
         <CalendarClock size={15} />
-        <span>{new Date(report.metadata.generated_at).toLocaleString()}</span>
+        <span>Generated {new Date(report.metadata.generated_at).toLocaleString()}</span>
         <span>{report.metadata.model_version}</span>
       </div>
       <ul className="insight-list">

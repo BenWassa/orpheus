@@ -14,20 +14,20 @@ export function EmotionMap({ report, activeWindow, comparisonWindow, selected, o
     <section className="panel emotion-panel" aria-labelledby="emotion-title">
       <div className="section-heading">
         <div>
-          <p className="eyebrow">Valence × arousal</p>
-          <h2 id="emotion-title">Emotion coordinates</h2>
+          <p className="eyebrow">Mood shape</p>
+          <h2 id="emotion-title">Emotional weather</h2>
         </div>
         <span className="depth-pill">{activeWindow.depth_label}</span>
       </div>
 
-      <div className="emotion-plot" role="img" aria-label="Emotion categories plotted by valence and arousal">
+      <div className="emotion-plot" role="img" aria-label="Emotion categories plotted by feeling and energy">
         <svg viewBox="-112 -112 224 224">
           <line x1="-100" y1="0" x2="100" y2="0" />
           <line x1="0" y1="-100" x2="0" y2="100" />
-          <text x="-100" y="8">low valence</text>
-          <text x="66" y="8">high valence</text>
-          <text x="4" y="-94">high energy</text>
-          <text x="4" y="100">low energy</text>
+          <text x="-100" y="8">heavier</text>
+          <text x="74" y="8">brighter</text>
+          <text x="4" y="-94">higher energy</text>
+          <text x="4" y="100">lower energy</text>
 
           {EMOTION_ORDER.map((category) => {
             const emotion = EMOTIONS[category];
@@ -66,11 +66,11 @@ export function EmotionMap({ report, activeWindow, comparisonWindow, selected, o
             <p>{EMOTIONS[selected].description}</p>
             <dl className="metric-grid">
               <div>
-                <dt>Current window</dt>
+                <dt>Recent window</dt>
                 <dd>{((activeWindow.emotion[selected] ?? 0) * 100).toFixed(1)}%</dd>
               </div>
               <div>
-                <dt>Comparison</dt>
+                <dt>Usual pattern</dt>
                 <dd>{((comparisonWindow.emotion[selected] ?? 0) * 100).toFixed(1)}%</dd>
               </div>
             </dl>
@@ -83,7 +83,7 @@ export function EmotionMap({ report, activeWindow, comparisonWindow, selected, o
               ))}
           </>
         ) : (
-          <p>Select an emotion point to inspect state, baseline, and related narrative evidence.</p>
+          <p>The larger marks show which feelings were most present in this report.</p>
         )}
       </div>
     </section>

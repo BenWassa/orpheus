@@ -9,10 +9,10 @@ interface ClusterListProps {
 }
 
 function clusterStatusCopy(status?: string) {
-  if (status === 'no_audio_features') return 'No audio features are available for clustering yet.';
-  if (status === 'insufficient_audio_data') return 'There was not enough audio feature data to form clusters.';
-  if (status === 'no_clusters_found') return 'The backend did not find stable listening clusters in this report.';
-  return 'No clusters were emitted in this report.';
+  if (status === 'no_audio_features') return 'This report does not include the audio details needed to find loops yet.';
+  if (status === 'insufficient_audio_data') return 'There was not enough listening detail to form stable loops.';
+  if (status === 'no_clusters_found') return 'No stable listening loops stood out in this report.';
+  return 'No listening loops were included in this report.';
 }
 
 export function ClusterList({ clusters, status, selected, onSelect }: ClusterListProps) {
@@ -21,7 +21,7 @@ export function ClusterList({ clusters, status, selected, onSelect }: ClusterLis
       <div className="section-heading">
         <div>
           <p className="eyebrow">Detected loops</p>
-          <h2 id="cluster-title">Listening clusters</h2>
+          <h2 id="cluster-title">Listening loops</h2>
         </div>
       </div>
 
@@ -45,7 +45,7 @@ export function ClusterList({ clusters, status, selected, onSelect }: ClusterLis
                     {cluster.track_count} tracks{cluster.share_of_listening ? `, ${cluster.share_of_listening}` : ''}
                   </span>
                   <span className="cluster-metrics">
-                    V {cluster.centroid_avd[0]?.toFixed(2)} · A {cluster.centroid_avd[1]?.toFixed(2)} · D{' '}
+                    Feeling {cluster.centroid_avd[0]?.toFixed(2)}, energy {cluster.centroid_avd[1]?.toFixed(2)}, depth{' '}
                     {cluster.centroid_avd[2]?.toFixed(2)}
                   </span>
                   {isSelected && (

@@ -14,7 +14,7 @@ export function ThemePanel({ activeWindow, comparisonWindow, selected, onSelect 
       <div className="section-heading">
         <div>
           <p className="eyebrow">Life themes</p>
-          <h2 id="theme-title">Semantic prevalence</h2>
+          <h2 id="theme-title">What keeps appearing</h2>
         </div>
       </div>
 
@@ -35,13 +35,13 @@ export function ThemePanel({ activeWindow, comparisonWindow, selected, onSelect 
               <span className="theme-swatch" style={{ background: theme.color }} />
               <span className="theme-main">
                 <strong>{theme.label}</strong>
-                <span>{isSelected ? theme.description : `${(score * 100).toFixed(0)}% current prevalence`}</span>
+                <span>{isSelected ? theme.description : `${(score * 100).toFixed(0)}% of recent listening`}</span>
                 <span className="theme-bar">
                   <span style={{ width: `${Math.max(4, score * 100)}%`, background: theme.color }} />
                 </span>
               </span>
               <span className={score >= baseline ? 'delta up' : 'delta down'}>
-                {((score - baseline) * 100).toFixed(1)}%
+                {formatDelta(score - baseline)}
               </span>
             </button>
           );
@@ -49,4 +49,9 @@ export function ThemePanel({ activeWindow, comparisonWindow, selected, onSelect 
       </div>
     </section>
   );
+}
+
+function formatDelta(delta: number) {
+  const value = (delta * 100).toFixed(1);
+  return delta > 0 ? `+${value}%` : `${value}%`;
 }

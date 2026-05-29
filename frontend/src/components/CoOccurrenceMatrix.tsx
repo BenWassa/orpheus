@@ -14,8 +14,8 @@ export function CoOccurrenceMatrix({ report, selected, onSelect }: CoOccurrenceM
     <section className="panel wide-panel" aria-labelledby="co-title">
       <div className="section-heading">
         <div>
-          <p className="eyebrow">Emotion × theme</p>
-          <h2 id="co-title">Co-occurrence evidence</h2>
+          <p className="eyebrow">Feeling and theme</p>
+          <h2 id="co-title">Where patterns meet</h2>
         </div>
       </div>
 
@@ -59,17 +59,17 @@ export function CoOccurrenceMatrix({ report, selected, onSelect }: CoOccurrenceM
               <p>{activePair.narrative}</p>
               <dl className="metric-grid">
                 <div>
-                  <dt>Observed</dt>
+                  <dt>Found together</dt>
                   <dd>{activePair.observed}</dd>
                 </div>
                 <div>
-                  <dt>Expected</dt>
+                  <dt>Expected baseline</dt>
                   <dd>{activePair.expected}</dd>
                 </div>
               </dl>
             </>
           ) : (
-            <p>Select a populated cell to read the relationship behind the count.</p>
+            <p>Marked squares show combinations that appeared together often enough to explain.</p>
           )}
         </aside>
       </div>
