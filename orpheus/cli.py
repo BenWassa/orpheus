@@ -364,8 +364,26 @@ def archive_import(ctx, path):
 
 
 @archive_group.command("fill-gaps")
+@click.option(
+    "--limit",
+    type=click.IntRange(min=1),
+    default=None,
+    help="Maximum number of missing tracks to request. Use this for small test runs.",
+)
+@click.option(
+    "--batch-size",
+    type=click.IntRange(min=1),
+    default=None,
+    help="Override reccobeats.batch_size for this run.",
+)
+@click.option(
+    "--delay",
+    type=click.FloatRange(min=0),
+    default=None,
+    help="Override reccobeats.delay between batches for this run.",
+)
 @click.pass_context
-def archive_fill_gaps(ctx):
+def archive_fill_gaps(ctx, limit, batch_size, delay):
     """Fill missing audio features via ReccoBeats."""
     _load_cfg(ctx)
     cfg = ctx.obj["config"]
@@ -381,6 +399,8 @@ def archive_fill_gaps(ctx):
            LEFT JOIN audio_features af ON t.track_uri = af.track_uri
            WHERE af.track_uri IS NULL"""
     ).fetchall()
+    if limit is not None:
+        rows = rows[:limit]
 
     ids_by_uri = [
         (row["track_uri"], spotify_id_from_track_uri(row["track_uri"]))
@@ -395,7 +415,8 @@ def archive_fill_gaps(ctx):
         "errors": 0,
     }
     client = ReccoBeatsClient()
-    batch_size = cfg.reccobeats.batch_size
+    batch_size = batch_size or cfg.reccobeats.batch_size
+    delay = cfg.reccobeats.delay if delay is None else delay
 
     try:
         for start in range(0, len(ids_by_uri), batch_size):
@@ -414,8 +435,8 @@ def archive_fill_gaps(ctx):
                     stats["fetched"] += 1
 
             conn.commit()
-            if cfg.reccobeats.delay > 0 and start + batch_size < len(ids_by_uri):
-                sleep(cfg.reccobeats.delay)
+            if delay > 0 and start + batch_size < len(ids_by_uri):
+                sleep(delay)
     finally:
         conn.close()
 

@@ -142,6 +142,45 @@ def test_reccobeats_client_parses_response(monkeypatch):
     assert result["missing"] is None
 
 
+def test_reccobeats_client_respects_retry_after(monkeypatch):
+    calls = []
+    sleeps = []
+
+    class RateLimitedResponse:
+        status_code = 429
+        headers = {"Retry-After": "1.5"}
+
+        def raise_for_status(self):
+            raise AssertionError("rate-limited response should be retried first")
+
+    class SuccessResponse:
+        status_code = 200
+        headers = {}
+
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return [{
+                "href": "https://open.spotify.com/track/abc123",
+                "valence": 0.7,
+                "energy": 0.8,
+            }]
+
+    def fake_get(url, params, timeout):
+        calls.append((url, params, timeout))
+        return RateLimitedResponse() if len(calls) == 1 else SuccessResponse()
+
+    monkeypatch.setattr("orpheus.enrich.reccobeats.requests.get", fake_get)
+    monkeypatch.setattr("orpheus.enrich.reccobeats.time.sleep", sleeps.append)
+
+    result = ReccoBeatsClient().fetch_features(["abc123"])
+
+    assert len(calls) == 2
+    assert sleeps == [1.5]
+    assert result["abc123"]["source"] == "reccobeats"
+
+
 def test_imported_audio_features_allow_cluster_status_ok(tmp_db, tmp_config, tmp_path):
     tmp_config.clustering.gmm_components = 1
     track_uris = [_insert_track(tmp_db, f"id{i}") for i in range(3)]

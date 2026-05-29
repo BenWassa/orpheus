@@ -13,9 +13,11 @@ logger = logging.getLogger(__name__)
 
 class ReccoBeatsClient:
     BASE_URL = "https://api.reccobeats.com/v1/audio-features"
+    DEFAULT_RETRY_DELAY = 5.0
 
-    def __init__(self, timeout: float = 20.0):
+    def __init__(self, timeout: float = 20.0, max_retries: int = 3):
         self._timeout = timeout
+        self._max_retries = max_retries
 
     def fetch_features(self, spotify_ids: list[str]) -> dict[str, dict | None]:
         ids = [spotify_id for spotify_id in spotify_ids if spotify_id]
@@ -37,20 +39,22 @@ class ReccoBeatsClient:
 
     def _get(self, spotify_ids: list[str]) -> Any | None:
         try:
-            response = requests.get(
-                self.BASE_URL,
-                params={"ids": ",".join(spotify_ids)},
-                timeout=self._timeout,
-            )
-            if response.status_code == 429:
-                retry_after = _retry_after_seconds(response.headers.get("Retry-After"))
-                if retry_after > 0:
-                    time.sleep(retry_after)
+            attempts = 0
+            while True:
                 response = requests.get(
                     self.BASE_URL,
                     params={"ids": ",".join(spotify_ids)},
                     timeout=self._timeout,
                 )
+                if response.status_code != 429:
+                    break
+
+                attempts += 1
+                if attempts > self._max_retries:
+                    break
+
+                retry_after = _retry_after_seconds(response.headers.get("Retry-After"))
+                time.sleep(retry_after or self.DEFAULT_RETRY_DELAY)
 
             response.raise_for_status()
             return response.json()
