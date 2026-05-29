@@ -52,7 +52,12 @@ function sendJson(res: ServerResponse, statusCode: number, payload: unknown) {
 
 function reportApiMiddleware(): Connect.HandleFunction {
   return async (req: IncomingMessage, res: ServerResponse, next: () => void) => {
-    const url = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
+    if (!req.url?.startsWith('/api/')) {
+      next();
+      return;
+    }
+
+    const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
 
     if (url.pathname === '/api/profiles') {
       try {
@@ -64,13 +69,13 @@ function reportApiMiddleware(): Connect.HandleFunction {
           if (entry.isDirectory()) {
             const profileDir = path.join(dir, entry.name);
             const files = await fs.readdir(profileDir);
-            const jsonFiles = files.filter(f => f.endsWith('.json')).sort();
+            const jsonFiles = files.filter((f) => f.endsWith('.json')).sort();
             const latest = jsonFiles[jsonFiles.length - 1] || null;
 
             profiles.push({
               name: entry.name,
               reportCount: jsonFiles.length,
-              latestReportAt: latest ? latest.replace('.json', '') : null
+              latestReportAt: latest ? latest.replace('.json', '') : null,
             });
           }
         }
@@ -93,7 +98,11 @@ function reportApiMiddleware(): Connect.HandleFunction {
         const latest = await latestReportPathForProfile(profile);
 
         if (!latest) {
-          sendJson(res, 404, { error: profile ? `No reports found for profile "${profile}".` : 'No Orpheus reports found.' });
+          sendJson(res, 404, {
+            error: profile
+              ? `No reports found for profile "${profile}".`
+              : 'No Orpheus reports found.',
+          });
           return;
         }
 
