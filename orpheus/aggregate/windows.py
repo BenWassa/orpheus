@@ -73,6 +73,22 @@ def _confidence_weights(value) -> tuple[float, float, float]:
     return 1.0, 1.0, 1.0
 
 
+def window_evidence_lookback_days(
+    half_life_days: float, evidence_lookback_days: float | None = None
+) -> float:
+    """The evidence span (in days) for a window.
+
+    Defaults to the decay-derived lookback (4 half-lives, beyond which a play's
+    weight is <~6%); callers can override it to decouple the evidence span from
+    the mood decay (see the state window's fixed 30-day span). Single source of
+    truth so anything scoped to a window's evidence (frequency tracks, coverage,
+    co-occurrences) uses the same span.
+    """
+    if evidence_lookback_days is not None:
+        return evidence_lookback_days
+    return half_life_days * FREQUENCY_WINDOW_HALF_LIVES
+
+
 def aggregate_window(
     conn: sqlite3.Connection,
     t_now: datetime,
@@ -85,11 +101,7 @@ def aggregate_window(
     # decay-derived lookback (4 half-lives, beyond which a play's weight is
     # <~6%) so the trait window is unaffected; callers can override it to
     # decouple the evidence span from the mood decay (see the state window).
-    lookback_days = (
-        evidence_lookback_days
-        if evidence_lookback_days is not None
-        else half_life_days * FREQUENCY_WINDOW_HALF_LIVES
-    )
+    lookback_days = window_evidence_lookback_days(half_life_days, evidence_lookback_days)
     rows = conn.execute(
         """SELECT p.ts, p.ms_played, p.track_uri, p.reason_start, p.reason_end,
                   p.shuffle, p.skipped,

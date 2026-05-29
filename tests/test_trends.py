@@ -139,9 +139,85 @@ def test_co_occurrence_weighted_by_play_count(tmp_db):
     pairs = detect_co_occurrences(tmp_db)
     by_pair = {tuple(p["pair"]): p for p in pairs}
 
-    # Within-group pairing is over-represented and play-weighted (observed
-    # reflects the 60 qualified plays, not the 6 distinct tracks).
+    # Within-group pairing scores high on the same tracks far more than its
+    # marginals predict (lift ~2.0) → reported as a strong connection.
     assert ("joyful_activation", "hedonism_escape") in by_pair
-    assert by_pair[("joyful_activation", "hedonism_escape")]["observed"] >= 60
-    # Cross-group pairing only present via the never-played ghost → excluded.
+    assert by_pair[("joyful_activation", "hedonism_escape")]["strength"] == "strong"
+    assert by_pair[("joyful_activation", "hedonism_escape")]["lift"] > 1.5
+    # Cross-group pairing only present via the never-played ghost (weight 0), so
+    # it accumulates no mass → excluded.
     assert ("joyful_activation", "heartbreak_loss") not in by_pair
+
+
+def _add_plays_at(conn, track_uri, when: datetime, count: int):
+    ts = when.isoformat()
+    for _ in range(count):
+        conn.execute(
+            "INSERT INTO plays (ts, ms_played, track_uri) VALUES (?, 200000, ?)",
+            (ts, track_uri),
+        )
+
+
+def test_co_occurrence_since_scopes_play_universe(tmp_db):
+    """`since` restricts the play universe to a window's evidence span: the same
+    pairing is observed fewer times when older plays fall outside the window."""
+    from orpheus.pattern.trends import detect_co_occurrences
+
+    # Two distinct groups so the expected-vs-observed lift is meaningful in both
+    # scopes (a single uniform group would have every category at prob 1.0).
+    group_a_emo = {"joyful_activation": 0.9, "triumphant_power": 0.6, "peacefulness": 0.3}
+    group_a_thm = {"hedonism_escape": 0.9, "status_ambition": 0.6, "identity_autonomy": 0.3}
+    group_b_emo = {"sadness_melancholy": 0.9, "tension_anxiety": 0.6, "anger_defiance": 0.3}
+    group_b_thm = {"heartbreak_loss": 0.9, "adversity_resilience": 0.6, "existentialism_spirituality": 0.3}
+
+    def vec(base, keys):
+        return {c: base.get(c, 0.0) for c in keys}
+
+    now = datetime.now(timezone.utc)
+    recent = now - timedelta(days=5)
+    old = now - timedelta(days=200)
+
+    # Each track is played both recently and long ago. The recent window should
+    # only count the recent plays; all-time counts both.
+    for i in range(6):
+        a = f"spotify:track:a{i}"
+        b = f"spotify:track:b{i}"
+        _insert_distinct_score(tmp_db, a, vec(group_a_emo, EMOTION_CATEGORIES), vec(group_a_thm, THEME_CATEGORIES))
+        _insert_distinct_score(tmp_db, b, vec(group_b_emo, EMOTION_CATEGORIES), vec(group_b_thm, THEME_CATEGORIES))
+        for track in (a, b):
+            _add_plays_at(tmp_db, track, recent, count=10)
+            _add_plays_at(tmp_db, track, old, count=10)
+    tmp_db.commit()
+
+    pair = ("joyful_activation", "hedonism_escape")
+    recent_by_pair = {tuple(p["pair"]): p for p in detect_co_occurrences(tmp_db, since=now - timedelta(days=30))}
+    all_by_pair = {tuple(p["pair"]): p for p in detect_co_occurrences(tmp_db)}
+
+    assert pair in recent_by_pair
+    assert pair in all_by_pair
+    # Recent counts only the recent plays; all-time counts recent + old (2x), so
+    # the all-time co-occurrence mass is ~double the recent mass for the same pair.
+    recent_obs = recent_by_pair[pair]["observed"]
+    all_obs = all_by_pair[pair]["observed"]
+    assert all_obs > recent_obs
+    assert abs(all_obs - 2 * recent_obs) <= 2  # equal recent/old play counts → 2x mass
+
+
+def test_co_occurrence_since_below_floor_returns_empty(tmp_db):
+    """A window with too few distinct played-and-scored tracks returns [] rather
+    than borrowing all-time connections."""
+    from orpheus.pattern.trends import detect_co_occurrences
+
+    now = datetime.now(timezone.utc)
+    # Only 3 distinct tracks in the recent window — below the min_tracks floor.
+    for i in range(3):
+        uri = f"spotify:track:thin{i}"
+        _insert_distinct_score(
+            tmp_db, uri,
+            {c: 0.5 for c in EMOTION_CATEGORIES},
+            {c: 0.5 for c in THEME_CATEGORIES},
+        )
+        _add_plays_at(tmp_db, uri, now - timedelta(days=2), count=5)
+    tmp_db.commit()
+
+    assert detect_co_occurrences(tmp_db, since=now - timedelta(days=30)) == []

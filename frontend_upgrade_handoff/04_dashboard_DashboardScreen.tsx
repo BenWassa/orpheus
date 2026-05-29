@@ -148,7 +148,12 @@ export function DashboardScreen({ report, onReset, profileName, onReload, reload
                 <p className="detail-scope-note">{item.scopeNote}</p>
               )}
               {item.id === 'connections' && detailView === 'connections' && (
-                <CoOccurrenceMatrix report={report} selected={selectedPair} onSelect={setSelectedPair} />
+                <CoOccurrenceMatrix
+                  coOccurrences={activeWindow.co_occurrences}
+                  scopeLabel={viewMode === 'state' ? 'recent listening' : 'listening history'}
+                  selected={selectedPair}
+                  onSelect={setSelectedPair}
+                />
               )}
               {item.id === 'movement' && detailView === 'movement' && (
                 <TrendEvents trends={report.trends} />

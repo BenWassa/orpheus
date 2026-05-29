@@ -2,7 +2,7 @@
 
 Generated: 2026-05-29
 
-This flat folder is a focused frontend handoff for assessing style and presentation upgrades in Project Orpheus. It intentionally does not dump every frontend file. The strongest upgrade leverage is in the report reader: the app entry flow, hero summary, emotion map, theme panel, and the CSS system that carries the overall tone.
+This flat folder is a focused frontend handoff for assessing style and presentation upgrades in Project Orpheus. It intentionally does not dump every frontend file. This refresh focuses on the report reader and the latest window-scoped evidence changes: app flow, dashboard composition, co-occurrence evidence, parser/runtime data shape, sample data, and the CSS system that carries the overall tone.
 
 ## Product Target
 
@@ -20,17 +20,17 @@ Main source folder in the repo: `frontend/src/`
 
 ## Selected Upgrade Focus
 
-1. Hero/report opening
-   - Source copy: `05_dashboard_HeroSummary.tsx`
-   - Why: It sets the emotional tone, creates the first impression, and decides whether the product feels personal or generic.
+1. Dashboard report flow
+   - Source copies: `03_app_flow_App.tsx`, `04_dashboard_DashboardScreen.tsx`
+   - Why: These files show how users enter the report, switch recent/usual views, and move into deeper evidence.
 
-2. Emotion and theme reading surface
-   - Source copies: `06_dashboard_EmotionMap.tsx`, `07_dashboard_ThemePanel.tsx`
-   - Why: These are the core visualizations. They need to feel inspectable, calm, and clear without looking like a SaaS chart grid.
+2. Window-scoped co-occurrence evidence
+   - Source copies: `05_dashboard_CoOccurrenceMatrix.tsx`, `06_dashboard_detailViews.ts`
+   - Why: Recent changes make connections respond to the Recent / Usual toggle instead of always using global report-level co-occurrences. This is now the most important interaction contract to assess.
 
-3. Dashboard composition and progressive disclosure
-   - Source copy: `04_dashboard_DashboardScreen.tsx`
-   - Why: The current page already separates summary, primary reading, and deeper evidence tabs. Any upgrade should preserve that progressive disclosure.
+3. Parser and report contract
+   - Source copies: `07_reportParser.ts`, `09_types.ts`
+   - Why: Window-level `co_occurrences` and optional `lift` are now part of the frontend contract. Presentation changes should respect empty evidence states and scoped comparisons.
 
 4. Global visual system
    - Source copy: `08_styles.css`
@@ -46,9 +46,9 @@ Main source folder in the repo: `frontend/src/`
 2. `02_product_design_context.md` - product/design constraints and current improvement notes.
 3. `03_app_flow_App.tsx` - current app state flow: profiles, upload fallback, demo, reload.
 4. `04_dashboard_DashboardScreen.tsx` - dashboard composition and evidence tabs.
-5. `05_dashboard_HeroSummary.tsx` - report hero and primary actions.
-6. `06_dashboard_EmotionMap.tsx` - valence/arousal/depth emotion plot.
-7. `07_dashboard_ThemePanel.tsx` - theme prevalence rows and comparison deltas.
+5. `05_dashboard_CoOccurrenceMatrix.tsx` - scoped emotion/theme connection matrix and empty state.
+6. `06_dashboard_detailViews.ts` - evidence tab definitions and scope metadata.
+7. `07_reportParser.ts` - report normalization, including window-level co-occurrences.
 8. `08_styles.css` - current global styling.
 9. `09_types.ts` - report, track, window, and category contracts.
 10. `10_sampleReport.ts` - complete sample report used by the demo path.
@@ -57,9 +57,10 @@ Main source folder in the repo: `frontend/src/`
 
 These were intentionally omitted to stay within the 10-file limit:
 
-- `frontend/src/lib/reportParser.ts`: important for runtime robustness, but less important for style assessment than the report contract and sample.
-- `frontend/src/taxonomy.ts` and `frontend/src/lib/moodColor.ts`: label/color helpers used by the included components. A full implementation pass should inspect them in the repo.
-- Evidence components such as `CoOccurrenceMatrix`, `ClusterList`, `EvidenceTracks`, and `TrendEvents`: visible in dashboard composition and styled in CSS, but secondary to the initial presentation upgrade.
+- `frontend/src/screens/dashboard/components/HeroSummary.tsx`: important to first impression, but unchanged in the latest source update and partially visible through dashboard composition and CSS.
+- `frontend/src/screens/dashboard/components/EmotionMap.tsx` and `ThemePanel.tsx`: core visualizations, but unchanged in the latest source update.
+- `frontend/src/taxonomy.ts` and `frontend/src/lib/moodColor.ts`: label/color helpers used by dashboard components. A full implementation pass should inspect them in the repo.
+- Evidence components such as `ClusterList`, `EvidenceTracks`, and `TrendEvents`: visible in dashboard composition and styled in CSS, but secondary to the current co-occurrence scope change.
 - Upload/profile screens: represented through `03_app_flow_App.tsx`, but not copied in full.
 
 If the expert needs implementation-ready coverage rather than assessment coverage, the next best second folder would include parser/taxonomy helpers plus the evidence, upload, and profile components.

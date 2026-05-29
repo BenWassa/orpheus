@@ -45,6 +45,9 @@ export interface WindowScores {
   from_date?: string; // ISO date string e.g. "2026-03-01"
   to_date?: string;   // ISO date string e.g. "2026-05-29"
   coverage?: WindowCoverage;
+  // Connections scoped to this window's evidence span. May be empty when the
+  // span has too few tracks for the lift comparison to be meaningful.
+  co_occurrences: CoOccurrence[];
 }
 
 export interface WindowCoverage {
@@ -100,6 +103,10 @@ export interface CoOccurrence {
   strength: 'strong' | 'moderate';
   observed: number;
   expected: number;
+  // Score-weighted lift (observed mass / expected under independence). 1.0 =
+  // independent; values are compressed near 1.0 because the theme classifier is
+  // near-uniform, so this is the most honest ranking signal.
+  lift?: number;
   narrative: string;
   emotion: EmotionCategory;
   theme: ThemeCategory;

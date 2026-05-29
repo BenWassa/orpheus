@@ -45,13 +45,15 @@ def assemble_report(
     trends: list[dict] | None = None,
     safety_flags: list[dict] | None = None,
     clusters_status: str = "ok",
+    state_co_occurrences: list[dict] | None = None,
+    trait_co_occurrences: list[dict] | None = None,
 ) -> dict:
     report = {
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "model_version": config.model_version,
         "windows": {
-            "state": _format_window(state, config),
-            "trait": _format_window(trait, config),
+            "state": _format_window(state, config, co_occurrences=state_co_occurrences),
+            "trait": _format_window(trait, config, co_occurrences=trait_co_occurrences),
         },
         "shifts": shifts,
         "trends": trends or [],
@@ -64,7 +66,9 @@ def assemble_report(
     return report
 
 
-def _format_window(window: dict, config: OrpheusConfig) -> dict:
+def _format_window(
+    window: dict, config: OrpheusConfig, co_occurrences: list[dict] | None = None
+) -> dict:
     top_emotions = [
         {"category": cat, "prevalence": prevalence_label(score)}
         for cat, score in sorted(window["emotions"].items(), key=lambda x: x[1], reverse=True)
@@ -110,6 +114,11 @@ def _format_window(window: dict, config: OrpheusConfig) -> dict:
         "from_date": window.get("from_date"),
         "to_date": window.get("to_date"),
         "coverage": window.get("coverage", {"scored_plays": 0, "total_plays": 0, "ratio": 0.0}),
+        # Connections scoped to this window's evidence span (see
+        # detect_co_occurrences_by_window). Empty when the span has too few
+        # distinct played-and-scored tracks for the lift comparison to mean
+        # anything — an honest empty state rather than borrowed all-time data.
+        "co_occurrences": co_occurrences or [],
     }
 
 

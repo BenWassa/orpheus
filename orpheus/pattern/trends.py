@@ -19,16 +19,47 @@ _SPIKE_THRESHOLD = 0.25
 _MIN_BUCKET_PLAYS = 3
 _QUALIFIED_LISTEN_MS = 30_000
 
+# Co-occurrence lift thresholds (score-weighted joint mass vs. independent
+# marginals). A fully-undiscriminated track contributes lift exactly 1.0, so
+# these are deliberately close to 1.0 — the theme classifier is near-uniform for
+# much of the catalog, so genuine associations show up as modest tilts, not the
+# 2x+ lifts a binary top-3 count would produce. Calibrated against real data.
+_CO_OCCURRENCE_LIFT_MIN = 1.08
+_CO_OCCURRENCE_STRONG_LIFT = 1.18
+# A reported pairing must account for at least this share of total listening mass
+# so rare-but-noisy combinations don't crowd out real ones.
+_CO_OCCURRENCE_MIN_SHARE = 0.01
 
-def _qualified_play_counts(conn: sqlite3.Connection) -> dict[str, int]:
-    """Qualified listens (>= 30s) per track_uri across all plays."""
-    rows = conn.execute(
-        """SELECT track_uri, COUNT(*) AS n
-           FROM plays
-           WHERE COALESCE(ms_played, 0) >= ?
-           GROUP BY track_uri""",
-        (_QUALIFIED_LISTEN_MS,),
-    ).fetchall()
+
+def _qualified_play_counts(
+    conn: sqlite3.Connection, since: datetime | None = None
+) -> dict[str, int]:
+    """Qualified listens (>= 30s) per track_uri.
+
+    Counts all plays by default; pass ``since`` to restrict to plays at or after
+    that instant, which scopes co-occurrence to a window's evidence span.
+    """
+    if since is None:
+        rows = conn.execute(
+            """SELECT track_uri, COUNT(*) AS n
+               FROM plays
+               WHERE COALESCE(ms_played, 0) >= ?
+               GROUP BY track_uri""",
+            (_QUALIFIED_LISTEN_MS,),
+        ).fetchall()
+    else:
+        # Compare on the fixed-width "YYYY-MM-DDTHH:MM:SS" prefix so the filter is
+        # agnostic to the timezone suffix stored on ts (Spotify emits a trailing
+        # "Z"); the 19-char prefix is lexicographically == chronologically ordered.
+        cutoff = since.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S")
+        rows = conn.execute(
+            """SELECT track_uri, COUNT(*) AS n
+               FROM plays
+               WHERE COALESCE(ms_played, 0) >= ?
+                 AND substr(ts, 1, 19) >= ?
+               GROUP BY track_uri""",
+            (_QUALIFIED_LISTEN_MS, cutoff),
+        ).fetchall()
     return {row["track_uri"]: row["n"] for row in rows}
 
 
@@ -96,21 +127,43 @@ def detect_trends(conn: sqlite3.Connection) -> list[dict]:
     return trends
 
 
-def detect_co_occurrences(conn: sqlite3.Connection) -> list[dict]:
-    # Weight each scored track by how many times it was actually played
-    # (qualified listens), so co-occurrence reflects listening behaviour rather
-    # than catalog composition. A track played 500 times should count far more
-    # than one played once, and tracks never played should not count at all.
+def detect_co_occurrences(
+    conn: sqlite3.Connection,
+    *,
+    since: datetime | None = None,
+    min_tracks: int = 10,
+) -> list[dict]:
+    # Score-weighted co-occurrence. Each track carries a full probability
+    # distribution over the 8 emotions and 8 themes (each axis sums to 1.0). We
+    # accumulate the joint mass e_score x t_score across the catalog rather than
+    # binarising to a "top-3" membership.
+    #
+    # The earlier top-3 approach broke down because the theme classifier is
+    # near-uniform for much of the catalog: a category that barely edges out a
+    # flat field lands in the top-3 ~80% of the time, so its marginal looks
+    # enormous and the expected co-occurrence with everything is so high that no
+    # genuine pairing (e.g. sadness x heartbreak) can clear the lift threshold.
+    # Using the raw scores fixes this: a fully-flat track contributes lift
+    # exactly 1.0 to every pair (no false signal), while a track that genuinely
+    # concentrates on sadness + heartbreak pushes that pair's mass above its
+    # marginals. Lift is then a clean "do these score high on the same tracks
+    # more than their marginal distributions predict?".
+    #
+    # Each track is weighted by its qualified play count, so co-occurrence
+    # reflects listening behaviour rather than catalog composition; tracks never
+    # played do not count. ``since`` scopes the play universe to a window's
+    # evidence span (the expected-vs-observed comparison then uses that window's
+    # own base rates); ``None`` = all-time.
     rows = conn.execute(
         """SELECT ts.track_uri, ts.emotion_scores, ts.theme_scores
            FROM track_scores ts"""
     ).fetchall()
 
-    play_counts = _qualified_play_counts(conn)
+    play_counts = _qualified_play_counts(conn, since)
 
-    co_counts: dict[tuple[str, str], float] = defaultdict(float)
-    emotion_counts: dict[str, float] = defaultdict(float)
-    theme_counts: dict[str, float] = defaultdict(float)
+    co_mass: dict[tuple[str, str], float] = defaultdict(float)
+    emotion_mass: dict[str, float] = defaultdict(float)
+    theme_mass: dict[str, float] = defaultdict(float)
     total = 0.0
     scored_tracks_played = 0
 
@@ -123,43 +176,85 @@ def detect_co_occurrences(conn: sqlite3.Connection) -> list[dict]:
         emotions = json.loads(row["emotion_scores"])
         themes = json.loads(row["theme_scores"])
 
-        top_emotions = sorted(emotions.items(), key=lambda x: x[1], reverse=True)[:3]
-        top_themes = sorted(themes.items(), key=lambda x: x[1], reverse=True)[:3]
-
-        for e_cat, _ in top_emotions:
-            emotion_counts[e_cat] += weight
-        for t_cat, _ in top_themes:
-            theme_counts[t_cat] += weight
-
-        for e_cat, _ in top_emotions:
-            for t_cat, _ in top_themes:
-                co_counts[(e_cat, t_cat)] += weight
+        for e_cat, e_score in emotions.items():
+            if e_score > 0:
+                emotion_mass[e_cat] += weight * e_score
+        for t_cat, t_score in themes.items():
+            if t_score > 0:
+                theme_mass[t_cat] += weight * t_score
+        for e_cat, e_score in emotions.items():
+            if e_score <= 0:
+                continue
+            we = weight * e_score
+            for t_cat, t_score in themes.items():
+                if t_score > 0:
+                    co_mass[(e_cat, t_cat)] += we * t_score
 
         total += weight
 
     # Need a minimum of distinct played-and-scored tracks for the expected-value
-    # comparison to mean anything.
-    if scored_tracks_played < 10 or total <= 0:
+    # comparison to mean anything. A short window (e.g. the 30-day "Recent" span)
+    # can legitimately fall below this and return [] — an honest empty state.
+    if scored_tracks_played < min_tracks or total <= 0:
         return []
 
     results = []
-    for (e_cat, t_cat), observed in co_counts.items():
-        e_prob = emotion_counts[e_cat] / total
-        t_prob = theme_counts[t_cat] / total
-        expected = e_prob * t_prob * total
+    for (e_cat, t_cat), observed in co_mass.items():
+        expected = emotion_mass[e_cat] * theme_mass[t_cat] / total
 
-        if expected > 0 and observed / expected > 1.5:
-            strength = "strong" if observed / expected > 2.0 else "moderate"
+        # Guard against surfacing a high-lift pair driven by negligible mass: a
+        # pairing must account for at least a small share of total listening to
+        # be reported, so rare-but-noisy combinations don't crowd out real ones.
+        if observed < total * _CO_OCCURRENCE_MIN_SHARE:
+            continue
+
+        lift = observed / expected if expected > 0 else 0.0
+        if lift > _CO_OCCURRENCE_LIFT_MIN:
+            strength = "strong" if lift > _CO_OCCURRENCE_STRONG_LIFT else "moderate"
             results.append({
                 "pair": [e_cat, t_cat],
                 "strength": strength,
                 "observed": int(round(observed)),
                 "expected": round(expected, 1),
+                "lift": round(lift, 2),
                 "narrative": _co_occurrence_narrative(e_cat, t_cat, strength),
             })
 
-    results.sort(key=lambda x: x["observed"] / max(x["expected"], 0.1), reverse=True)
+    results.sort(key=lambda x: x["lift"], reverse=True)
     return results[:10]
+
+
+def detect_co_occurrences_by_window(
+    conn: sqlite3.Connection,
+    config,
+    t_now: datetime | None = None,
+) -> dict[str, list[dict]]:
+    """Co-occurrences scoped to each window plus an all-time global set.
+
+    Each window's pairings are computed over the plays within that window's
+    *evidence* span (state: the fixed 30-day recent span; trait: the decay-derived
+    span, half_life x 4) — the same spans the windows use for frequency tracks and
+    coverage — so the Recent / Usual toggle changes which connections surface.
+    ``global`` is the all-time set, kept for backward compatibility.
+    """
+    # Imported here (not at module load) to keep the pattern->aggregate edge
+    # one-directional and avoid import-time coupling.
+    from orpheus.aggregate.windows import (
+        RECENT_EVIDENCE_LOOKBACK_DAYS,
+        window_evidence_lookback_days,
+    )
+
+    t_now = t_now or datetime.now(timezone.utc)
+    state_lookback = window_evidence_lookback_days(
+        config.windows.state_half_life_days, RECENT_EVIDENCE_LOOKBACK_DAYS
+    )
+    trait_lookback = window_evidence_lookback_days(config.windows.trait_half_life_days)
+
+    return {
+        "global": detect_co_occurrences(conn),
+        "state": detect_co_occurrences(conn, since=t_now - timedelta(days=state_lookback)),
+        "trait": detect_co_occurrences(conn, since=t_now - timedelta(days=trait_lookback)),
+    }
 
 
 def compare_state_trait(state: dict, trait: dict) -> list[dict]:

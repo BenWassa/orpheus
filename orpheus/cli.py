@@ -68,7 +68,11 @@ def _write_current_report(cfg, output_path: Path | None = None) -> tuple[Path, s
     from orpheus.aggregate.windows import compute_state_and_trait
     from orpheus.output.assemble import assemble_report, record_run, write_report
     from orpheus.pattern.cluster import cluster_gmm, clusters_status, filter_noise
-    from orpheus.pattern.trends import compare_state_trait, detect_co_occurrences, detect_trends
+    from orpheus.pattern.trends import (
+        compare_state_trait,
+        detect_co_occurrences_by_window,
+        detect_trends,
+    )
     from orpheus.safety.rumination import check_rumination
 
     conn = get_db(cfg.db_path)
@@ -80,13 +84,15 @@ def _write_current_report(cfg, output_path: Path | None = None) -> tuple[Path, s
         clusters = cluster_gmm(clean_points, clean_tracks, cfg) if len(clean_points) > 0 else []
         cl_status = clusters_status(conn, clusters, len(clean_points))
         trends = detect_trends(conn)
-        co_occurrences = detect_co_occurrences(conn)
+        co_occurrences = detect_co_occurrences_by_window(conn, cfg)
         shifts = compare_state_trait(windows["state"], windows["trait"])
         safety_flags = check_rumination(windows["state"], cfg)
 
         report_data = assemble_report(
             state=windows["state"], trait=windows["trait"],
-            shifts=shifts, trends=trends, co_occurrences=co_occurrences,
+            shifts=shifts, trends=trends, co_occurrences=co_occurrences["global"],
+            state_co_occurrences=co_occurrences["state"],
+            trait_co_occurrences=co_occurrences["trait"],
             clusters=clusters, config=cfg, safety_flags=safety_flags,
             clusters_status=cl_status,
         )
@@ -258,7 +264,11 @@ def analyze(ctx):
 
     from orpheus.aggregate.windows import compute_state_and_trait
     from orpheus.pattern.cluster import cluster_gmm, filter_noise
-    from orpheus.pattern.trends import compare_state_trait, detect_co_occurrences, detect_trends
+    from orpheus.pattern.trends import (
+        compare_state_trait,
+        detect_co_occurrences_by_window,
+        detect_trends,
+    )
 
     click.echo("Aggregating windows...")
     windows = compute_state_and_trait(conn, cfg)
@@ -269,14 +279,15 @@ def analyze(ctx):
 
     click.echo("Detecting trends...")
     trends = detect_trends(conn)
-    co_occurrences = detect_co_occurrences(conn)
+    co_occurrences = detect_co_occurrences_by_window(conn, cfg)
     shifts = compare_state_trait(windows["state"], windows["trait"])
 
     conn.close()
 
     click.echo(f"Done. {len(clusters)} clusters, {len(trends)} trends, "
-               f"{len(co_occurrences)} co-occurrences, {len(shifts)} shifts, "
-               f"{noise_count} noise tracks filtered.")
+               f"{len(co_occurrences['global'])} co-occurrences "
+               f"({len(co_occurrences['state'])} recent, {len(co_occurrences['trait'])} usual), "
+               f"{len(shifts)} shifts, {noise_count} noise tracks filtered.")
 
 
 @main.command()
@@ -335,7 +346,11 @@ def run_all(ctx, source, out, profile):
     from orpheus.enrich import run_enrichment
     from orpheus.output.assemble import assemble_report, record_run, write_report
     from orpheus.pattern.cluster import cluster_gmm, clusters_status, filter_noise
-    from orpheus.pattern.trends import compare_state_trait, detect_co_occurrences, detect_trends
+    from orpheus.pattern.trends import (
+        compare_state_trait,
+        detect_co_occurrences_by_window,
+        detect_trends,
+    )
     from orpheus.safety.rumination import check_rumination
     from orpheus.score.scoring import run_scoring
 
@@ -362,14 +377,16 @@ def run_all(ctx, source, out, profile):
     clusters = cluster_gmm(clean_points, clean_tracks, cfg) if len(clean_points) > 0 else []
     cl_status = clusters_status(conn, clusters, len(clean_points))
     trends = detect_trends(conn)
-    co_occurrences = detect_co_occurrences(conn)
+    co_occurrences = detect_co_occurrences_by_window(conn, cfg)
     shifts = compare_state_trait(windows["state"], windows["trait"])
     safety_flags = check_rumination(windows["state"], cfg)
 
     click.echo("Assembling report...")
     report_data = assemble_report(
         state=windows["state"], trait=windows["trait"],
-        shifts=shifts, trends=trends, co_occurrences=co_occurrences,
+        shifts=shifts, trends=trends, co_occurrences=co_occurrences["global"],
+        state_co_occurrences=co_occurrences["state"],
+        trait_co_occurrences=co_occurrences["trait"],
         clusters=clusters, config=cfg, safety_flags=safety_flags,
         clusters_status=cl_status,
     )

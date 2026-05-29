@@ -65,6 +65,28 @@ def test_assemble_report_structure(tmp_config):
     assert report["safety_flags"] == []
 
 
+def test_assemble_report_attaches_per_window_co_occurrences(tmp_config):
+    state_co = [{"pair": ["joyful_activation", "hedonism_escape"], "strength": "strong",
+                 "observed": 60, "expected": 30.0, "narrative": "recent"}]
+    trait_co = [{"pair": ["nostalgia_longing", "heartbreak_loss"], "strength": "moderate",
+                 "observed": 40, "expected": 25.0, "narrative": "usual"}]
+    report = assemble_report(
+        _make_window(), _make_window(), [], [{"pair": ["x", "y"]}], [], tmp_config,
+        state_co_occurrences=state_co, trait_co_occurrences=trait_co,
+    )
+    # Per-window connections live inside each window and are independent.
+    assert report["windows"]["state"]["co_occurrences"] == state_co
+    assert report["windows"]["trait"]["co_occurrences"] == trait_co
+    # Top-level remains the global set (backward compatible).
+    assert report["co_occurrences"] == [{"pair": ["x", "y"]}]
+
+
+def test_assemble_report_window_co_occurrences_default_empty(tmp_config):
+    report = assemble_report(_make_window(), _make_window(), [], [], [], tmp_config)
+    assert report["windows"]["state"]["co_occurrences"] == []
+    assert report["windows"]["trait"]["co_occurrences"] == []
+
+
 def test_assemble_report_clusters_status_passthrough(tmp_config):
     report = assemble_report(
         _make_window(), _make_window(), [], [], [], tmp_config,

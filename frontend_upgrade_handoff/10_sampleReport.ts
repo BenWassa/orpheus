@@ -94,6 +94,17 @@ export const sampleReport: OrpheusReport = {
         theme_scores: { place_heritage: 0.45, existentialism_spirituality: 0.35, adversity_resilience: 0.2 },
       },
     ],
+    co_occurrences: [
+      {
+        pair: ['sadness_melancholy', 'heartbreak_loss'],
+        strength: 'strong',
+        observed: 11,
+        expected: 4.1,
+        narrative: 'Recent listening leans into grief processed as acute loss.',
+        emotion: 'sadness_melancholy',
+        theme: 'heartbreak_loss',
+      },
+    ],
   },
   trait: {
     emotion: {
@@ -128,6 +139,26 @@ export const sampleReport: OrpheusReport = {
     top_artists: [{ artist: 'The National', weight: 0.18 }],
     top_tracks: [],
     top_frequency_tracks: [],
+    co_occurrences: [
+      {
+        pair: ['nostalgia_longing', 'heartbreak_loss'],
+        strength: 'strong',
+        observed: 38,
+        expected: 14.5,
+        narrative: 'Heartbreak themes are filtered through nostalgia rather than acute defeat.',
+        emotion: 'nostalgia_longing',
+        theme: 'heartbreak_loss',
+      },
+      {
+        pair: ['sadness_melancholy', 'existentialism_spirituality'],
+        strength: 'strong',
+        observed: 29,
+        expected: 11.2,
+        narrative: 'Melancholy is linked with cosmic scale and questions about meaning.',
+        emotion: 'sadness_melancholy',
+        theme: 'existentialism_spirituality',
+      },
+    ],
   },
   shifts: [
     {
