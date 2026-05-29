@@ -9,6 +9,10 @@ spotify:
 genius:
   access_token: ""
 
+reccobeats:
+  batch_size: 20
+  delay: 0.5
+
 windows:
   state_half_life_days: 3
   trait_half_life_days: 90

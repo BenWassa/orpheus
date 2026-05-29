@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from time import sleep
 
 import click
 
@@ -327,7 +328,7 @@ def live_sync(ctx):
 
 @main.group("archive")
 def archive_group():
-    """Anna's Archive bulk operations."""
+    """Audio-feature archive operations."""
     pass
 
 
@@ -335,6 +336,94 @@ def archive_group():
 @click.argument("path", type=click.Path(exists=True))
 @click.pass_context
 def archive_import(ctx, path):
-    """Bulk-import audio features from Anna's Archive dump."""
+    """Bulk-import audio features from CSV or SQLite archive."""
     _load_cfg(ctx)
-    click.echo("Not yet implemented.")
+    cfg = ctx.obj["config"]
+    archive_path = Path(path)
+
+    from orpheus.enrich.audio_import import import_from_csv, import_from_sqlite
+
+    conn = get_db(cfg.db_path)
+    try:
+        suffix = archive_path.suffix.lower()
+        if suffix == ".csv":
+            stats = import_from_csv(conn, archive_path)
+        elif suffix in {".db", ".sqlite", ".sqlite3"}:
+            stats = import_from_sqlite(conn, archive_path)
+        else:
+            raise click.ClickException(
+                "Unsupported archive format. Use .csv, .db, .sqlite, or .sqlite3."
+            )
+    except ValueError as e:
+        raise click.ClickException(str(e))
+    finally:
+        conn.close()
+
+    click.echo(f"Imported audio features from {archive_path}")
+    _echo_stats(stats)
+
+
+@archive_group.command("fill-gaps")
+@click.pass_context
+def archive_fill_gaps(ctx):
+    """Fill missing audio features via ReccoBeats."""
+    _load_cfg(ctx)
+    cfg = ctx.obj["config"]
+
+    from orpheus.enrich.audio_import import spotify_id_from_track_uri
+    from orpheus.enrich.enrich import _insert_audio_features
+    from orpheus.enrich.reccobeats import ReccoBeatsClient
+
+    conn = get_db(cfg.db_path)
+    rows = conn.execute(
+        """SELECT t.track_uri
+           FROM tracks t
+           LEFT JOIN audio_features af ON t.track_uri = af.track_uri
+           WHERE af.track_uri IS NULL"""
+    ).fetchall()
+
+    ids_by_uri = [
+        (row["track_uri"], spotify_id_from_track_uri(row["track_uri"]))
+        for row in rows
+    ]
+    ids_by_uri = [(track_uri, spotify_id) for track_uri, spotify_id in ids_by_uri if spotify_id]
+
+    stats = {
+        "total_unmatched": len(rows),
+        "fetched": 0,
+        "not_found": len(rows) - len(ids_by_uri),
+        "errors": 0,
+    }
+    client = ReccoBeatsClient()
+    batch_size = cfg.reccobeats.batch_size
+
+    try:
+        for start in range(0, len(ids_by_uri), batch_size):
+            batch = ids_by_uri[start:start + batch_size]
+            spotify_ids = [spotify_id for _, spotify_id in batch]
+            result = client.fetch_features(spotify_ids)
+            if result == {} and spotify_ids:
+                stats["errors"] += len(spotify_ids)
+            else:
+                for track_uri, spotify_id in batch:
+                    features = result.get(spotify_id)
+                    if features is None:
+                        stats["not_found"] += 1
+                        continue
+                    _insert_audio_features(conn, track_uri, features)
+                    stats["fetched"] += 1
+
+            conn.commit()
+            if cfg.reccobeats.delay > 0 and start + batch_size < len(ids_by_uri):
+                sleep(cfg.reccobeats.delay)
+    finally:
+        conn.close()
+
+    click.echo("Filled audio-feature gaps from ReccoBeats")
+    _echo_stats(stats)
+
+
+def _echo_stats(stats: dict) -> None:
+    width = max(len(key) for key in stats) if stats else 0
+    for key, value in stats.items():
+        click.echo(f"  {key:<{width}}  {value}")

@@ -20,6 +20,12 @@ class GeniusConfig:
 
 
 @dataclass
+class ReccoBeatsConfig:
+    batch_size: int = 20
+    delay: float = 0.5
+
+
+@dataclass
 class WindowsConfig:
     state_half_life_days: float = 3.0
     trait_half_life_days: float = 90.0
@@ -72,6 +78,7 @@ class PathsConfig:
 class OrpheusConfig:
     spotify: SpotifyConfig = field(default_factory=SpotifyConfig)
     genius: GeniusConfig = field(default_factory=GeniusConfig)
+    reccobeats: ReccoBeatsConfig = field(default_factory=ReccoBeatsConfig)
     windows: WindowsConfig = field(default_factory=WindowsConfig)
     engagement_weights: EngagementWeights = field(default_factory=EngagementWeights)
     clustering: ClusteringConfig = field(default_factory=ClusteringConfig)
@@ -139,6 +146,7 @@ def load_config(config_path: Path | None = None, project_root: Path | None = Non
     cfg = OrpheusConfig(
         spotify=_build_dataclass(SpotifyConfig, raw.get("spotify")),
         genius=_build_dataclass(GeniusConfig, raw.get("genius")),
+        reccobeats=_build_dataclass(ReccoBeatsConfig, raw.get("reccobeats")),
         windows=_build_dataclass(WindowsConfig, raw.get("windows")),
         engagement_weights=_build_dataclass(EngagementWeights, raw.get("engagement_weights")),
         clustering=_build_dataclass(ClusteringConfig, raw.get("clustering")),
@@ -164,6 +172,10 @@ def validate_config(config: OrpheusConfig) -> list[str]:
         errors.append("clustering.dbscan_min_pts must be >= 2")
     if config.clustering.gmm_components < 1:
         errors.append("clustering.gmm_components must be >= 1")
+    if config.reccobeats.batch_size < 1:
+        errors.append("reccobeats.batch_size must be >= 1")
+    if config.reccobeats.delay < 0:
+        errors.append("reccobeats.delay must be >= 0")
 
     prev_threshold = 0.0
     for dl in config.depth_labels:
