@@ -131,8 +131,8 @@ class ThemeScorer:
         return "\n".join(filtered)
 
     def _acoustic_heuristic(self, audio_features: dict) -> dict:
-        valence = audio_features.get("valence", 0.5)
-        energy = audio_features.get("energy", 0.5)
+        valence = audio_features.get("valence") or 0.5
+        energy = audio_features.get("energy") or 0.5
 
         scores = {cat: 0.1 for cat in THEME_CATEGORIES}
 
