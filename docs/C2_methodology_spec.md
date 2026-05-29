@@ -67,6 +67,12 @@ For each unique track identified in the listening history, fetch and cache:
 | Lyrical | Genius API | Raw lyrics text + crowd annotations where available |
 | Metadata | Spotify + MusicBrainz | Genre tags, release date, popularity, artist identity |
 
+> **Implementation note (arousal):** the current enrichment source (ReccoBeats)
+> does not supply measured arousal. The pipeline falls back to Spotify `energy`
+> as the arousal proxy for every track, so the valence/arousal plane is in
+> practice a **valence/energy** plane. The frontend labels the vertical axis
+> "energy" to match.
+
 Cache aggressively. Audio features and lyrics don't change for a given track; pull once, store, reuse.
 
 For tracks missing from SoundNet (rare with 6.7M+ catalog), fall back to Essentia local extraction. For tracks without lyrics (instrumental), flag and let the theme axis confidence drop accordingly.

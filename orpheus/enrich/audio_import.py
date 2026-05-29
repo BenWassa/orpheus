@@ -141,6 +141,9 @@ def _features_from_mapping(row: dict[str, Any], source: str, use_row_source: boo
     arousal = _as_float(row.get("arousal"))
     return {
         "valence": _as_float(row.get("valence")),
+        # No measured arousal in our sources today, so fall back to energy as a
+        # proxy. Downstream (emotion._VA_ANCHORS) treats this axis as energy;
+        # keep that contract in mind if a real arousal source is added.
         "arousal": arousal if arousal is not None else energy,
         "tempo": _as_float(row.get("tempo")),
         "key": _as_int(row.get("key")),

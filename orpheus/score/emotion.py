@@ -29,7 +29,12 @@ EMOTION_LABELS = {
     "anger_defiance": "anger, defiance, rage, rebellion",
 }
 
-# V/A anchor coordinates from T1 taxonomy
+# V/A anchor coordinates from T1 taxonomy.
+#
+# NB: the "arousal" axis here is not measured arousal. The enrichment source
+# (ReccoBeats) supplies no arousal field, so audio_import falls back to Spotify
+# `energy` for every track (see enrich/audio_import.py). Treat this plane as
+# valence/energy; the UI labels the vertical axis "energy" accordingly.
 _VA_ANCHORS = {
     "joyful_activation": (0.8, 0.6),
     "triumphant_power": (0.6, 0.8),
