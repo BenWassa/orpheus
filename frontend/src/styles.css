@@ -285,10 +285,62 @@ button {
   font-size: 0.8rem;
 }
 
-.dashboard-grid {
+.reader-layout {
   display: grid;
   grid-template-columns: minmax(0, 1.25fr) minmax(320px, 0.75fr);
   gap: 22px;
+}
+
+.evidence-section {
+  margin-top: 28px;
+}
+
+.evidence-heading {
+  margin-bottom: 12px;
+}
+
+.detail-tabs {
+  width: fit-content;
+  max-width: 100%;
+  padding: 6px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  background: var(--paper-strong);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.detail-tabs button {
+  min-height: 38px;
+  padding: 0 14px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.detail-tabs button:hover,
+.detail-tabs button:focus-visible {
+  color: var(--ink);
+  outline: none;
+  border-color: var(--line);
+}
+
+.detail-tabs button.active {
+  background: var(--panel);
+  color: var(--ink);
+  border-color: var(--line);
+  box-shadow: 0 4px 18px color-mix(in oklch, var(--ink), transparent 94%);
+}
+
+.detail-stage {
+  margin-top: 14px;
+}
+
+.detail-stage .wide-panel {
+  grid-column: auto;
 }
 
 .panel {
@@ -654,7 +706,7 @@ button {
 }
 
 @media (max-width: 920px) {
-  .dashboard-grid,
+  .reader-layout,
   .matrix-layout {
     grid-template-columns: 1fr;
   }

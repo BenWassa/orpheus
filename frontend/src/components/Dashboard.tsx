@@ -16,9 +16,18 @@ interface DashboardProps {
 }
 
 type ViewMode = 'state' | 'trait';
+type DetailView = 'connections' | 'movement' | 'loops' | 'tracks';
+
+const DETAIL_VIEWS: Array<{ id: DetailView; label: string }> = [
+  { id: 'connections', label: 'Connections' },
+  { id: 'movement', label: 'Movement' },
+  { id: 'loops', label: 'Loops' },
+  { id: 'tracks', label: 'Tracks' },
+];
 
 export function Dashboard({ report, onReset }: DashboardProps) {
   const [viewMode, setViewMode] = useState<ViewMode>('state');
+  const [detailView, setDetailView] = useState<DetailView>('connections');
   const [selectedEmotion, setSelectedEmotion] = useState<EmotionCategory | null>(null);
   const [selectedTheme, setSelectedTheme] = useState<ThemeCategory | null>(null);
   const [selectedCluster, setSelectedCluster] = useState<number | null>(null);
@@ -44,7 +53,7 @@ export function Dashboard({ report, onReset }: DashboardProps) {
       <HeroSummary report={report} onExport={exportReport} onReset={onReset} />
       <ViewToggle value={viewMode} onChange={setViewMode} />
 
-      <div className="dashboard-grid">
+      <div className="reader-layout">
         <EmotionMap
           report={report}
           activeWindow={activeWindow}
@@ -58,16 +67,47 @@ export function Dashboard({ report, onReset }: DashboardProps) {
           selected={selectedTheme}
           onSelect={setSelectedTheme}
         />
-        <CoOccurrenceMatrix report={report} selected={selectedPair} onSelect={setSelectedPair} />
-        <TrendEvents trends={report.trends} />
-        <ClusterList
-          clusters={report.clusters}
-          status={report.clusters_status}
-          selected={selectedCluster}
-          onSelect={setSelectedCluster}
-        />
-        <EvidenceTracks tracks={tracks} />
       </div>
+
+      <section className="evidence-section" aria-labelledby="evidence-title">
+        <div className="section-heading evidence-heading">
+          <div>
+            <p className="eyebrow">Deeper evidence</p>
+            <h2 id="evidence-title">Look closer</h2>
+          </div>
+        </div>
+
+        <div className="detail-tabs" role="tablist" aria-label="Evidence view">
+          {DETAIL_VIEWS.map((item) => (
+            <button
+              aria-selected={detailView === item.id}
+              className={detailView === item.id ? 'active' : ''}
+              key={item.id}
+              onClick={() => setDetailView(item.id)}
+              role="tab"
+              type="button"
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="detail-stage">
+          {detailView === 'connections' && (
+            <CoOccurrenceMatrix report={report} selected={selectedPair} onSelect={setSelectedPair} />
+          )}
+          {detailView === 'movement' && <TrendEvents trends={report.trends} />}
+          {detailView === 'loops' && (
+            <ClusterList
+              clusters={report.clusters}
+              status={report.clusters_status}
+              selected={selectedCluster}
+              onSelect={setSelectedCluster}
+            />
+          )}
+          {detailView === 'tracks' && <EvidenceTracks tracks={tracks} />}
+        </div>
+      </section>
     </main>
   );
 }
