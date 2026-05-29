@@ -1,4 +1,4 @@
-import { CalendarClock, Download, RotateCcw } from 'lucide-react';
+import { CalendarClock, Download, RotateCcw, PlusSquare } from 'lucide-react';
 import { categoryLabel } from '../taxonomy';
 import type { OrpheusReport } from '../types';
 
@@ -6,9 +6,10 @@ interface HeroSummaryProps {
   report: OrpheusReport;
   onExport: () => void;
   onReset: () => void;
+  onAddData?: () => void;
 }
 
-export function HeroSummary({ report, onExport, onReset }: HeroSummaryProps) {
+export function HeroSummary({ report, onExport, onReset, onAddData }: HeroSummaryProps) {
   const topEmotion = report.state.top_emotions[0]?.category;
   const topTheme = report.state.top_themes[0]?.category;
   const headline =
@@ -21,13 +22,19 @@ export function HeroSummary({ report, onExport, onReset }: HeroSummaryProps) {
   return (
     <header className="hero-summary">
       <div className="hero-actions">
+        {onAddData && (
+          <button type="button" onClick={onAddData} className="accent">
+            <PlusSquare size={16} />
+            Add data
+          </button>
+        )}
         <button type="button" onClick={onExport}>
           <Download size={16} />
           Download report
         </button>
         <button type="button" onClick={onReset}>
           <RotateCcw size={16} />
-          Open another
+          Back to profiles
         </button>
       </div>
       <p className="eyebrow">Project Orpheus</p>

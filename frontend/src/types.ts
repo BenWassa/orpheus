@@ -1,3 +1,9 @@
+export interface ProfileInfo {
+  name: string;
+  reportCount: number;
+  latestReportAt: string | null; // ISO-ish timestamp from filename, e.g. "20261129T004730"
+}
+
 export type EmotionCategory =
   | 'joyful_activation'
   | 'triumphant_power'

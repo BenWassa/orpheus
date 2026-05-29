@@ -8,11 +8,14 @@ import { SafetyFlags } from './SafetyFlags';
 import { ThemePanel } from './ThemePanel';
 import { TrendEvents } from './TrendEvents';
 import { ViewToggle } from './ViewToggle';
+import { AddDataPanel } from './AddDataPanel';
 import type { EmotionCategory, OrpheusReport, ThemeCategory } from '../types';
 
 interface DashboardProps {
   report: OrpheusReport;
   onReset: () => void;
+  profileName?: string;
+  onReload?: () => void;
 }
 
 type ViewMode = 'state' | 'trait';
@@ -25,13 +28,14 @@ const DETAIL_VIEWS: Array<{ id: DetailView; label: string }> = [
   { id: 'tracks', label: 'Tracks' },
 ];
 
-export function Dashboard({ report, onReset }: DashboardProps) {
+export function Dashboard({ report, onReset, profileName, onReload }: DashboardProps) {
   const [viewMode, setViewMode] = useState<ViewMode>('state');
   const [detailView, setDetailView] = useState<DetailView>('connections');
   const [selectedEmotion, setSelectedEmotion] = useState<EmotionCategory | null>(null);
   const [selectedTheme, setSelectedTheme] = useState<ThemeCategory | null>(null);
   const [selectedCluster, setSelectedCluster] = useState<number | null>(null);
   const [selectedPair, setSelectedPair] = useState<{ emotion: EmotionCategory; theme: ThemeCategory } | null>(null);
+  const [showAddData, setShowAddData] = useState(false);
 
   const activeWindow = viewMode === 'state' ? report.state : report.trait;
   const comparisonWindow = viewMode === 'state' ? report.trait : report.state;
@@ -47,10 +51,27 @@ export function Dashboard({ report, onReset }: DashboardProps) {
     URL.revokeObjectURL(url);
   }
 
+  function handleReload() {
+    setShowAddData(false);
+    onReload?.();
+  }
+
   return (
     <main className="app-shell">
+      {showAddData && profileName && (
+        <AddDataPanel
+          profileName={profileName}
+          onReload={handleReload}
+          onClose={() => setShowAddData(false)}
+        />
+      )}
       <SafetyFlags flags={report.safety_flags} />
-      <HeroSummary report={report} onExport={exportReport} onReset={onReset} />
+      <HeroSummary
+        report={report}
+        onExport={exportReport}
+        onReset={onReset}
+        onAddData={profileName ? () => setShowAddData(true) : undefined}
+      />
       <ViewToggle value={viewMode} onChange={setViewMode} />
 
       <div className="reader-layout">
