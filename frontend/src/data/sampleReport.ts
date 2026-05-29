@@ -68,6 +68,28 @@ export const sampleReport: OrpheusReport = {
         theme_scores: { place_heritage: 0.45, existentialism_spirituality: 0.35, adversity_resilience: 0.2 },
       },
     ],
+    top_frequency_tracks: [
+      {
+        uri: 'spotify:track:45882',
+        name: 'Fourth of July',
+        artist: 'Sufjan Stevens',
+        album: 'Carrie & Lowell',
+        qualified_play_count: 14,
+        play_count: 14,
+        last_played: '2026-05-20T18:42:00Z',
+        frequency_window_days: 12,
+      },
+      {
+        uri: 'spotify:track:12093',
+        name: 'Holocene',
+        artist: 'Bon Iver',
+        album: 'Bon Iver, Bon Iver',
+        qualified_play_count: 12,
+        play_count: 12,
+        last_played: '2026-05-18T21:15:00Z',
+        frequency_window_days: 12,
+      },
+    ],
   },
   trait: {
     emotion: {
@@ -101,6 +123,7 @@ export const sampleReport: OrpheusReport = {
     depth_label: 'engaged',
     top_artists: [{ artist: 'The National', weight: 0.18 }],
     top_tracks: [],
+    top_frequency_tracks: [],
   },
   shifts: [
     {

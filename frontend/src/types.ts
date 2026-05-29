@@ -41,6 +41,7 @@ export interface WindowScores {
   depth_label: DepthLabel;
   top_artists: Array<{ artist: string; weight: number }>;
   top_tracks: Track[];
+  top_frequency_tracks: Track[];
   from_date?: string; // ISO date string e.g. "2026-03-01"
   to_date?: string;   // ISO date string e.g. "2026-05-29"
 }
@@ -56,6 +57,9 @@ export interface Track {
   depth_score?: number;
   depth_label?: DepthLabel;
   play_count?: number;
+  qualified_play_count?: number;
+  last_played?: string;
+  frequency_window_days?: number;
 }
 
 export interface Shift {

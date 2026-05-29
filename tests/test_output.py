@@ -42,6 +42,9 @@ def _make_window():
         "avg_depth": 0.5,
         "top_artists": [{"artist": "Test", "weight": 1.0}],
         "top_tracks": [{"track_uri": "spotify:track:test", "weight": 1.0}],
+        "top_frequency_tracks": [
+            {"uri": "spotify:track:freq", "qualified_play_count": 3, "play_count": 3}
+        ],
     }
 
 
@@ -90,6 +93,14 @@ def test_assemble_report_copies_tracks_and_defaults_missing_depth(tmp_config):
 
     assert source_track == {"uri": "spotify:track:test", "weight": 1.0, "depth_score": None}
     assert report["windows"]["state"]["top_tracks"][0]["depth_label"] == "engaged"
+
+
+def test_assemble_report_includes_frequency_tracks(tmp_config):
+    report = assemble_report(_make_window(), _make_window(), [], [], [], tmp_config)
+
+    assert report["windows"]["state"]["top_frequency_tracks"] == [
+        {"uri": "spotify:track:freq", "qualified_play_count": 3, "play_count": 3}
+    ]
 
 
 def test_write_report_deterministic(tmp_path, tmp_config):

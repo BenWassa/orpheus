@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import logging
 import sqlite3
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from orpheus.aggregate.decay import engagement_weight, time_decay_weight
 from orpheus.config import OrpheusConfig
@@ -11,6 +11,20 @@ from orpheus.score.emotion import EMOTION_CATEGORIES
 from orpheus.score.theme import THEME_CATEGORIES
 
 logger = logging.getLogger(__name__)
+
+FREQUENCY_WINDOW_HALF_LIVES = 4
+QUALIFIED_LISTEN_MS = 30_000
+
+
+def _parse_ts(ts: str) -> datetime:
+    t_play = datetime.fromisoformat(ts.replace("Z", "+00:00"))
+    if t_play.tzinfo is None:
+        t_play = t_play.replace(tzinfo=timezone.utc)
+    return t_play
+
+
+def _is_qualified_frequency_play(ms_played: int | None) -> bool:
+    return (ms_played or 0) >= QUALIFIED_LISTEN_MS
 
 
 def aggregate_window(
@@ -31,6 +45,13 @@ def aggregate_window(
            ORDER BY p.ts DESC""",
         (config.model_version,),
     ).fetchall()
+    play_rows = conn.execute(
+        """SELECT p.ts, p.ms_played, p.track_uri,
+                  t.track_name, t.primary_artist, t.album_name
+           FROM plays p
+           JOIN tracks t ON p.track_uri = t.track_uri
+           ORDER BY p.ts DESC"""
+    ).fetchall()
 
     emotion_agg = {cat: 0.0 for cat in EMOTION_CATEGORIES}
     theme_agg = {cat: 0.0 for cat in THEME_CATEGORIES}
@@ -41,6 +62,9 @@ def aggregate_window(
     track_weights: dict[str, float] = {}
     track_play_counts: dict[str, int] = {}
     track_info: dict[str, dict] = {}
+    frequency_counts: dict[str, int] = {}
+    frequency_latest: dict[str, str] = {}
+    frequency_info: dict[str, dict] = {}
 
     ew_dict = {
         "full_play": config.engagement_weights.full_play,
@@ -52,9 +76,7 @@ def aggregate_window(
     }
 
     for row in rows:
-        t_play = datetime.fromisoformat(row["ts"].replace("Z", "+00:00"))
-        if t_play.tzinfo is None:
-            t_play = t_play.replace(tzinfo=timezone.utc)
+        t_play = _parse_ts(row["ts"])
 
         w0 = engagement_weight(
             ms_played=row["ms_played"],
@@ -135,14 +157,38 @@ def aggregate_window(
         key=lambda x: (-x[1], track_info[x[0]].get("name") or x[0]),
     )[:10]
 
+    frequency_start = t_now - timedelta(days=half_life_days * FREQUENCY_WINDOW_HALF_LIVES)
+    for row in play_rows:
+        t_play = _parse_ts(row["ts"])
+        if t_play < frequency_start or not _is_qualified_frequency_play(row["ms_played"]):
+            continue
+
+        track_uri = row["track_uri"]
+        frequency_counts[track_uri] = frequency_counts.get(track_uri, 0) + 1
+        frequency_latest[track_uri] = max(frequency_latest.get(track_uri, row["ts"]), row["ts"])
+        if track_uri not in frequency_info:
+            frequency_info[track_uri] = {
+                "uri": track_uri,
+                "name": row["track_name"],
+                "artist": row["primary_artist"],
+                "album": row["album_name"],
+            }
+
+    top_frequency_tracks = sorted(
+        frequency_counts.items(),
+        key=lambda x: (
+            -x[1],
+            -_parse_ts(frequency_latest[x[0]]).timestamp(),
+            frequency_info[x[0]].get("name") or x[0],
+        ),
+    )[:10]
+
     # Collect timestamps of plays with positive weight for date range labels
     from_date: str | None = None
     to_date: str | None = None
     dated_plays: list[str] = []
     for row in rows:
-        t_play = datetime.fromisoformat(row["ts"].replace("Z", "+00:00"))
-        if t_play.tzinfo is None:
-            t_play = t_play.replace(tzinfo=timezone.utc)
+        t_play = _parse_ts(row["ts"])
         w0 = engagement_weight(
             ms_played=row["ms_played"],
             duration_ms=row["duration_ms"],
@@ -169,6 +215,16 @@ def aggregate_window(
         "top_tracks": [
             {**track_info[t], "weight": w, "play_count": track_play_counts[t]}
             for t, w in top_tracks
+        ],
+        "top_frequency_tracks": [
+            {
+                **frequency_info[t],
+                "qualified_play_count": count,
+                "play_count": count,
+                "last_played": frequency_latest[t],
+                "frequency_window_days": half_life_days * FREQUENCY_WINDOW_HALF_LIVES,
+            }
+            for t, count in top_frequency_tracks
         ],
         "total_weight": total_weight,
         "play_count": len(rows),

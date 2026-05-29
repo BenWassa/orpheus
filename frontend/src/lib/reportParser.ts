@@ -89,6 +89,31 @@ function normalizeWindow(value: unknown): WindowScores {
   const source = asRecord(value);
   const topEmotions = normalizePrevalenceItems(source.top_emotions);
   const topThemes = normalizePrevalenceItems(source.top_themes);
+  const normalizeTracks = (items: unknown): WindowScores['top_tracks'] =>
+    Array.isArray(items)
+      ? items.map((track, index) => {
+          const row = asRecord(track);
+          return {
+            uri: asString(row.uri ?? row.track_uri, `track-${index}`),
+            name: typeof row.name === 'string' ? row.name : undefined,
+            artist: typeof row.artist === 'string' ? row.artist : undefined,
+            album: typeof row.album === 'string' ? row.album : undefined,
+            weight: typeof row.weight === 'number' ? row.weight : undefined,
+            depth_score: typeof row.depth_score === 'number' ? row.depth_score : undefined,
+            depth_label:
+              row.depth_label === 'surface' || row.depth_label === 'engaged' || row.depth_label === 'immersive'
+                ? row.depth_label
+                : undefined,
+            play_count: typeof row.play_count === 'number' ? row.play_count : undefined,
+            qualified_play_count: typeof row.qualified_play_count === 'number' ? row.qualified_play_count : undefined,
+            last_played: typeof row.last_played === 'string' ? row.last_played : undefined,
+            frequency_window_days:
+              typeof row.frequency_window_days === 'number' ? row.frequency_window_days : undefined,
+            emotion_scores: normalizeScores(row.emotion_scores, EMOTION_ORDER),
+            theme_scores: normalizeScores(row.theme_scores, THEME_ORDER),
+          };
+        })
+      : [];
 
   return {
     emotion: fillScoresFromTopItems(normalizeScores(source.emotion, EMOTION_ORDER), topEmotions, EMOTION_ORDER),
@@ -104,26 +129,8 @@ function normalizeWindow(value: unknown): WindowScores {
           return { artist: asString(row.artist, 'Unknown artist'), weight: asNumber(row.weight) };
         })
       : [],
-    top_tracks: Array.isArray(source.top_tracks)
-      ? source.top_tracks.map((track, index) => {
-          const row = asRecord(track);
-          return {
-            uri: asString(row.uri ?? row.track_uri, `track-${index}`),
-            name: typeof row.name === 'string' ? row.name : undefined,
-            artist: typeof row.artist === 'string' ? row.artist : undefined,
-            album: typeof row.album === 'string' ? row.album : undefined,
-            weight: typeof row.weight === 'number' ? row.weight : undefined,
-            depth_score: typeof row.depth_score === 'number' ? row.depth_score : undefined,
-            depth_label:
-              row.depth_label === 'surface' || row.depth_label === 'engaged' || row.depth_label === 'immersive'
-                ? row.depth_label
-                : undefined,
-            play_count: typeof row.play_count === 'number' ? row.play_count : undefined,
-            emotion_scores: normalizeScores(row.emotion_scores, EMOTION_ORDER),
-            theme_scores: normalizeScores(row.theme_scores, THEME_ORDER),
-          };
-        })
-      : [],
+    top_tracks: normalizeTracks(source.top_tracks),
+    top_frequency_tracks: normalizeTracks(source.top_frequency_tracks),
   };
 }
 

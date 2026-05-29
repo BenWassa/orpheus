@@ -88,12 +88,18 @@ def _format_window(window: dict, config: OrpheusConfig) -> dict:
             "depth_label": depth_label_from_score(float(depth_score), config),
         })
 
+    top_frequency_tracks = [
+        dict(t)
+        for t in window.get("top_frequency_tracks", [])[:9]
+    ]
+
     return {
         "top_emotions": top_emotions,
         "top_themes": top_themes,
         "depth_label": depth_label_from_score(window["avg_depth"], config),
         "top_artists": window.get("top_artists", [])[:5],
         "top_tracks": top_tracks,
+        "top_frequency_tracks": top_frequency_tracks,
         "from_date": window.get("from_date"),
         "to_date": window.get("to_date"),
     }

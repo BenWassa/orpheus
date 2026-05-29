@@ -9,6 +9,10 @@ This is not a raw play-count list. A track becomes primary when repeated,
 intentional, recent listening outweighs weak or negative evidence such as early
 skips.
 
+The report also carries a separate frequency view. Frequency tracks are ranked
+by qualified listen counts (`ms_played >= 30s`) inside the window's practical
+time horizon. They answer a simpler question: "what did I play most often?"
+
 ## Scoring Rule
 
 Each play receives a base engagement score from `engagement_weight`:
@@ -63,6 +67,11 @@ evidence that the opposite emotion/theme occurred. Emotion, theme, and depth
 aggregation therefore uses only positive play weights, while track and artist
 ranking uses signed net weights.
 
+Spotify's public Web API does not expose the full formula for a user's top
+tracks. It describes the endpoint as returning items based on calculated
+affinity over short-, medium-, and long-term ranges. Orpheus keeps that simpler
+frequency axis visible, but does not use it as the main evidentiary ranking.
+
 ## Data Contract
 
 Backend aggregation emits `window.top_tracks` with:
@@ -82,6 +91,21 @@ interface TopTrack {
 }
 ```
 
+It also emits `window.top_frequency_tracks` with:
+
+```typescript
+interface FrequencyTrack {
+  uri: string
+  name?: string
+  artist?: string
+  album?: string
+  qualified_play_count: number
+  play_count: number
+  last_played?: string
+  frequency_window_days: number
+}
+```
+
 The report assembly layer adds `depth_label`. The frontend renders the list as
 "Primary tracks" and displays `play_count` when present, falling back to numeric
 `weight` when play count is unavailable.
@@ -94,6 +118,8 @@ The report assembly layer adds `depth_label`. The frontend renders the list as
 - Non-positive net tracks are excluded from `top_tracks`.
 - Emotion/theme/depth window mixtures are based on positive weights only.
 - Report assembly must not mutate the aggregation result while formatting tracks.
+- Frequency ranking includes all tracks in `plays`, even if a track has not been
+  scored for emotion/theme yet.
 
 ## Implementation
 
