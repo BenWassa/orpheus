@@ -17,6 +17,19 @@ _TREND_WEEKS = 12
 _SLOPE_THRESHOLD = 0.02
 _SPIKE_THRESHOLD = 0.25
 _MIN_BUCKET_PLAYS = 3
+_QUALIFIED_LISTEN_MS = 30_000
+
+
+def _qualified_play_counts(conn: sqlite3.Connection) -> dict[str, int]:
+    """Qualified listens (>= 30s) per track_uri across all plays."""
+    rows = conn.execute(
+        """SELECT track_uri, COUNT(*) AS n
+           FROM plays
+           WHERE COALESCE(ms_played, 0) >= ?
+           GROUP BY track_uri""",
+        (_QUALIFIED_LISTEN_MS,),
+    ).fetchall()
+    return {row["track_uri"]: row["n"] for row in rows}
 
 
 def detect_trends(conn: sqlite3.Connection) -> list[dict]:
@@ -84,20 +97,29 @@ def detect_trends(conn: sqlite3.Connection) -> list[dict]:
 
 
 def detect_co_occurrences(conn: sqlite3.Connection) -> list[dict]:
+    # Weight each scored track by how many times it was actually played
+    # (qualified listens), so co-occurrence reflects listening behaviour rather
+    # than catalog composition. A track played 500 times should count far more
+    # than one played once, and tracks never played should not count at all.
     rows = conn.execute(
-        """SELECT ts.emotion_scores, ts.theme_scores
+        """SELECT ts.track_uri, ts.emotion_scores, ts.theme_scores
            FROM track_scores ts"""
     ).fetchall()
 
-    if len(rows) < 10:
-        return []
+    play_counts = _qualified_play_counts(conn)
 
-    co_counts: dict[tuple[str, str], int] = defaultdict(int)
-    emotion_counts: dict[str, int] = defaultdict(int)
-    theme_counts: dict[str, int] = defaultdict(int)
-    total = 0
+    co_counts: dict[tuple[str, str], float] = defaultdict(float)
+    emotion_counts: dict[str, float] = defaultdict(float)
+    theme_counts: dict[str, float] = defaultdict(float)
+    total = 0.0
+    scored_tracks_played = 0
 
     for row in rows:
+        weight = play_counts.get(row["track_uri"], 0)
+        if weight <= 0:
+            continue
+        scored_tracks_played += 1
+
         emotions = json.loads(row["emotion_scores"])
         themes = json.loads(row["theme_scores"])
 
@@ -105,15 +127,20 @@ def detect_co_occurrences(conn: sqlite3.Connection) -> list[dict]:
         top_themes = sorted(themes.items(), key=lambda x: x[1], reverse=True)[:3]
 
         for e_cat, _ in top_emotions:
-            emotion_counts[e_cat] += 1
+            emotion_counts[e_cat] += weight
         for t_cat, _ in top_themes:
-            theme_counts[t_cat] += 1
+            theme_counts[t_cat] += weight
 
         for e_cat, _ in top_emotions:
             for t_cat, _ in top_themes:
-                co_counts[(e_cat, t_cat)] += 1
+                co_counts[(e_cat, t_cat)] += weight
 
-        total += 1
+        total += weight
+
+    # Need a minimum of distinct played-and-scored tracks for the expected-value
+    # comparison to mean anything.
+    if scored_tracks_played < 10 or total <= 0:
+        return []
 
     results = []
     for (e_cat, t_cat), observed in co_counts.items():
@@ -126,7 +153,7 @@ def detect_co_occurrences(conn: sqlite3.Connection) -> list[dict]:
             results.append({
                 "pair": [e_cat, t_cat],
                 "strength": strength,
-                "observed": observed,
+                "observed": int(round(observed)),
                 "expected": round(expected, 1),
                 "narrative": _co_occurrence_narrative(e_cat, t_cat, strength),
             })
