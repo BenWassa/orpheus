@@ -10,7 +10,25 @@ interface EmotionMapProps {
   onSelect: (category: EmotionCategory | null) => void;
 }
 
+function fmtDateRange(from?: string, to?: string): string {
+  if (!from || !to) return '';
+  const fmt = (iso: string) =>
+    new Date(iso + 'T00:00:00Z').toLocaleDateString('en-GB', { month: 'short', year: 'numeric', timeZone: 'UTC' });
+  const f = fmt(from);
+  const t = fmt(to);
+  if (f === t) return f;
+  const fromYear = from.slice(0, 4);
+  const toYear = to.slice(0, 4);
+  if (fromYear === toYear) {
+    const fMonth = new Date(from + 'T00:00:00Z').toLocaleDateString('en-GB', { month: 'short', timeZone: 'UTC' });
+    return `${fMonth}–${t}`;
+  }
+  return `${f}–${t}`;
+}
+
 export function EmotionMap({ report, activeWindow, comparisonWindow, selected, onSelect }: EmotionMapProps) {
+  const activeRange = fmtDateRange(activeWindow.from_date, activeWindow.to_date);
+  const comparisonRange = fmtDateRange(comparisonWindow.from_date, comparisonWindow.to_date);
   function handleKeyDown(e: React.KeyboardEvent<SVGGElement>, category: EmotionCategory) {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
@@ -72,7 +90,6 @@ export function EmotionMap({ report, activeWindow, comparisonWindow, selected, o
           {EMOTION_ORDER.map((category) => {
             const emotion = EMOTIONS[category];
             const score = activeWindow.emotion[category] ?? 0;
-            const comparisonScore = comparisonWindow.emotion[category] ?? 0;
             const radius = 5 + score * 22;
             const cx = emotion.valence * 92;
             const cy = -emotion.arousal * 92;
@@ -90,7 +107,6 @@ export function EmotionMap({ report, activeWindow, comparisonWindow, selected, o
                 onKeyDown={(e) => handleKeyDown(e, category)}
                 style={{ cursor: 'pointer' }}
               >
-                <circle className="comparison-dot" cx={cx + comparisonScore * 12} cy={cy} r={3 + comparisonScore * 14} />
                 <circle
                   className={isSelected ? 'emotion-dot selected' : 'emotion-dot'}
                   cx={cx}
@@ -116,11 +132,11 @@ export function EmotionMap({ report, activeWindow, comparisonWindow, selected, o
             <p>{EMOTIONS[selected].description}</p>
             <dl className="metric-grid">
               <div>
-                <dt>Recent window</dt>
+                <dt>Recent window{activeRange && <> · <span style={{ fontWeight: 400 }}>{activeRange}</span></>}</dt>
                 <dd>{((activeWindow.emotion[selected] ?? 0) * 100).toFixed(1)}%</dd>
               </div>
               <div>
-                <dt>Usual pattern</dt>
+                <dt>Usual pattern{comparisonRange && <> · <span style={{ fontWeight: 400 }}>{comparisonRange}</span></>}</dt>
                 <dd>{((comparisonWindow.emotion[selected] ?? 0) * 100).toFixed(1)}%</dd>
               </div>
             </dl>
