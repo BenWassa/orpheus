@@ -7,7 +7,6 @@ from pathlib import Path
 
 from orpheus.config import OrpheusConfig
 from orpheus.enrich.soundnet import SoundNetClient
-from orpheus.enrich.spotify_features import SpotifyFeaturesClient
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +48,7 @@ def enrich_audio_features(
     ).fetchall()
 
     if not tracks:
-        return {"total": 0, "archive_hits": 0, "spotify_hits": 0, "soundnet_hits": 0, "missed": 0}
+        return {"total": 0, "archive_hits": 0, "soundnet_hits": 0, "missed": 0}
 
     archive_reader = None
     if archive_db_path and archive_db_path.exists():
@@ -60,13 +59,6 @@ def enrich_audio_features(
         except Exception as e:
             logger.warning("Failed to open archive DB: %s", e)
 
-    spotify_client = None
-    if config.spotify.client_id and config.spotify.client_secret:
-        spotify_client = SpotifyFeaturesClient(
-            client_id=config.spotify.client_id,
-            client_secret=config.spotify.client_secret,
-        )
-
     soundnet_client = None
     if config.soundnet.api_key:
         soundnet_client = SoundNetClient(
@@ -74,7 +66,7 @@ def enrich_audio_features(
             rate_limit_per_minute=config.soundnet.rate_limit_per_minute,
         )
 
-    stats = {"total": len(tracks), "archive_hits": 0, "spotify_hits": 0, "soundnet_hits": 0, "missed": 0}
+    stats = {"total": len(tracks), "archive_hits": 0, "soundnet_hits": 0, "missed": 0}
 
     # Collect URIs not already in archive, then batch-fetch from Spotify
     remaining = []
@@ -96,28 +88,8 @@ def enrich_audio_features(
 
         remaining.append(track_uri)
 
-    # Spotify batch fetch (100 tracks per request)
-    if spotify_client and remaining:
-        batch_size = 100
-        for i in range(0, len(remaining), batch_size):
-            batch = remaining[i:i + batch_size]
-            batch_results = spotify_client.fetch_batch(batch)
-            for uri in batch:
-                if uri in batch_results:
-                    _insert_audio_features(conn, uri, batch_results[uri])
-                    stats["spotify_hits"] += 1
-                else:
-                    stats["missed"] += 1
-
-            conn.commit()
-            logger.info("Spotify enrichment: %d/%d tracks processed",
-                        min(i + batch_size, len(remaining)), len(remaining))
-
-    elif soundnet_client:
-        # SoundNet fallback (one-by-one)
+    if soundnet_client and remaining:
         for i, track_uri in enumerate(remaining):
-            if _has_audio_features(conn, track_uri):
-                continue
             features = soundnet_client.fetch_audio_features(track_uri)
             if features:
                 _insert_audio_features(conn, track_uri, features)
@@ -132,7 +104,7 @@ def enrich_audio_features(
 
         conn.commit()
 
-    elif not spotify_client and not soundnet_client:
+    elif not soundnet_client:
         stats["missed"] += len(remaining)
 
     # Mark all tracks as enriched even if audio features weren't found,

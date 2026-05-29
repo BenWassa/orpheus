@@ -15,7 +15,6 @@ class GeniusClient:
             import lyricsgenius
             self._genius = lyricsgenius.Genius(
                 access_token,
-                verbose=False,
                 remove_section_headers=False,
                 retries=3,
             )
