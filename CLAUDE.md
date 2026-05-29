@@ -39,7 +39,9 @@ orpheus enrich
 orpheus score
 orpheus analyze
 orpheus report [--out data/output/reports/my_report.json]
+orpheus refresh
 orpheus run-all --source data/raw/
+orpheus archive missing-audio --out data/output/missing_audio_features.json
 ```
 
 ## Generating a report (recurring task)
@@ -51,9 +53,9 @@ Treat this as the living checklist, not a frozen procedure. When the output
 stabilizes, promote it to a `/report` skill that owns the interpretation layer.
 
 The action set, as it stands:
-1. Decide scope: `orpheus report` re-assembles from existing DB state (fast);
-   `orpheus run-all --source data/raw/` re-runs ingest → enrich → score → analyze
-   first (use when underlying data or scoring changed).
+1. Decide scope: `orpheus refresh` re-assembles from existing DB state (fast);
+   `orpheus run-all --source <Spotify export dir>` re-runs ingest → enrich → score
+   → analyze first (use when underlying data or scoring changed).
 2. Run it; the JSON lands in `data/output/reports/YYYYMMDDTHHMMSS.json`.
 3. Read the JSON and write a human summary: state vs. trait windows, trends,
    shifts, co-occurrences, clusters.

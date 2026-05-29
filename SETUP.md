@@ -100,14 +100,19 @@ orpheus archive import data/raw/tracks_features.csv
 orpheus archive fill-gaps
 orpheus enrich
 orpheus score
-orpheus analyze
-orpheus report
+orpheus refresh
 
 # Convenience path without an audio-feature archive
 orpheus run-all --source path/to/Spotify\ Extended\ Streaming\ History/
 
+# Normal repeat use after data is already loaded
+orpheus refresh
+
 # Check status
 orpheus status
+
+# Inspect tracks still missing audio features
+orpheus archive missing-audio --out data/output/missing_audio_features.json
 ```
 
 **Expected runtime:**
@@ -115,8 +120,7 @@ orpheus status
 - Gap fill: rate-limited by ReccoBeats batch delay
 - Enrich: fast, lyrics only via Genius
 - Score: ~5–10 min (transformer models load once)
-- Analyze: < 1 min
-- Report: < 1 sec
+- Refresh/report: seconds; recomputes aggregation, clusters, and JSON output
 
 Output JSON will be written to `data/output/reports/YYYYMMDDTHHMMSS.json`.
 

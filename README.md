@@ -88,13 +88,16 @@ orpheus archive import data/raw/tracks_features.csv
 orpheus archive fill-gaps    # optional: uses ReccoBeats for tracks not found in the archive
 orpheus enrich
 orpheus score
-orpheus analyze
-orpheus report
+orpheus refresh
 
 orpheus status   # check progress at any time
+orpheus archive missing-audio --out data/output/missing_audio_features.json
 
 # Convenience path if you do not have an audio-feature archive yet
 orpheus run-all --source "path/to/Spotify Extended Streaming History/"
+
+# Normal repeat use after data is already in the DB
+orpheus refresh
 ```
 
 See **[SETUP.md](SETUP.md)** for credentials, runtimes, and troubleshooting.

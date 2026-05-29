@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from time import sleep
 
@@ -17,6 +18,60 @@ def _load_cfg(ctx: click.Context) -> None:
         ctx.obj["project_root"] = project_root
     except FileNotFoundError as e:
         raise click.ClickException(str(e))
+
+
+def _missing_audio_feature_tracks(conn, limit: int | None = None) -> list[dict]:
+    query = """SELECT t.track_uri, t.track_name, t.primary_artist, t.album_name
+               FROM tracks t
+               LEFT JOIN audio_features af ON t.track_uri = af.track_uri
+               WHERE af.track_uri IS NULL
+               ORDER BY t.primary_artist, t.track_name, t.track_uri"""
+    params: tuple = ()
+    if limit is not None:
+        query += " LIMIT ?"
+        params = (limit,)
+
+    return [dict(row) for row in conn.execute(query, params).fetchall()]
+
+
+def _write_current_report(cfg, output_path: Path | None = None) -> tuple[Path, str, str]:
+    from datetime import datetime, timezone
+
+    from orpheus.aggregate.windows import compute_state_and_trait
+    from orpheus.output.assemble import assemble_report, record_run, write_report
+    from orpheus.pattern.cluster import cluster_gmm, clusters_status, filter_noise
+    from orpheus.pattern.trends import compare_state_trait, detect_co_occurrences, detect_trends
+    from orpheus.safety.rumination import check_rumination
+
+    conn = get_db(cfg.db_path)
+    started_at = datetime.now(timezone.utc)
+
+    try:
+        windows = compute_state_and_trait(conn, cfg)
+        clean_points, clean_tracks, _ = filter_noise(conn, cfg)
+        clusters = cluster_gmm(clean_points, clean_tracks, cfg) if len(clean_points) > 0 else []
+        cl_status = clusters_status(conn, clusters, len(clean_points))
+        trends = detect_trends(conn)
+        co_occurrences = detect_co_occurrences(conn)
+        shifts = compare_state_trait(windows["state"], windows["trait"])
+        safety_flags = check_rumination(windows["state"], cfg)
+
+        report_data = assemble_report(
+            state=windows["state"], trait=windows["trait"],
+            shifts=shifts, trends=trends, co_occurrences=co_occurrences,
+            clusters=clusters, config=cfg, safety_flags=safety_flags,
+            clusters_status=cl_status,
+        )
+
+        if output_path is None:
+            ts = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S")
+            output_path = cfg.reports_dir / f"{ts}.json"
+
+        output_hash = write_report(report_data, output_path)
+        run_id = record_run(conn, cfg, output_path, output_hash, started_at)
+        return output_path, run_id, output_hash
+    finally:
+        conn.close()
 
 
 @click.group()
@@ -203,46 +258,30 @@ def report(ctx, out):
     """Assemble and write the JSON report."""
     _load_cfg(ctx)
     cfg = ctx.obj["config"]
-    conn = get_db(cfg.db_path)
-
-    from datetime import datetime, timezone
-
-    from orpheus.aggregate.windows import compute_state_and_trait
-    from orpheus.output.assemble import assemble_report, record_run, write_report
-    from orpheus.pattern.cluster import cluster_gmm, clusters_status, filter_noise
-    from orpheus.pattern.trends import compare_state_trait, detect_co_occurrences, detect_trends
-    from orpheus.safety.rumination import check_rumination
-
-    started_at = datetime.now(timezone.utc)
-
-    windows = compute_state_and_trait(conn, cfg)
-    clean_points, clean_tracks, _ = filter_noise(conn, cfg)
-    clusters = cluster_gmm(clean_points, clean_tracks, cfg) if len(clean_points) > 0 else []
-    cl_status = clusters_status(conn, clusters, len(clean_points))
-    trends = detect_trends(conn)
-    co_occurrences = detect_co_occurrences(conn)
-    shifts = compare_state_trait(windows["state"], windows["trait"])
-    safety_flags = check_rumination(windows["state"], cfg)
-
-    report_data = assemble_report(
-        state=windows["state"], trait=windows["trait"],
-        shifts=shifts, trends=trends, co_occurrences=co_occurrences,
-        clusters=clusters, config=cfg, safety_flags=safety_flags,
-        clusters_status=cl_status,
+    output_path, run_id, output_hash = _write_current_report(
+        cfg,
+        Path(out) if out else None,
     )
-
-    if out:
-        output_path = Path(out)
-    else:
-        ts = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S")
-        output_path = cfg.reports_dir / f"{ts}.json"
-
-    output_hash = write_report(report_data, output_path)
-    run_id = record_run(conn, cfg, output_path, output_hash, started_at)
-    conn.close()
 
     click.echo(f"Report written to {output_path}")
     click.echo(f"Run ID: {run_id}, Hash: {output_hash[:16]}...")
+
+
+@main.command()
+@click.option("--out", type=click.Path(), default=None, help="Output path for JSON report")
+@click.pass_context
+def refresh(ctx, out):
+    """Refresh the report from the current database."""
+    _load_cfg(ctx)
+    cfg = ctx.obj["config"]
+    output_path, run_id, output_hash = _write_current_report(
+        cfg,
+        Path(out) if out else None,
+    )
+
+    click.echo(f"Latest report: {output_path}")
+    click.echo(f"Run ID: {run_id}")
+    click.echo(f"Hash:   {output_hash[:16]}...")
 
 
 @main.command("run-all")
@@ -382,8 +421,14 @@ def archive_import(ctx, path):
     default=None,
     help="Override reccobeats.delay between batches for this run.",
 )
+@click.option(
+    "--not-found-out",
+    type=click.Path(),
+    default=None,
+    help="Write tracks not found in this run to a JSON file.",
+)
 @click.pass_context
-def archive_fill_gaps(ctx, limit, batch_size, delay):
+def archive_fill_gaps(ctx, limit, batch_size, delay, not_found_out):
     """Fill missing audio features via ReccoBeats."""
     _load_cfg(ctx)
     cfg = ctx.obj["config"]
@@ -393,25 +438,23 @@ def archive_fill_gaps(ctx, limit, batch_size, delay):
     from orpheus.enrich.reccobeats import ReccoBeatsClient
 
     conn = get_db(cfg.db_path)
-    rows = conn.execute(
-        """SELECT t.track_uri
-           FROM tracks t
-           LEFT JOIN audio_features af ON t.track_uri = af.track_uri
-           WHERE af.track_uri IS NULL"""
-    ).fetchall()
-    if limit is not None:
-        rows = rows[:limit]
+    rows = _missing_audio_feature_tracks(conn, limit=limit)
 
     ids_by_uri = [
-        (row["track_uri"], spotify_id_from_track_uri(row["track_uri"]))
+        (row, spotify_id_from_track_uri(row["track_uri"]))
         for row in rows
     ]
-    ids_by_uri = [(track_uri, spotify_id) for track_uri, spotify_id in ids_by_uri if spotify_id]
+    not_found_tracks = [
+        {**row, "reason": "missing_spotify_id"}
+        for row, spotify_id in ids_by_uri
+        if not spotify_id
+    ]
+    ids_by_uri = [(row, spotify_id) for row, spotify_id in ids_by_uri if spotify_id]
 
     stats = {
         "total_unmatched": len(rows),
         "fetched": 0,
-        "not_found": len(rows) - len(ids_by_uri),
+        "not_found": len(not_found_tracks),
         "errors": 0,
     }
     client = ReccoBeatsClient()
@@ -425,13 +468,18 @@ def archive_fill_gaps(ctx, limit, batch_size, delay):
             result = client.fetch_features(spotify_ids)
             if result == {} and spotify_ids:
                 stats["errors"] += len(spotify_ids)
+                not_found_tracks.extend(
+                    {**row, "reason": "fetch_error"}
+                    for row, _ in batch
+                )
             else:
-                for track_uri, spotify_id in batch:
+                for row, spotify_id in batch:
                     features = result.get(spotify_id)
                     if features is None:
                         stats["not_found"] += 1
+                        not_found_tracks.append({**row, "reason": "not_found"})
                         continue
-                    _insert_audio_features(conn, track_uri, features)
+                    _insert_audio_features(conn, row["track_uri"], features)
                     stats["fetched"] += 1
 
             conn.commit()
@@ -442,6 +490,39 @@ def archive_fill_gaps(ctx, limit, batch_size, delay):
 
     click.echo("Filled audio-feature gaps from ReccoBeats")
     _echo_stats(stats)
+    if not_found_out:
+        out_path = Path(not_found_out)
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        out_path.write_text(json.dumps(not_found_tracks, indent=2, ensure_ascii=False))
+        click.echo(f"Not-found tracks written to {out_path}")
+
+
+@archive_group.command("missing-audio")
+@click.option("--limit", type=click.IntRange(min=1), default=25, help="Rows to print.")
+@click.option("--out", type=click.Path(), default=None, help="Write full missing list to JSON.")
+@click.pass_context
+def archive_missing_audio(ctx, limit, out):
+    """List tracks that still lack audio features."""
+    _load_cfg(ctx)
+    cfg = ctx.obj["config"]
+    conn = get_db(cfg.db_path)
+    try:
+        all_rows = _missing_audio_feature_tracks(conn)
+    finally:
+        conn.close()
+
+    click.echo(f"Tracks missing audio features: {len(all_rows)}")
+
+    if out:
+        out_path = Path(out)
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        out_path.write_text(json.dumps(all_rows, indent=2, ensure_ascii=False))
+        click.echo(f"Missing tracks written to {out_path}")
+
+    for row in all_rows[:limit]:
+        title = row.get("track_name") or row["track_uri"]
+        artist = row.get("primary_artist") or "Unknown artist"
+        click.echo(f"  {artist} - {title} ({row['track_uri']})")
 
 
 def _echo_stats(stats: dict) -> None:
