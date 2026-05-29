@@ -131,7 +131,17 @@ function normalizeWindow(value: unknown): WindowScores {
       : [],
     top_tracks: normalizeTracks(source.top_tracks),
     top_frequency_tracks: normalizeTracks(source.top_frequency_tracks),
+    coverage: normalizeCoverage(source.coverage),
   };
+}
+
+function normalizeCoverage(value: unknown): WindowScores['coverage'] {
+  if (!isRecord(value)) return undefined;
+  const scored = typeof value.scored_plays === 'number' ? value.scored_plays : 0;
+  const total = typeof value.total_plays === 'number' ? value.total_plays : 0;
+  const ratio =
+    typeof value.ratio === 'number' ? value.ratio : total > 0 ? scored / total : 0;
+  return { scored_plays: scored, total_plays: total, ratio };
 }
 
 function normalizeSafetyFlag(item: unknown): SafetyFlag | null {

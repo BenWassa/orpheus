@@ -218,6 +218,21 @@ def aggregate_window(
         from_date = sorted_plays[0][:10]
         to_date = sorted_plays[-1][:10]
 
+    # Coverage: how much of the actual listening in this window backs the mood
+    # mixture. The emotion/theme windows are built only from plays of *scored*
+    # tracks; if most plays are unscored, the headline is built on a thin,
+    # possibly biased slice and the report should say so rather than imply
+    # authority.
+    total_window_plays = sum(
+        1 for row in play_rows if _parse_ts(row["ts"]) >= window_start
+    )
+    scored_window_plays = len(dated_plays)
+    coverage = {
+        "scored_plays": scored_window_plays,
+        "total_plays": total_window_plays,
+        "ratio": (scored_window_plays / total_window_plays) if total_window_plays else 0.0,
+    }
+
     return {
         "emotions": dict(top_emotions),
         "themes": dict(top_themes),
@@ -241,6 +256,7 @@ def aggregate_window(
         "play_count": len(rows),
         "from_date": from_date,
         "to_date": to_date,
+        "coverage": coverage,
     }
 
 

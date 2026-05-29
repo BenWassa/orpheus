@@ -44,6 +44,13 @@ export interface WindowScores {
   top_frequency_tracks: Track[];
   from_date?: string; // ISO date string e.g. "2026-03-01"
   to_date?: string;   // ISO date string e.g. "2026-05-29"
+  coverage?: WindowCoverage;
+}
+
+export interface WindowCoverage {
+  scored_plays: number;
+  total_plays: number;
+  ratio: number; // scored_plays / total_plays, in [0, 1]
 }
 
 export interface Track {

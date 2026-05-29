@@ -102,6 +102,7 @@ def _format_window(window: dict, config: OrpheusConfig) -> dict:
         "top_frequency_tracks": top_frequency_tracks,
         "from_date": window.get("from_date"),
         "to_date": window.get("to_date"),
+        "coverage": window.get("coverage", {"scored_plays": 0, "total_plays": 0, "ratio": 0.0}),
     }
 
 

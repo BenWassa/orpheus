@@ -21,6 +21,10 @@ export function HeroSummary({ report, onExport, onReset, onAddData, addDataTrigg
     }.`;
   const insights = report.narrative?.key_insights ?? report.shifts.map((shift) => shift.narrative).slice(0, 3);
 
+  // Be honest about how much of recent listening actually backs the reading.
+  const coverage = report.state.coverage;
+  const lowCoverage = coverage !== undefined && coverage.total_plays > 0 && coverage.ratio < 0.4;
+
   return (
     <header className="hero-summary">
       <div className="hero-actions">
@@ -51,6 +55,15 @@ export function HeroSummary({ report, onExport, onReset, onAddData, addDataTrigg
           <li key={`${insight}-${index}`}>{insight}</li>
         ))}
       </ul>
+      {coverage !== undefined && coverage.total_plays > 0 && (
+        <p className={lowCoverage ? 'caveat' : 'metadata-line'}>
+          {lowCoverage ? 'A light reading: based on ' : 'Based on '}
+          {coverage.scored_plays} of {coverage.total_plays} recent plays
+          {lowCoverage
+            ? ' — most recent tracks aren’t scored yet, so treat the headline as provisional.'
+            : '.'}
+        </p>
+      )}
       {report.narrative?.caveats && <p className="caveat">{report.narrative.caveats.join(' ')}</p>}
     </header>
   );
