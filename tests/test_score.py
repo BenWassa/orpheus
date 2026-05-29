@@ -126,6 +126,19 @@ class TestDepth:
         assert _lexical_density("hello") is None
         assert _lexical_density(None) is None
 
+    def test_lexical_density_not_length_biased(self):
+        # Two texts with the SAME per-segment variety (a 60-word vocabulary
+        # cycled) but very different lengths should score comparably. Plain
+        # type/token ratio would tank the long one (60/1200 vs 60/120) purely
+        # for being longer; mean-segmental TTR should not.
+        import string
+
+        vocab = [a + b for a in string.ascii_lowercase for b in string.ascii_lowercase][:60]
+        short = _lexical_density(" ".join(vocab[i % 60] for i in range(120)))
+        long = _lexical_density(" ".join(vocab[i % 60] for i in range(1200)))
+        assert short is not None and long is not None
+        assert abs(short - long) < 0.05
+
     def test_acoustic_complexity_none_for_none(self):
         assert _acoustic_complexity(None) is None
 

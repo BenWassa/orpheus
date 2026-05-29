@@ -79,6 +79,9 @@ def _acoustic_complexity(audio_features: dict | None) -> float | None:
     return sum(signals) / len(signals)
 
 
+_TTR_SEGMENT = 100
+
+
 def _lexical_density(lyrics: str | None) -> float | None:
     if not lyrics or len(lyrics.strip()) < 20:
         return None
@@ -87,14 +90,30 @@ def _lexical_density(lyrics: str | None) -> float | None:
     if len(words) < 10:
         return None
 
-    unique = len(set(words))
     total = len(words)
-    base_density = unique / total
+
+    # Plain type/token ratio is length-biased: a short lyric mechanically scores
+    # as more "dense" because fewer tokens means fewer chances to repeat. Use a
+    # mean-segmental TTR (average TTR over fixed-size word segments) so density
+    # is comparable across a 40-word chorus and a 400-word rap verse.
+    base_density = _mean_segmental_ttr(words, _TTR_SEGMENT)
 
     avg_syllables = sum(_count_syllables(w) for w in words) / total
     syllable_weight = min(avg_syllables / 3.0, 1.0)
 
     return min(base_density * (0.7 + 0.3 * syllable_weight), 1.0)
+
+
+def _mean_segmental_ttr(words: list[str], segment: int) -> float:
+    if len(words) <= segment:
+        return len(set(words)) / len(words)
+    ratios = []
+    for i in range(0, len(words) - segment + 1, segment):
+        chunk = words[i : i + segment]
+        ratios.append(len(set(chunk)) / len(chunk))
+    # Ignore a trailing partial segment to keep every ratio over the same token
+    # count; if the text was shorter than one segment we already returned above.
+    return sum(ratios) / len(ratios)
 
 
 def _count_syllables(word: str) -> int:
