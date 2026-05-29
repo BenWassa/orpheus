@@ -205,16 +205,20 @@ def aggregate_window(
         ),
     )[:10]
 
-    # Date range spans plays within the window's effective lookback
-    # (same cutoff as frequency_start so state/trait show distinct ranges)
+    # Date range spans *all* plays within the window's effective lookback (the
+    # span of actual listening), not just scored plays — otherwise low coverage
+    # would make the displayed range collapse to whatever handful of tracks
+    # happen to be scored. Effective lookback = 4 half-lives, beyond which a
+    # play's decayed weight is <~6%; same cutoff as frequency_start so state and
+    # trait show distinct ranges.
     window_start = t_now - timedelta(days=half_life_days * FREQUENCY_WINDOW_HALF_LIVES)
-    dated_plays: list[str] = [
-        row["ts"] for row in rows if _parse_ts(row["ts"]) >= window_start
+    window_play_ts: list[str] = [
+        row["ts"] for row in play_rows if _parse_ts(row["ts"]) >= window_start
     ]
     from_date: str | None = None
     to_date: str | None = None
-    if dated_plays:
-        sorted_plays = sorted(dated_plays)
+    if window_play_ts:
+        sorted_plays = sorted(window_play_ts)
         from_date = sorted_plays[0][:10]
         to_date = sorted_plays[-1][:10]
 
@@ -223,10 +227,10 @@ def aggregate_window(
     # tracks; if most plays are unscored, the headline is built on a thin,
     # possibly biased slice and the report should say so rather than imply
     # authority.
-    total_window_plays = sum(
-        1 for row in play_rows if _parse_ts(row["ts"]) >= window_start
+    total_window_plays = len(window_play_ts)
+    scored_window_plays = sum(
+        1 for row in rows if _parse_ts(row["ts"]) >= window_start
     )
-    scored_window_plays = len(dated_plays)
     coverage = {
         "scored_plays": scored_window_plays,
         "total_plays": total_window_plays,
