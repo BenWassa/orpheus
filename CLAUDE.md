@@ -42,6 +42,26 @@ orpheus report [--out data/output/reports/my_report.json]
 orpheus run-all --source data/raw/
 ```
 
+## Generating a report (recurring task)
+
+"Make a report" / "remake the report" is a recurring request. It is **not yet a
+slash command** — the report output is still evolving (recently added
+`clusters_status`, fixed trend detection), so the steps below will keep changing.
+Treat this as the living checklist, not a frozen procedure. When the output
+stabilizes, promote it to a `/report` skill that owns the interpretation layer.
+
+The action set, as it stands:
+1. Decide scope: `orpheus report` re-assembles from existing DB state (fast);
+   `orpheus run-all --source data/raw/` re-runs ingest → enrich → score → analyze
+   first (use when underlying data or scoring changed).
+2. Run it; the JSON lands in `data/output/reports/YYYYMMDDTHHMMSS.json`.
+3. Read the JSON and write a human summary: state vs. trait windows, trends,
+   shifts, co-occurrences, clusters.
+4. **Sanity-check before presenting** — flag likely artifacts rather than
+   reporting them as signal. Known ones: `clusters_status` other than `ok` means
+   no/insufficient audio features (clusters legitimately empty); a stale trailing
+   week can still skew trends. Call these out explicitly.
+
 ## Architecture
 
 The pipeline runs linearly: **Ingest → Enrich → Score → Aggregate → Pattern → Output**. Each step is independently re-runnable — later steps query the DB for already-processed records and skip re-work. The entire state lives in a SQLite database (`data/cache/orpheus.db`).
