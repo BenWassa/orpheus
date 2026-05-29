@@ -100,13 +100,13 @@ orpheus archive import data/raw/tracks_features.csv
 orpheus archive fill-gaps
 orpheus enrich
 orpheus score
-orpheus refresh
+orpheus refresh --profile Ben
 
 # Convenience path without an audio-feature archive
-orpheus run-all --source path/to/Spotify\ Extended\ Streaming\ History/
+orpheus run-all --source path/to/Spotify\ Extended\ Streaming\ History/ --profile Ben
 
 # Normal repeat use after data is already loaded
-orpheus refresh
+orpheus refresh --profile Ben
 
 # Check status
 orpheus status
@@ -122,7 +122,7 @@ orpheus archive missing-audio --out data/output/missing_audio_features.json
 - Score: ~5–10 min (transformer models load once)
 - Refresh/report: seconds; recomputes aggregation, clusters, and JSON output
 
-Output JSON will be written to `data/output/reports/YYYYMMDDTHHMMSS.json`.
+Output JSON will be written to `data/output/reports/<profile>/YYYYMMDDTHHMMSS.json`.
 
 ## Troubleshooting
 

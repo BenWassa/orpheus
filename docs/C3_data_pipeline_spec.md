@@ -197,8 +197,8 @@ orpheus ingest --source <path>     # parse export JSON, write to plays + tracks
 orpheus enrich                     # fetch audio features + lyrics for new tracks
 orpheus score                      # run scoring on enriched tracks
 orpheus analyze                    # aggregate + cluster + detect trends
-orpheus report [--out <path>]      # write JSON output
-orpheus run-all                    # convenience: full pipeline end-to-end
+orpheus report --profile <name>    # write profile-scoped JSON output
+orpheus run-all --profile <name>   # convenience: full pipeline end-to-end
 orpheus status                     # show DB state, missing enrichments, last run
 
 orpheus live sync                  # pull latest from Spotify Web API into plays
@@ -313,9 +313,9 @@ End-to-end run flow:
       → detect trends, co-occurrences, shifts
       → store intermediate results in run-scoped temp tables
 
-[6] orpheus report --out ./data/output/reports/{timestamp}.json
+[6] orpheus report --profile <name>
       → assemble JSON per C2 schema
-      → write to disk
+      → write to data/output/reports/<profile>/{timestamp}.json
       → record run in pipeline_runs
 ```
 

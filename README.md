@@ -60,8 +60,9 @@ Orpheus runs a linear, re-runnable pipeline. Each step reads the SQLite database
 | **Pattern** | Clusters listening in valence/arousal/depth space and detects weekly trends. |
 | **Output** | Assembles a JSON report with windows, trends, clusters, and safety flags. |
 
-The report lands in `data/output/reports/YYYYMMDDTHHMMSS.json`. The React
-frontend in [`frontend/`](frontend/) renders it as a readable narrative.
+Profile reports land in `data/output/reports/<profile>/YYYYMMDDTHHMMSS.json`.
+The React frontend in [`frontend/`](frontend/) renders the newest report for
+the selected profile as a readable narrative.
 
 ---
 
@@ -88,16 +89,16 @@ orpheus archive import data/raw/tracks_features.csv
 orpheus archive fill-gaps    # optional: uses ReccoBeats for tracks not found in the archive
 orpheus enrich
 orpheus score
-orpheus refresh
+orpheus refresh --profile Ben
 
 orpheus status   # check progress at any time
 orpheus archive missing-audio --out data/output/missing_audio_features.json
 
 # Convenience path if you do not have an audio-feature archive yet
-orpheus run-all --source "path/to/Spotify Extended Streaming History/"
+orpheus run-all --source "path/to/Spotify Extended Streaming History/" --profile Ben
 
 # Normal repeat use after data is already in the DB
-orpheus refresh
+orpheus refresh --profile Ben
 ```
 
 See **[SETUP.md](SETUP.md)** for credentials, runtimes, and troubleshooting.

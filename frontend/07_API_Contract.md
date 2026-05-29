@@ -20,11 +20,11 @@ This document covers MVP (static report) + optional Phase 2 (live API) patterns.
 
 User runs backend CLI:
 ```bash
-orpheus run-all --source data/raw/streaming_history.json
-orpheus report --out data/output/reports/my_report.json
+orpheus run-all --source data/raw/streaming_history.json --profile Ben
+orpheus report --profile Ben
 ```
 
-**Output**: `my_report.json` (2–5 MB typical)
+**Output**: `data/output/reports/<profile>/YYYYMMDDTHHMMSS.json` (2–5 MB typical)
 
 **Report schema**: See `02_Output_Schema.md`
 
