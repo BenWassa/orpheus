@@ -37,7 +37,6 @@ class EngagementWeights:
     partial_play: float = 0.7
     early_skip: float = -0.5
     boundary_skip: float = -0.25
-    repeat_session: float = 0.3
     shuffle_source: float = -0.1
     library_play: float = 0.1
 

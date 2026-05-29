@@ -136,7 +136,6 @@ def record_run(
             "partial_play": config.engagement_weights.partial_play,
             "early_skip": config.engagement_weights.early_skip,
             "boundary_skip": config.engagement_weights.boundary_skip,
-            "repeat_session": config.engagement_weights.repeat_session,
             "shuffle_source": config.engagement_weights.shuffle_source,
             "library_play": config.engagement_weights.library_play,
         },

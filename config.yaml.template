@@ -22,7 +22,6 @@ engagement_weights:
   partial_play: 0.7
   early_skip: -0.5
   boundary_skip: -0.25
-  repeat_session: 0.3
   shuffle_source: -0.1
   library_play: 0.1
 
