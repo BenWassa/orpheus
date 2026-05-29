@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Dashboard } from './components/Dashboard';
 import { UploadPanel } from './components/UploadPanel';
 import { sampleReport } from './data/sampleReport';
@@ -8,6 +8,28 @@ import type { OrpheusReport } from './types';
 export function App() {
   const [report, setReport] = useState<OrpheusReport | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    async function loadLatestReport() {
+      try {
+        const response = await fetch('/api/reports/latest', { signal: controller.signal });
+        if (!response.ok) return;
+
+        const json = await response.json();
+        setReport(parseOrpheusReport(json));
+        setUploadError(null);
+      } catch (error) {
+        if (!controller.signal.aborted) {
+          console.info('Latest Orpheus report was not auto-loaded.', error);
+        }
+      }
+    }
+
+    loadLatestReport();
+    return () => controller.abort();
+  }, []);
 
   async function handleFile(file: File) {
     try {
