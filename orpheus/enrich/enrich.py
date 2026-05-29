@@ -7,6 +7,7 @@ from pathlib import Path
 
 from orpheus.config import OrpheusConfig
 from orpheus.enrich.soundnet import SoundNetClient
+from orpheus.enrich.spotify_features import SpotifyFeaturesClient
 
 logger = logging.getLogger(__name__)
 
@@ -48,7 +49,7 @@ def enrich_audio_features(
     ).fetchall()
 
     if not tracks:
-        return {"total": 0, "archive_hits": 0, "soundnet_hits": 0, "missed": 0}
+        return {"total": 0, "archive_hits": 0, "spotify_hits": 0, "soundnet_hits": 0, "missed": 0}
 
     archive_reader = None
     if archive_db_path and archive_db_path.exists():
@@ -59,6 +60,13 @@ def enrich_audio_features(
         except Exception as e:
             logger.warning("Failed to open archive DB: %s", e)
 
+    spotify_client = None
+    if config.spotify.client_id and config.spotify.client_secret:
+        spotify_client = SpotifyFeaturesClient(
+            client_id=config.spotify.client_id,
+            client_secret=config.spotify.client_secret,
+        )
+
     soundnet_client = None
     if config.soundnet.api_key:
         soundnet_client = SoundNetClient(
@@ -66,9 +74,11 @@ def enrich_audio_features(
             rate_limit_per_minute=config.soundnet.rate_limit_per_minute,
         )
 
-    stats = {"total": len(tracks), "archive_hits": 0, "soundnet_hits": 0, "missed": 0}
+    stats = {"total": len(tracks), "archive_hits": 0, "spotify_hits": 0, "soundnet_hits": 0, "missed": 0}
 
-    for i, track in enumerate(tracks):
+    # Collect URIs not already in archive, then batch-fetch from Spotify
+    remaining = []
+    for track in tracks:
         track_uri = track["track_uri"]
         isrc = track["isrc"]
 
@@ -80,23 +90,58 @@ def enrich_audio_features(
         if archive_reader:
             features = archive_reader.lookup(track_uri=track_uri, isrc=isrc)
             if features:
+                _insert_audio_features(conn, track_uri, features)
                 stats["archive_hits"] += 1
+                continue
 
-        if features is None and soundnet_client:
+        remaining.append(track_uri)
+
+    # Spotify batch fetch (100 tracks per request)
+    if spotify_client and remaining:
+        batch_size = 100
+        for i in range(0, len(remaining), batch_size):
+            batch = remaining[i:i + batch_size]
+            batch_results = spotify_client.fetch_batch(batch)
+            for uri in batch:
+                if uri in batch_results:
+                    _insert_audio_features(conn, uri, batch_results[uri])
+                    stats["spotify_hits"] += 1
+                else:
+                    stats["missed"] += 1
+
+            conn.commit()
+            logger.info("Spotify enrichment: %d/%d tracks processed",
+                        min(i + batch_size, len(remaining)), len(remaining))
+
+    elif soundnet_client:
+        # SoundNet fallback (one-by-one)
+        for i, track_uri in enumerate(remaining):
+            if _has_audio_features(conn, track_uri):
+                continue
             features = soundnet_client.fetch_audio_features(track_uri)
             if features:
+                _insert_audio_features(conn, track_uri, features)
                 stats["soundnet_hits"] += 1
+            else:
+                stats["missed"] += 1
+                logger.debug("No audio features found for %s", track_uri)
 
-        if features:
-            _insert_audio_features(conn, track_uri, features)
-        else:
-            stats["missed"] += 1
-            logger.debug("No audio features found for %s", track_uri)
+            if (i + 1) % 100 == 0:
+                conn.commit()
+                logger.info("SoundNet enrichment: %d/%d tracks", i + 1, len(remaining))
 
-        if (i + 1) % 100 == 0:
-            conn.commit()
-            logger.info("Enriched %d/%d tracks", i + 1, len(tracks))
+        conn.commit()
 
+    elif not spotify_client and not soundnet_client:
+        stats["missed"] += len(remaining)
+
+    # Mark all tracks as enriched even if audio features weren't found,
+    # so we can proceed to scoring with lyrics-only data
+    for track in tracks:
+        conn.execute(
+            "UPDATE tracks SET enriched_at = ? WHERE track_uri = ? AND enriched_at IS NULL",
+            (datetime.now(timezone.utc).isoformat(), track["track_uri"]),
+        )
     conn.commit()
 
     if archive_reader:
