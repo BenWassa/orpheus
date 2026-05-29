@@ -54,9 +54,11 @@ def main():
     print("  3. Run: orpheus run-all --source data/raw/")
     print()
     print("API keys needed:")
-    print("  - SoundNet/SoundStat (RapidAPI): for audio features")
     print("  - Genius: for lyrics")
     print("  - Spotify (optional): for live sync (deferred)")
+    print()
+    print("Note: audio-feature enrichment (valence/arousal) has no live source —")
+    print("      see docs/C3_data_pipeline_spec.md. Clustering stays empty without it.")
 
 
 if __name__ == "__main__":

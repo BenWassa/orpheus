@@ -35,6 +35,21 @@ def test_enrich_no_sources(tmp_db, tmp_config, sample_export_path):
     stats = enrich_audio_features(tmp_db, tmp_config)
     assert stats["total"] == 6
     assert stats["missed"] == 6
+    # No live audio source remains, so the stats no longer carry SoundNet hits.
+    assert set(stats) == {"total", "archive_hits", "missed"}
+
+
+def test_enrich_marks_enriched_without_audio(tmp_db, tmp_config, sample_export_path):
+    """With no audio source, tracks still get marked enriched (lyrics-only path)
+    and the audio_features table stays empty."""
+    _setup_tracks(tmp_db, sample_export_path)
+    enrich_audio_features(tmp_db, tmp_config)
+
+    assert tmp_db.execute("SELECT COUNT(*) FROM audio_features").fetchone()[0] == 0
+    unenriched = tmp_db.execute(
+        "SELECT COUNT(*) FROM tracks WHERE enriched_at IS NULL"
+    ).fetchone()[0]
+    assert unenriched == 0
 
 
 def test_enrich_idempotent(tmp_db, tmp_config, sample_export_path):

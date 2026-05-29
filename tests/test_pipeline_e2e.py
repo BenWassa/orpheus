@@ -13,7 +13,7 @@ from orpheus.config import load_config
 from orpheus.db import ensure_schema, get_db
 from orpheus.ingest.spotify_export import ingest_export
 from orpheus.output.assemble import assemble_report, record_run, write_report
-from orpheus.pattern.cluster import cluster_gmm, filter_noise
+from orpheus.pattern.cluster import cluster_gmm, clusters_status, filter_noise
 from orpheus.pattern.trends import compare_state_trait, detect_co_occurrences, detect_trends
 from orpheus.safety.rumination import check_rumination
 from orpheus.score.emotion import EMOTION_CATEGORIES
@@ -120,6 +120,7 @@ def test_full_pipeline_e2e(tmp_project, sample_export_path):
     # Step 5: Pattern detection
     clean_points, clean_tracks, noise_count = filter_noise(conn, cfg)
     clusters = cluster_gmm(clean_points, clean_tracks, cfg) if len(clean_points) > 0 else []
+    cl_status = clusters_status(conn, clusters, len(clean_points))
 
     trends = detect_trends(conn)
     co_occurrences = detect_co_occurrences(conn)
@@ -134,6 +135,7 @@ def test_full_pipeline_e2e(tmp_project, sample_export_path):
         state=windows["state"], trait=windows["trait"],
         shifts=shifts, trends=trends, co_occurrences=co_occurrences,
         clusters=clusters, config=cfg, safety_flags=safety_flags,
+        clusters_status=cl_status,
     )
 
     # Verify report structure per C2 schema
@@ -157,6 +159,10 @@ def test_full_pipeline_e2e(tmp_project, sample_export_path):
     assert "shifts" in report_data
     assert "co_occurrences" in report_data
     assert "clusters" in report_data
+    assert "clusters_status" in report_data
+    assert report_data["clusters_status"] in (
+        "ok", "no_audio_features", "insufficient_audio_data", "no_clusters_found"
+    )
     assert "safety_flags" in report_data
 
     # Step 8: Write report

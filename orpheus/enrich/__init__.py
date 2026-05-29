@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import logging
 import sqlite3
-from datetime import datetime, timezone
 
 from orpheus.config import OrpheusConfig
 from orpheus.enrich.enrich import enrich_audio_features

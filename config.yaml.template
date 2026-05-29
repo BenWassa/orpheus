@@ -6,10 +6,6 @@ spotify:
   client_secret: ""
   redirect_uri: "http://localhost:8080/callback"
 
-soundnet:
-  api_key: ""
-  rate_limit_per_minute: 60
-
 genius:
   access_token: ""
 

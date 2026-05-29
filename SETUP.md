@@ -30,7 +30,7 @@ This creates:
 
 ## API Credentials
 
-Before running the pipeline, you must populate **two** API keys in `config.yaml`:
+Before running the pipeline, you need **one** API key in `config.yaml` (Genius, for lyrics). Spotify is optional and audio features are deferred — see below:
 
 ### 1. Genius Access Token
 
@@ -49,27 +49,24 @@ genius:
   access_token: "YOUR_TOKEN_HERE"
 ```
 
-### 2. SoundNet RapidAPI Key
+### 2. Audio Features (Deferred — No Live Source)
 
-**Purpose:** Fetch audio features (valence, arousal, tempo, energy, etc.) when not cached locally.
+**Purpose:** Audio features (valence, arousal, tempo, energy) drive the V/A/D
+clustering step. There is currently **no working live source** for them.
 
-**How to get it:**
-1. Go to [rapidapi.com/SoundNet-SoundNet/api/SoundNet](https://rapidapi.com/SoundNet-SoundNet/api/SoundNet)
-2. Sign up / log in (free tier available)
-3. Subscribe to the API
-4. Copy your **X-RapidAPI-Key** from the dashboard
-5. Paste into config
+The RapidAPI "track-analysis" (SoundNet) API was evaluated and removed — its
+BASIC tier allows only 5 requests/day, which is unusable for a multi-thousand
+track corpus. See [docs/C3_data_pipeline_spec.md](docs/C3_data_pipeline_spec.md)
+for the full rationale and candidate replacement sources under consideration.
 
-**Config:**
-```yaml
-soundnet:
-  api_key: "YOUR_RAPIDAPI_KEY_HERE"
-  rate_limit_per_minute: 60  # SoundNet free tier: ~1 req/sec
-```
+**Impact:** Everything except clustering works without audio features. Emotion
+and theme scoring run off lyrics, so the pipeline produces a full report — the
+`clusters` section will simply report `no_audio_features` until a source is wired
+up. If you have a local archive cache of audio features, point `orpheus enrich`
+at it; otherwise audio features are skipped.
 
-**Cost estimate:** 
+**Cost estimate:**
 - Genius: free, unlimited
-- SoundNet RapidAPI: free tier allows ~1,500 API calls/month (your 4,243 tracks may need multiple calls depending on cache hits). If you exhaust free tier, paid plans start at ~$5/month.
 
 ### 3. Spotify (Optional)
 
@@ -104,7 +101,7 @@ orpheus status
 ```
 
 **Expected runtime:**
-- Enrich: ~10–30 min (API rate-limited by SoundNet; 1 req/sec = ~70 min for 4,243 tracks)
+- Enrich: fast — lyrics only (Genius), plus any local audio-feature archive lookups
 - Score: ~5–10 min (transformer models load once)
 - Analyze: < 1 min
 - Report: < 1 sec
@@ -113,17 +110,13 @@ Output JSON will be written to `data/output/reports/YYYYMMDDTHHMMSS.json`.
 
 ## Troubleshooting
 
-**"SoundNet API key invalid"**
-- Verify the key is copied correctly (no leading/trailing spaces)
-- Check RapidAPI dashboard for active subscription
-
 **"Genius token unauthorized"**
 - Regenerate the token at genius.com/api-clients
 - Verify it's your access token, not the API base URL
 
-**"Rate limit exceeded"**
-- Enrich will retry automatically (exponential backoff)
-- Free tier SoundNet: wait 24 hours or upgrade to paid plan
+**"clusters: no_audio_features" in the report**
+- Expected — there is no live audio-feature source (see section 2 above)
+- Everything else in the report is unaffected
 
 **"No lyrics found for track"**
 - Genius coverage is ~85% of Spotify catalog

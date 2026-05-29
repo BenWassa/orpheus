@@ -16,11 +16,18 @@ logger = logging.getLogger(__name__)
 _TREND_WEEKS = 12
 _SLOPE_THRESHOLD = 0.02
 _SPIKE_THRESHOLD = 0.25
+_MIN_BUCKET_PLAYS = 3
 
 
 def detect_trends(conn: sqlite3.Connection) -> list[dict]:
     t_now = datetime.now(timezone.utc)
     buckets = _build_weekly_buckets(conn, t_now, _TREND_WEEKS)
+
+    # Drop weeks with too few plays to yield a trustworthy weekly mean. Without
+    # this, an empty or sparse trailing week (e.g. data ends days before "now")
+    # collapses every category's latest value toward 0 and false-flags a uniform
+    # "decline" across all categories.
+    buckets = [b for b in buckets if b["_count"] >= _MIN_BUCKET_PLAYS]
 
     if len(buckets) < 4:
         return []
@@ -180,6 +187,7 @@ def _build_weekly_buckets(
     buckets: list[dict[str, list[float]]] = [
         defaultdict(list) for _ in range(n_weeks)
     ]
+    counts = [0] * n_weeks
 
     for row in rows:
         ts = datetime.fromisoformat(row["ts"].replace("Z", "+00:00"))
@@ -189,6 +197,7 @@ def _build_weekly_buckets(
         if week_idx < 0 or week_idx >= n_weeks:
             continue
 
+        counts[week_idx] += 1
         emotions = json.loads(row["emotion_scores"])
         themes = json.loads(row["theme_scores"])
         for cat, val in emotions.items():
@@ -196,7 +205,12 @@ def _build_weekly_buckets(
         for cat, val in themes.items():
             buckets[week_idx][cat].append(val)
 
-    return [{cat: np.mean(vals) for cat, vals in bucket.items()} for bucket in buckets]
+    result = []
+    for i, bucket in enumerate(buckets):
+        agg = {cat: float(np.mean(vals)) for cat, vals in bucket.items()}
+        agg["_count"] = counts[i]
+        result.append(agg)
+    return result
 
 
 _READABLE = {

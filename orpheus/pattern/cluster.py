@@ -16,6 +16,18 @@ from orpheus.score.theme import THEME_CATEGORIES
 logger = logging.getLogger(__name__)
 
 
+def clusters_status(conn: sqlite3.Connection, clusters: list[dict], n_clean_points: int) -> str:
+    """Explain why clusters may be empty so the report can degrade honestly."""
+    af_count = conn.execute("SELECT COUNT(*) FROM audio_features").fetchone()[0]
+    if af_count == 0:
+        return "no_audio_features"
+    if n_clean_points == 0:
+        return "insufficient_audio_data"
+    if not clusters:
+        return "no_clusters_found"
+    return "ok"
+
+
 def _load_avd_data(conn: sqlite3.Connection) -> tuple[np.ndarray, list[dict]]:
     rows = conn.execute(
         """SELECT ts.track_uri, ts.emotion_scores, ts.theme_scores, ts.depth_score,

@@ -159,7 +159,7 @@ The mythology fits: Orpheus descends into the underworld with music as his guide
 - **Language:** Python 3.11+
 - **Persistence:** SQLite (single file, local)
 - **NLP models:** BART-large-MNLI, MPNet (all-mpnet-base-v2), s-VSM filter
-- **Audio features:** SoundNet/SoundStat API (primary), Anna's Archive dump (bulk cache), Essentia (rare fallback)
+- **Audio features:** Anna's Archive dump (bulk cache) — only working source. The SoundNet/SoundStat RapidAPI primary was removed (5 req/day BASIC tier, unusable) and audio features are deferred pending a replacement; see docs/C3_data_pipeline_spec.md.
 - **External APIs:** Spotify Web API, Genius API
 - **Output:** JSON files written to disk
 - **CLI:** standard Python CLI tool, no web server in engine

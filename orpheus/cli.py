@@ -142,7 +142,7 @@ def enrich(ctx):
 
     audio = stats["audio"]
     lyrics = stats["lyrics"]
-    click.echo(f"Audio features: {audio['archive_hits']} archive, {audio['soundnet_hits']} SoundNet, "
+    click.echo(f"Audio features: {audio['archive_hits']} archive, "
                f"{audio['missed']} missed (of {audio['total']})")
     click.echo(f"Lyrics: {lyrics['fetched']} fetched, {lyrics['no_lyrics']} no lyrics, "
                f"{lyrics['failed']} failed (of {lyrics['total']})")
@@ -208,7 +208,7 @@ def report(ctx, out):
 
     from orpheus.aggregate.windows import compute_state_and_trait
     from orpheus.output.assemble import assemble_report, record_run, write_report
-    from orpheus.pattern.cluster import cluster_gmm, filter_noise
+    from orpheus.pattern.cluster import cluster_gmm, clusters_status, filter_noise
     from orpheus.pattern.trends import compare_state_trait, detect_co_occurrences, detect_trends
     from orpheus.safety.rumination import check_rumination
 
@@ -217,6 +217,7 @@ def report(ctx, out):
     windows = compute_state_and_trait(conn, cfg)
     clean_points, clean_tracks, _ = filter_noise(conn, cfg)
     clusters = cluster_gmm(clean_points, clean_tracks, cfg) if len(clean_points) > 0 else []
+    cl_status = clusters_status(conn, clusters, len(clean_points))
     trends = detect_trends(conn)
     co_occurrences = detect_co_occurrences(conn)
     shifts = compare_state_trait(windows["state"], windows["trait"])
@@ -226,6 +227,7 @@ def report(ctx, out):
         state=windows["state"], trait=windows["trait"],
         shifts=shifts, trends=trends, co_occurrences=co_occurrences,
         clusters=clusters, config=cfg, safety_flags=safety_flags,
+        clusters_status=cl_status,
     )
 
     if out:
@@ -259,7 +261,7 @@ def run_all(ctx, source):
     from orpheus.aggregate.windows import compute_state_and_trait
     from orpheus.enrich import run_enrichment
     from orpheus.output.assemble import assemble_report, record_run, write_report
-    from orpheus.pattern.cluster import cluster_gmm, filter_noise
+    from orpheus.pattern.cluster import cluster_gmm, clusters_status, filter_noise
     from orpheus.pattern.trends import compare_state_trait, detect_co_occurrences, detect_trends
     from orpheus.safety.rumination import check_rumination
     from orpheus.score.scoring import run_scoring
@@ -275,7 +277,6 @@ def run_all(ctx, source):
     click.echo("Enriching...")
     enrich_stats = run_enrichment(conn, cfg)
     click.echo(f"  Audio: {enrich_stats['audio']['archive_hits']} archive, "
-               f"{enrich_stats['audio']['soundnet_hits']} SoundNet, "
                f"{enrich_stats['audio']['missed']} missed")
 
     click.echo("Scoring...")
@@ -286,6 +287,7 @@ def run_all(ctx, source):
     windows = compute_state_and_trait(conn, cfg)
     clean_points, clean_tracks, noise_count = filter_noise(conn, cfg)
     clusters = cluster_gmm(clean_points, clean_tracks, cfg) if len(clean_points) > 0 else []
+    cl_status = clusters_status(conn, clusters, len(clean_points))
     trends = detect_trends(conn)
     co_occurrences = detect_co_occurrences(conn)
     shifts = compare_state_trait(windows["state"], windows["trait"])
@@ -296,6 +298,7 @@ def run_all(ctx, source):
         state=windows["state"], trait=windows["trait"],
         shifts=shifts, trends=trends, co_occurrences=co_occurrences,
         clusters=clusters, config=cfg, safety_flags=safety_flags,
+        clusters_status=cl_status,
     )
 
     ts = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S")

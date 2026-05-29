@@ -15,12 +15,6 @@ class SpotifyConfig:
 
 
 @dataclass
-class SoundNetConfig:
-    api_key: str = ""
-    rate_limit_per_minute: int = 60
-
-
-@dataclass
 class GeniusConfig:
     access_token: str = ""
 
@@ -77,7 +71,6 @@ class PathsConfig:
 @dataclass
 class OrpheusConfig:
     spotify: SpotifyConfig = field(default_factory=SpotifyConfig)
-    soundnet: SoundNetConfig = field(default_factory=SoundNetConfig)
     genius: GeniusConfig = field(default_factory=GeniusConfig)
     windows: WindowsConfig = field(default_factory=WindowsConfig)
     engagement_weights: EngagementWeights = field(default_factory=EngagementWeights)
@@ -145,7 +138,6 @@ def load_config(config_path: Path | None = None, project_root: Path | None = Non
 
     cfg = OrpheusConfig(
         spotify=_build_dataclass(SpotifyConfig, raw.get("spotify")),
-        soundnet=_build_dataclass(SoundNetConfig, raw.get("soundnet")),
         genius=_build_dataclass(GeniusConfig, raw.get("genius")),
         windows=_build_dataclass(WindowsConfig, raw.get("windows")),
         engagement_weights=_build_dataclass(EngagementWeights, raw.get("engagement_weights")),

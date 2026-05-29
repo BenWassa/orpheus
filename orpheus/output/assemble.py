@@ -44,6 +44,7 @@ def assemble_report(
     config: OrpheusConfig,
     trends: list[dict] | None = None,
     safety_flags: list[dict] | None = None,
+    clusters_status: str = "ok",
 ) -> dict:
     report = {
         "generated_at": datetime.now(timezone.utc).isoformat(),
@@ -56,6 +57,7 @@ def assemble_report(
         "trends": trends or [],
         "co_occurrences": co_occurrences,
         "clusters": clusters,
+        "clusters_status": clusters_status,
         "safety_flags": safety_flags or [],
     }
 

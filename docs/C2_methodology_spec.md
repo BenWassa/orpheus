@@ -44,7 +44,7 @@ Each stage runs independently and writes intermediate artifacts so individual st
 - Purpose: supplements static export with up-to-the-minute state
 
 **Enrichment sources (per track):**
-- **Audio features**: SoundNet/SoundStat API (primary), Essentia on-prem (fallback for missing tracks)
+- **Audio features**: deferred — no live source. The SoundNet/SoundStat RapidAPI was removed (5 req/day BASIC tier, unusable); only the Anna's Archive bulk cache remains. See docs/C3_data_pipeline_spec.md for the rationale and candidate replacements.
 - **Bulk audio features cache**: Anna's Archive 200GB SQLite dump (Nov 2025, 256M tracks) for offline pre-population
 - **Lyrics**: Genius API (preferred for crowd annotations), MusixMatch as backup
 - **Artist metadata**: Spotify Web API + MusicBrainz fallback

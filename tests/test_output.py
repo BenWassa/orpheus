@@ -56,8 +56,19 @@ def test_assemble_report_structure(tmp_config):
     assert "shifts" in report
     assert "co_occurrences" in report
     assert "clusters" in report
+    assert "clusters_status" in report
+    assert report["clusters_status"] == "ok"
     assert "safety_flags" in report
     assert report["safety_flags"] == []
+
+
+def test_assemble_report_clusters_status_passthrough(tmp_config):
+    report = assemble_report(
+        _make_window(), _make_window(), [], [], [], tmp_config,
+        clusters_status="no_audio_features",
+    )
+    assert report["clusters"] == []
+    assert report["clusters_status"] == "no_audio_features"
 
 
 def test_assemble_report_prevalence_labels(tmp_config):

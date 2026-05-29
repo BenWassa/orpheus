@@ -6,7 +6,6 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from orpheus.config import OrpheusConfig
-from orpheus.enrich.soundnet import SoundNetClient
 
 logger = logging.getLogger(__name__)
 
@@ -48,8 +47,11 @@ def enrich_audio_features(
     ).fetchall()
 
     if not tracks:
-        return {"total": 0, "archive_hits": 0, "soundnet_hits": 0, "missed": 0}
+        return {"total": 0, "archive_hits": 0, "missed": 0}
 
+    # Audio features come only from a local archive cache. No live audio-feature
+    # API is wired up — see docs/C3_data_pipeline_spec.md for why the RapidAPI
+    # source was removed and which replacements are under consideration.
     archive_reader = None
     if archive_db_path and archive_db_path.exists():
         from orpheus.enrich.archive_lookup import ArchiveReader
@@ -59,17 +61,8 @@ def enrich_audio_features(
         except Exception as e:
             logger.warning("Failed to open archive DB: %s", e)
 
-    soundnet_client = None
-    if config.soundnet.api_key:
-        soundnet_client = SoundNetClient(
-            api_key=config.soundnet.api_key,
-            rate_limit_per_minute=config.soundnet.rate_limit_per_minute,
-        )
+    stats = {"total": len(tracks), "archive_hits": 0, "missed": 0}
 
-    stats = {"total": len(tracks), "archive_hits": 0, "soundnet_hits": 0, "missed": 0}
-
-    # Collect URIs not already in archive, then batch-fetch from Spotify
-    remaining = []
     for track in tracks:
         track_uri = track["track_uri"]
         isrc = track["isrc"]
@@ -77,35 +70,14 @@ def enrich_audio_features(
         if _has_audio_features(conn, track_uri):
             continue
 
-        features = None
+        features = archive_reader.lookup(track_uri=track_uri, isrc=isrc) if archive_reader else None
+        if features:
+            _insert_audio_features(conn, track_uri, features)
+            stats["archive_hits"] += 1
+        else:
+            stats["missed"] += 1
 
-        if archive_reader:
-            features = archive_reader.lookup(track_uri=track_uri, isrc=isrc)
-            if features:
-                _insert_audio_features(conn, track_uri, features)
-                stats["archive_hits"] += 1
-                continue
-
-        remaining.append(track_uri)
-
-    if soundnet_client and remaining:
-        for i, track_uri in enumerate(remaining):
-            features = soundnet_client.fetch_audio_features(track_uri)
-            if features:
-                _insert_audio_features(conn, track_uri, features)
-                stats["soundnet_hits"] += 1
-            else:
-                stats["missed"] += 1
-                logger.debug("No audio features found for %s", track_uri)
-
-            if (i + 1) % 100 == 0:
-                conn.commit()
-                logger.info("SoundNet enrichment: %d/%d tracks", i + 1, len(remaining))
-
-        conn.commit()
-
-    elif not soundnet_client:
-        stats["missed"] += len(remaining)
+    conn.commit()
 
     # Mark all tracks as enriched even if audio features weren't found,
     # so we can proceed to scoring with lyrics-only data

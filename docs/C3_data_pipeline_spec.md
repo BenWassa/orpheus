@@ -24,9 +24,7 @@ orpheus-v2/
 │   │   ├── spotify_export.py    # parse Extended Streaming History JSON
 │   │   └── spotify_live.py      # Web API client
 │   ├── enrich/
-│   │   ├── soundnet.py          # primary audio features client
-│   │   ├── essentia.py          # local fallback extractor
-│   │   ├── archive_lookup.py    # Anna's Archive bulk cache reader
+│   │   ├── archive_lookup.py    # Anna's Archive bulk cache reader (only audio-feature source)
 │   │   └── genius.py            # lyrics fetcher
 │   ├── score/
 │   │   ├── emotion.py           # BART-MNLI + acoustic fusion
@@ -115,7 +113,7 @@ CREATE TABLE tracks (
 -- Cached audio features (immutable per track)
 CREATE TABLE audio_features (
     track_uri TEXT PRIMARY KEY,
-    source TEXT,                       -- 'soundnet' | 'essentia' | 'archive'
+    source TEXT,                       -- 'archive' (only source; live APIs removed)
     valence REAL,
     arousal REAL,
     tempo REAL,
@@ -215,24 +213,35 @@ Each command is idempotent. Re-running `enrich` skips already-enriched tracks. R
 
 ### 4. API Integrations
 
-**SoundNet/SoundStat API**
-- Auth: RapidAPI key from `config.yaml`
-- Endpoint: track lookup by Spotify ID or ISRC
-- Batching: batch requests where the API supports it; rate limit per their tier
-- Retry: exponential backoff on 429/503 (1s, 2s, 4s, 8s, 16s, max 5 retries)
-- Cost: paid pay-per-use. Budget approximately $0.001-0.003 per track. For a typical 5K-track library, first run cost is under $15. Subsequent runs hit cache.
+**Audio-feature source — REMOVED / DEFERRED (2026-05-28)**
 
-**Essentia (local fallback)**
-- Triggered when SoundNet returns no match
-- Requires the audio file, which Spotify does not provide. So Essentia only works if user has local audio files matching tracks (less common).
-- In practice: most tracks resolved via SoundNet or Anna's Archive cache. Essentia is rarely needed for typical Spotify-only users.
-- Keep it scaffolded for non-mainstream tracks but expect <5% of catalog needs it.
+There is currently **no live audio-feature source** wired into the pipeline.
 
-**Anna's Archive bulk cache**
+- The RapidAPI "track-analysis" (SoundNet) API was integrated, then removed. Its
+  BASIC tier allows only **5 requests/day** — confirmed via live test returning
+  HTTP 429 "exceeded the DAILY quota". This is unusable for a multi-thousand
+  track corpus (the working library is 4,243 tracks), and never persisted a
+  single `audio_features` row. The `soundnet.py` client and the `essentia.py`
+  local-extractor stub were deleted; the `soundnet` config block was removed.
+- Impact: emotion/theme scoring runs off **lyrics**, so the full pipeline still
+  produces a report. Only the V/A/D clustering step is affected — it reports
+  `no_audio_features` (see `orpheus/output/assemble.py`) instead of looking
+  silently empty.
+
+**Candidate replacement sources to evaluate** (none committed yet):
+- **AcousticBrainz** — open, free, community audio-feature dump keyed by MBID
+  (requires ISRC→MBID resolution; project is in maintenance mode).
+- **ReccoBeats** — newer API exposing Spotify-style audio features.
+- **Anna's Archive bulk cache** — one-time local import (see below); pre-populates
+  the `audio_features` table without any per-track API calls.
+- **Local Essentia extraction** — only viable if the user has local audio files
+  matching tracks; Spotify does not provide audio, so rarely applicable.
+
+**Anna's Archive bulk cache** (the supported local path)
 - One-time import via `orpheus archive import <path>`
-- Pre-populates `audio_features` table for the 256M tracks in the dump
-- For a personal library, expect 80-95% of tracks resolved from this single source
-- Removes most of the SoundNet API spend
+- Pre-populates `audio_features` table from a local dump
+- For a personal library, expect a high resolution rate from this single source
+- Avoids any per-track audio-feature API entirely
 
 **Spotify Web API**
 - Auth: OAuth 2.0 Authorization Code flow
@@ -273,9 +282,8 @@ End-to-end run flow:
 
 [3] orpheus enrich
       → for each track in tracks where enriched_at IS NULL:
-          → check audio_features cache (Anna's Archive import)
-          → if miss: call SoundNet API
-          → if miss: try Essentia (requires local audio)
+          → check audio_features cache (Anna's Archive import) — only audio source
+          → (no live audio-feature API: RapidAPI removed, see API Integrations)
           → fetch lyrics from Genius
           → update tracks.enriched_at
 
@@ -342,10 +350,6 @@ spotify:
   client_secret: "..."
   redirect_uri: "http://localhost:8080/callback"
 
-soundnet:
-  api_key: "..."
-  rate_limit_per_minute: 60
-
 genius:
   access_token: "..."
 
@@ -400,7 +404,7 @@ Validated by `orpheus config validate` before any other command runs.
 
 **Missing data:**
 - Instrumental track (no lyrics): proceed with acoustic-only theme scoring, lower confidence
-- Track not in any audio features source: skip scoring for that track, exclude from analysis with a count of skipped tracks in report
+- Track not in any audio features source: still scored from lyrics, but excluded from V/A/D clustering. When *no* track has audio features, the report's `clusters` section reports `no_audio_features` rather than an empty list
 - Empty windows (e.g., user has <30 days of data for trait): degrade gracefully, surface a note in output
 
 **Schema mismatches:**

@@ -51,7 +51,7 @@ The pipeline runs linearly: **Ingest → Enrich → Score → Aggregate → Patt
 | Step | Module | What it does |
 |------|--------|--------------|
 | Ingest | `orpheus/ingest/spotify_export.py` | Parses Spotify Extended Streaming History JSON; deduplicates by `(ts, track_uri)`; writes `plays` and `tracks` tables |
-| Enrich | `orpheus/enrich/` | Fetches audio features (archive DB → SoundNet RapidAPI fallback) and lyrics (Genius); marks `tracks.enriched_at` when done |
+| Enrich | `orpheus/enrich/` | Fetches audio features (local archive DB only — no live audio API; RapidAPI removed, see docs/C3_data_pipeline_spec.md) and lyrics (Genius); marks `tracks.enriched_at` when done |
 | Score | `orpheus/score/` | Runs `facebook/bart-large-mnli` for emotion classification and `sentence-transformers/all-mpnet-base-v2` for theme scoring; writes `track_scores` |
 | Aggregate | `orpheus/aggregate/` | Computes **state** (3-day half-life) and **trait** (90-day half-life) windows using engagement weights + exponential time decay |
 | Pattern | `orpheus/pattern/` | DBSCAN noise removal → GMM clustering on V/A/D space; weekly trend detection over 12-week lookback |
