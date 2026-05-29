@@ -27,7 +27,7 @@ const DETAIL_VIEWS: Array<{ id: DetailView; label: string }> = [
   { id: 'connections', label: 'Connections' },
   { id: 'movement', label: 'Movement' },
   { id: 'loops', label: 'Loops' },
-  { id: 'tracks', label: 'Tracks' },
+  { id: 'tracks', label: 'Influence' },
   { id: 'frequency', label: 'Frequency' },
 ];
 

@@ -11,22 +11,28 @@ export function EvidenceTracks({ tracks, variant = 'primary' }: EvidenceTracksPr
   const isFrequency = variant === 'frequency';
 
   return (
-    <section className="panel wide-panel" aria-labelledby="track-title">
-      <div className="section-heading">
+    <section className="panel wide-panel evidence-tracks" aria-labelledby="track-title">
+      <div className="section-heading evidence-tracks-heading">
         <div>
           <p className="eyebrow">Listening evidence</p>
-          <h2 id="track-title">{isFrequency ? 'Frequency tracks' : 'Primary tracks'}</h2>
+          <h2 id="track-title">{isFrequency ? 'Frequency tracks' : 'Influence tracks'}</h2>
         </div>
+        {isFrequency && (
+          <p className="evidence-tracks-desc">Tracks played most often, regardless of engagement weight.</p>
+        )}
+        {!isFrequency && (
+          <p className="evidence-tracks-desc">Tracks weighted by engagement depth and recency.</p>
+        )}
       </div>
 
       {tracks.length === 0 ? (
         <p className="muted-copy">
           {isFrequency
             ? 'No frequency tracks were attached to this report.'
-            : 'No primary tracks were attached to this report.'}
+            : 'No influence tracks were attached to this report.'}
         </p>
       ) : (
-        <div className="track-grid-bento">
+        <div className={`track-grid-bento${isFrequency ? ' track-grid-frequency' : ''}`}>
           {tracks.map((track, index) => (
             <article
               className={`track-card-ranked${isFrequency ? ' frequency-card' : ''}`}

@@ -722,6 +722,25 @@ button {
   margin-top: 24px;
 }
 
+.track-grid-frequency {
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
+
+.evidence-tracks-heading {
+  align-items: flex-end;
+  gap: 24px;
+}
+
+.evidence-tracks-desc {
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--muted);
+  line-height: 1.5;
+  text-align: right;
+  max-width: 28ch;
+}
+
 .track-card-ranked {
   position: relative;
   border: 1px solid var(--line);
@@ -742,7 +761,7 @@ button {
 }
 
 .track-card-ranked.frequency-card {
-  min-height: 170px;
+  min-height: auto;
 }
 
 .track-rank {
@@ -752,15 +771,7 @@ button {
   font-size: 2.2rem;
   font-weight: 700;
   line-height: 1;
-  color: var(--accent);
-  opacity: 0.6;
-}
-
-.track-content {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  flex: 1;
+  color: oklch(0.72 0.065 172);
 }
 
 .track-content {
@@ -816,7 +827,8 @@ button {
   flex-wrap: wrap;
 }
 
-.track-emotion-chip {
+.track-emotion-chip,
+.track-theme-chip {
   font-size: 0.75rem;
   font-weight: 600;
   padding: 3px 7px;
@@ -832,21 +844,20 @@ button {
   flex-wrap: wrap;
 }
 
-.track-theme-chip {
-  font-size: 0.75rem;
-  font-weight: 600;
-  padding: 3px 7px;
-  border-radius: 3px;
-  line-height: 1.2;
-  border: 1px solid transparent;
-  transition: opacity 180ms ease-out;
-}
-
 
 @media (max-width: 920px) {
   .track-grid-bento {
     grid-template-columns: repeat(2, 1fr);
     gap: 16px;
+  }
+
+  .track-grid-frequency {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+
+  .evidence-tracks-desc {
+    display: none;
   }
 
   .reader-layout,
@@ -873,7 +884,8 @@ button {
 }
 
 @media (max-width: 620px) {
-  .track-grid-bento {
+  .track-grid-bento,
+  .track-grid-frequency {
     grid-template-columns: 1fr;
     gap: 12px;
   }
@@ -1159,7 +1171,7 @@ button {
 
 .add-data-panel button.primary {
   background: var(--accent);
-  color: white;
+  color: var(--paper);
   border: none;
 }
 
@@ -1185,5 +1197,5 @@ button {
 
 .hero-actions button.accent:hover {
   background: var(--accent);
-  color: white;
+  color: var(--paper);
 }
