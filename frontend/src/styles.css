@@ -1,19 +1,20 @@
 :root {
   color-scheme: light;
-  --paper: oklch(0.985 0.006 88);
-  --paper-strong: oklch(0.965 0.009 88);
-  --ink: oklch(0.235 0.025 74);
-  --muted: oklch(0.52 0.025 74);
-  --line: oklch(0.88 0.012 88);
-  --panel: oklch(0.995 0.004 88);
-  --panel-soft: oklch(0.955 0.01 88);
-  --accent: oklch(0.55 0.12 166);
-  --accent-soft: oklch(0.93 0.04 166);
-  --warn-soft: oklch(0.94 0.04 80);
-  --warn: oklch(0.5 0.1 70);
-  --danger-soft: oklch(0.94 0.035 28);
-  --danger: oklch(0.55 0.16 28);
-  --shadow: 0 18px 48px color-mix(in oklch, var(--ink), transparent 90%);
+  --paper: oklch(0.982 0.007 116);
+  --paper-strong: oklch(0.952 0.011 122);
+  --ink: oklch(0.245 0.025 142);
+  --muted: oklch(0.51 0.024 152);
+  --line: oklch(0.862 0.018 128);
+  --panel: oklch(0.992 0.006 116);
+  --panel-soft: oklch(0.944 0.014 124);
+  --accent: oklch(0.46 0.105 172);
+  --accent-strong: oklch(0.36 0.09 172);
+  --accent-soft: oklch(0.915 0.045 172);
+  --plum: oklch(0.46 0.105 316);
+  --warn-soft: oklch(0.93 0.038 82);
+  --warn: oklch(0.46 0.09 72);
+  --danger-soft: oklch(0.925 0.036 28);
+  --danger: oklch(0.51 0.145 28);
   font-family:
     Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   background: var(--paper);
@@ -28,9 +29,7 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background:
-    radial-gradient(circle at 18% 8%, oklch(0.92 0.045 74 / 0.78), transparent 32rem),
-    linear-gradient(180deg, var(--paper), oklch(0.95 0.01 88));
+  background: linear-gradient(180deg, var(--paper), oklch(0.948 0.012 124));
 }
 
 button {
@@ -56,7 +55,6 @@ button {
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: 8px;
-  box-shadow: var(--shadow);
 }
 
 .upload-panel {
@@ -64,6 +62,7 @@ button {
   padding: clamp(24px, 5vw, 48px);
   display: grid;
   gap: 24px;
+  border-color: color-mix(in oklch, var(--line), var(--accent) 18%);
 }
 
 .brand-mark {
@@ -106,7 +105,7 @@ button {
 }
 
 .dropzone {
-  border: 1px dashed color-mix(in oklch, var(--accent), var(--line) 35%);
+  border: 1px solid color-mix(in oklch, var(--accent), var(--line) 50%);
   background: var(--panel-soft);
   border-radius: 8px;
   min-height: 170px;
@@ -150,7 +149,7 @@ button {
 .view-toggle button {
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: var(--ink);
+  background: var(--accent-strong);
   color: var(--paper);
   min-height: 42px;
   padding: 0 16px;
@@ -163,7 +162,18 @@ button {
 
 .primary-action:hover,
 .hero-actions button:hover {
-  background: color-mix(in oklch, var(--ink), var(--accent) 14%);
+  background: var(--accent);
+}
+
+.hero-actions button + button {
+  background: transparent;
+  color: var(--muted);
+}
+
+.hero-actions button + button:hover,
+.hero-actions button + button:focus-visible {
+  background: var(--panel-soft);
+  color: var(--ink);
 }
 
 .error-message {
@@ -191,7 +201,6 @@ button {
   padding: 18px;
   color: var(--warn);
   background: var(--warn-soft);
-  box-shadow: none;
 }
 
 .safety-note h2,
@@ -237,22 +246,30 @@ button {
   margin: 28px 0 0;
   border-top: 1px solid var(--line);
   list-style: none;
+  counter-reset: insight;
 }
 
 .insight-list li {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  gap: 12px;
   max-width: 76ch;
   color: var(--muted);
   line-height: 1.6;
 }
 
 .insight-list li::before {
-  content: '';
-  display: inline-block;
-  width: 8px;
-  height: 8px;
-  margin-right: 10px;
+  counter-increment: insight;
+  content: counter(insight);
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line);
   border-radius: 50%;
-  background: var(--accent);
+  color: var(--accent-strong);
+  font-size: 0.78rem;
+  font-weight: 800;
 }
 
 .view-toggle {
@@ -275,7 +292,7 @@ button {
 .view-toggle button.active {
   background: var(--panel);
   color: var(--ink);
-  box-shadow: 0 4px 18px color-mix(in oklch, var(--ink), transparent 92%);
+  border-color: color-mix(in oklch, var(--accent), var(--line) 45%);
 }
 
 .view-toggle span {
@@ -332,7 +349,6 @@ button {
   background: var(--panel);
   color: var(--ink);
   border-color: var(--line);
-  box-shadow: 0 4px 18px color-mix(in oklch, var(--ink), transparent 94%);
 }
 
 .detail-stage {
@@ -345,7 +361,6 @@ button {
 
 .panel {
   padding: 22px;
-  box-shadow: none;
 }
 
 .wide-panel {
@@ -439,10 +454,8 @@ button {
 
 .detail-well {
   margin-top: 16px;
-  padding: 16px;
-  border-radius: 8px;
-  background: var(--panel-soft);
-  border: 1px solid var(--line);
+  padding: 16px 0 0;
+  border-top: 1px solid var(--line);
 }
 
 .detail-well h3,
@@ -460,10 +473,8 @@ button {
 }
 
 .metric-grid div {
-  padding: 12px;
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: 8px;
+  padding: 12px 0;
+  border-top: 1px solid color-mix(in oklch, var(--line), transparent 28%);
 }
 
 .metric-grid dt {
@@ -496,7 +507,7 @@ button {
   align-items: flex-start;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: transparent;
+  background: color-mix(in oklch, var(--panel), transparent 18%);
   color: var(--ink);
   padding: 13px;
   cursor: pointer;
@@ -507,7 +518,7 @@ button {
 .theme-row.selected,
 .cluster-card:hover,
 .cluster-card.selected {
-  background: var(--panel-soft);
+  background: color-mix(in oklch, var(--accent-soft), var(--panel) 45%);
   border-color: color-mix(in oklch, var(--accent), var(--line) 40%);
 }
 
@@ -596,7 +607,7 @@ button {
 }
 
 .matrix-cell.strong {
-  background: var(--accent);
+  background: var(--accent-strong);
   color: var(--paper);
 }
 
@@ -635,7 +646,7 @@ button {
   height: 32px;
   display: grid;
   place-items: center;
-  background: var(--panel-soft);
+  background: color-mix(in oklch, var(--panel-soft), var(--panel) 35%);
   border-radius: 50%;
 }
 
@@ -646,7 +657,7 @@ button {
   place-items: center;
   flex: 0 0 auto;
   border-radius: 50%;
-  background: var(--ink);
+  background: var(--plum);
   color: var(--paper);
   font-weight: 750;
   font-size: 0.78rem;
@@ -687,7 +698,7 @@ button {
   border: 1px solid var(--line);
   border-radius: 8px;
   padding: 16px;
-  background: var(--panel-soft);
+  background: color-mix(in oklch, var(--panel-soft), var(--panel) 35%);
 }
 
 .track-card h3,
@@ -719,6 +730,14 @@ button {
     width: 100%;
     margin-left: 0;
   }
+
+  .detail-tabs {
+    width: 100%;
+  }
+
+  .detail-tabs button {
+    flex: 1 1 132px;
+  }
 }
 
 @media (max-width: 620px) {
@@ -732,8 +751,40 @@ button {
     justify-content: flex-start;
   }
 
+  .hero-actions button,
+  .primary-action {
+    width: 100%;
+  }
+
   .upload-copy h1,
   .hero-summary h1 {
     font-size: 2.25rem;
+  }
+
+  .panel,
+  .hero-summary,
+  .upload-panel {
+    padding: 18px;
+  }
+
+  .emotion-plot {
+    min-height: 280px;
+  }
+
+  .matrix-grid {
+    grid-template-columns: 82px repeat(8, minmax(40px, 46px));
+  }
+
+  .matrix-cell {
+    min-height: 40px;
+  }
+
+  .insight-list li {
+    grid-template-columns: 24px minmax(0, 1fr);
+  }
+
+  .insight-list li::before {
+    width: 24px;
+    height: 24px;
   }
 }
