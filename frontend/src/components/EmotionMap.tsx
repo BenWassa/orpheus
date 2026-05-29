@@ -1,4 +1,5 @@
 import { EMOTION_ORDER, EMOTIONS } from '../taxonomy';
+import { moodColorRGBA } from '../lib/moodColor';
 import type { EmotionCategory, OrpheusReport, WindowScores } from '../types';
 
 interface EmotionMapProps {
@@ -19,6 +20,12 @@ export function EmotionMap({ report, activeWindow, comparisonWindow, selected, o
         </div>
         <span className="depth-pill">{activeWindow.depth_label}</span>
       </div>
+      <div className="mood-legend" aria-hidden>
+        <div className="legend-item"><span className="swatch" style={{ background: 'rgba(255, 204, 0, 0.7)' }} /> High energy, bright</div>
+        <div className="legend-item"><span className="swatch" style={{ background: 'rgba(255, 71, 71, 0.7)' }} /> High energy, heavy</div>
+        <div className="legend-item"><span className="swatch" style={{ background: 'rgba(74, 222, 128, 0.7)' }} /> Low energy, bright</div>
+        <div className="legend-item"><span className="swatch" style={{ background: 'rgba(59, 130, 246, 0.7)' }} /> Low energy, heavy</div>
+      </div>
 
       <div className="emotion-plot" role="img" aria-label="Emotion categories plotted by feeling and energy">
         <svg viewBox="-112 -112 224 224">
@@ -29,6 +36,12 @@ export function EmotionMap({ report, activeWindow, comparisonWindow, selected, o
           <text x="4" y="-94">higher energy</text>
           <text x="4" y="100">lower energy</text>
 
+          {/* Quadrant legend markers */}
+          <rect x="42" y="-96" width="16" height="16" fill="rgba(255, 204, 0, 0.7)" stroke="rgba(0,0,0,0.06)" />
+          <rect x="-96" y="-96" width="16" height="16" fill="rgba(255, 71, 71, 0.7)" stroke="rgba(0,0,0,0.06)" />
+          <rect x="42" y="80" width="16" height="16" fill="rgba(74, 222, 128, 0.7)" stroke="rgba(0,0,0,0.06)" />
+          <rect x="-96" y="80" width="16" height="16" fill="rgba(59, 130, 246, 0.7)" stroke="rgba(0,0,0,0.06)" />
+
           {EMOTION_ORDER.map((category) => {
             const emotion = EMOTIONS[category];
             const score = activeWindow.emotion[category] ?? 0;
@@ -38,6 +51,7 @@ export function EmotionMap({ report, activeWindow, comparisonWindow, selected, o
             const cy = -emotion.arousal * 92;
             const isSelected = selected === category;
 
+            const { background, border, color } = moodColorRGBA(emotion.valence, emotion.arousal, 0.22);
             return (
               <g key={category}>
                 <circle className="comparison-dot" cx={cx + comparisonScore * 12} cy={cy} r={3 + comparisonScore * 14} />
@@ -47,10 +61,10 @@ export function EmotionMap({ report, activeWindow, comparisonWindow, selected, o
                     cx={cx}
                     cy={cy}
                     r={radius}
-                    style={{ '--dot-color': emotion.color } as React.CSSProperties}
+                    style={{ fill: background, stroke: border } as React.CSSProperties}
                   />
                 </button>
-                <text className="dot-label" x={cx} y={cy - radius - 5} textAnchor="middle">
+                <text className="dot-label" x={cx} y={cy - radius - 5} textAnchor="middle" style={{ fill: color }}>
                   {emotion.short}
                 </text>
               </g>

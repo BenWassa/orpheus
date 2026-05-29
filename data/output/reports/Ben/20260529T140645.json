@@ -1,0 +1,757 @@
+{
+  "clusters": [
+    {
+      "centroid_avd": [
+        0.634,
+        0.681,
+        0.599
+      ],
+      "dominant_emotions": [
+        {
+          "category": "nostalgia_longing",
+          "weight": 0.185
+        },
+        {
+          "category": "anger_defiance",
+          "weight": 0.184
+        },
+        {
+          "category": "tension_anxiety",
+          "weight": 0.171
+        }
+      ],
+      "dominant_themes": [
+        {
+          "category": "heartbreak_loss",
+          "weight": 0.193
+        },
+        {
+          "category": "hedonism_escape",
+          "weight": 0.154
+        },
+        {
+          "category": "adversity_resilience",
+          "weight": 0.133
+        }
+      ],
+      "label": "energetic bright",
+      "share_of_listening": "approximately 49%",
+      "track_count": 53
+    },
+    {
+      "centroid_avd": [
+        0.241,
+        0.391,
+        0.943
+      ],
+      "dominant_emotions": [
+        {
+          "category": "nostalgia_longing",
+          "weight": 0.186
+        },
+        {
+          "category": "tension_anxiety",
+          "weight": 0.146
+        },
+        {
+          "category": "anger_defiance",
+          "weight": 0.135
+        }
+      ],
+      "dominant_themes": [
+        {
+          "category": "heartbreak_loss",
+          "weight": 0.15
+        },
+        {
+          "category": "hedonism_escape",
+          "weight": 0.134
+        },
+        {
+          "category": "interpersonal_devotion",
+          "weight": 0.131
+        }
+      ],
+      "label": "introspective core",
+      "share_of_listening": "approximately 8%",
+      "track_count": 8
+    },
+    {
+      "centroid_avd": [
+        0.32,
+        0.609,
+        0.575
+      ],
+      "dominant_emotions": [
+        {
+          "category": "nostalgia_longing",
+          "weight": 0.188
+        },
+        {
+          "category": "tension_anxiety",
+          "weight": 0.171
+        },
+        {
+          "category": "anger_defiance",
+          "weight": 0.165
+        }
+      ],
+      "dominant_themes": [
+        {
+          "category": "heartbreak_loss",
+          "weight": 0.229
+        },
+        {
+          "category": "adversity_resilience",
+          "weight": 0.137
+        },
+        {
+          "category": "hedonism_escape",
+          "weight": 0.127
+        }
+      ],
+      "label": "intense dark",
+      "share_of_listening": "approximately 42%",
+      "track_count": 45
+    }
+  ],
+  "clusters_status": "ok",
+  "co_occurrences": [
+    {
+      "expected": 16.1,
+      "narrative": "Peacefulness and interpersonal devotion co-occur frequently in your listening.",
+      "observed": 40,
+      "pair": [
+        "peacefulness",
+        "interpersonal_devotion"
+      ],
+      "strength": "strong"
+    },
+    {
+      "expected": 23.6,
+      "narrative": "Tenderness and place and heritage co-occur more often than separately in your listening.",
+      "observed": 46,
+      "pair": [
+        "tenderness",
+        "place_heritage"
+      ],
+      "strength": "moderate"
+    },
+    {
+      "expected": 37.5,
+      "narrative": "Tenderness and interpersonal devotion co-occur more often than separately in your listening.",
+      "observed": 72,
+      "pair": [
+        "tenderness",
+        "interpersonal_devotion"
+      ],
+      "strength": "moderate"
+    },
+    {
+      "expected": 22.2,
+      "narrative": "Peacefulness and adversity and resilience co-occur more often than separately in your listening.",
+      "observed": 41,
+      "pair": [
+        "peacefulness",
+        "adversity_resilience"
+      ],
+      "strength": "moderate"
+    },
+    {
+      "expected": 102.9,
+      "narrative": "Anger and defiance and status and ambition co-occur more often than separately in your listening.",
+      "observed": 157,
+      "pair": [
+        "anger_defiance",
+        "status_ambition"
+      ],
+      "strength": "moderate"
+    },
+    {
+      "expected": 57.2,
+      "narrative": "Joyful activation and interpersonal devotion co-occur more often than separately in your listening.",
+      "observed": 87,
+      "pair": [
+        "joyful_activation",
+        "interpersonal_devotion"
+      ],
+      "strength": "moderate"
+    },
+    {
+      "expected": 14.5,
+      "narrative": "Tension and anxiety and existentialism and spirituality co-occur more often than separately in your listening.",
+      "observed": 22,
+      "pair": [
+        "tension_anxiety",
+        "existentialism_spirituality"
+      ],
+      "strength": "moderate"
+    }
+  ],
+  "generated_at": "2026-05-29T14:06:45.570823+00:00",
+  "model_version": "facebook/bart-large-mnli+sentence-transformers/all-mpnet-base-v2",
+  "safety_flags": [],
+  "shifts": [
+    {
+      "axis": "theme",
+      "category": "status_ambition",
+      "delta": -0.077,
+      "direction": "faded",
+      "narrative": "Status and ambition has faded from recent listening relative to the long-term pattern."
+    },
+    {
+      "axis": "theme",
+      "category": "identity_autonomy",
+      "delta": -0.062,
+      "direction": "faded",
+      "narrative": "Identity and autonomy has faded from recent listening relative to the long-term pattern."
+    },
+    {
+      "axis": "theme",
+      "category": "heartbreak_loss",
+      "delta": 0.057,
+      "direction": "elevated",
+      "narrative": "Heartbreak and loss is elevated in recent listening compared to the long-term baseline."
+    },
+    {
+      "axis": "theme",
+      "category": "existentialism_spirituality",
+      "delta": 0.043,
+      "direction": "elevated",
+      "narrative": "Existentialism and spirituality is elevated in recent listening compared to the long-term baseline."
+    },
+    {
+      "axis": "theme",
+      "category": "place_heritage",
+      "delta": 0.04,
+      "direction": "elevated",
+      "narrative": "Place and heritage is elevated in recent listening compared to the long-term baseline."
+    }
+  ],
+  "trends": [
+    {
+      "axis": "theme",
+      "category": "interpersonal_devotion",
+      "direction": "declining",
+      "magnitude": "notable",
+      "narrative": "Interpersonal devotion has been declining steadily."
+    },
+    {
+      "axis": "theme",
+      "category": "heartbreak_loss",
+      "direction": "spiking",
+      "magnitude": "notable",
+      "narrative": "Heartbreak and loss has spiked sharply in the most recent listening."
+    },
+    {
+      "axis": "theme",
+      "category": "identity_autonomy",
+      "direction": "declining",
+      "magnitude": "notable",
+      "narrative": "Identity and autonomy has been declining steadily."
+    },
+    {
+      "axis": "theme",
+      "category": "status_ambition",
+      "direction": "declining",
+      "magnitude": "notable",
+      "narrative": "Status and ambition has been declining steadily."
+    },
+    {
+      "axis": "theme",
+      "category": "place_heritage",
+      "direction": "spiking",
+      "magnitude": "notable",
+      "narrative": "Place and heritage has spiked sharply in the most recent listening."
+    },
+    {
+      "axis": "theme",
+      "category": "existentialism_spirituality",
+      "direction": "spiking",
+      "magnitude": "notable",
+      "narrative": "Existentialism and spirituality has spiked sharply in the most recent listening."
+    }
+  ],
+  "windows": {
+    "state": {
+      "depth_label": "engaged",
+      "top_artists": [
+        {
+          "artist": "Bailey Zimmerman",
+          "weight": 0.04956306922211543
+        },
+        {
+          "artist": "Bryan Martin",
+          "weight": 0.04216461052371528
+        },
+        {
+          "artist": "Jelly Roll",
+          "weight": 0.04163296478504994
+        },
+        {
+          "artist": "Kenny Rogers",
+          "weight": 0.041462723822301976
+        },
+        {
+          "artist": "Uncle Lucius",
+          "weight": 0.041452217861117975
+        }
+      ],
+      "top_emotions": [
+        {
+          "category": "tension_anxiety",
+          "prevalence": "high"
+        },
+        {
+          "category": "nostalgia_longing",
+          "prevalence": "high"
+        },
+        {
+          "category": "anger_defiance",
+          "prevalence": "moderate"
+        },
+        {
+          "category": "sadness_melancholy",
+          "prevalence": "moderate"
+        },
+        {
+          "category": "triumphant_power",
+          "prevalence": "moderate"
+        },
+        {
+          "category": "tenderness",
+          "prevalence": "moderate"
+        },
+        {
+          "category": "joyful_activation",
+          "prevalence": "present"
+        },
+        {
+          "category": "peacefulness",
+          "prevalence": "present"
+        }
+      ],
+      "top_themes": [
+        {
+          "category": "heartbreak_loss",
+          "prevalence": "high"
+        },
+        {
+          "category": "adversity_resilience",
+          "prevalence": "high"
+        },
+        {
+          "category": "hedonism_escape",
+          "prevalence": "moderate"
+        },
+        {
+          "category": "place_heritage",
+          "prevalence": "moderate"
+        },
+        {
+          "category": "existentialism_spirituality",
+          "prevalence": "moderate"
+        },
+        {
+          "category": "interpersonal_devotion",
+          "prevalence": "moderate"
+        },
+        {
+          "category": "identity_autonomy",
+          "prevalence": "present"
+        },
+        {
+          "category": "status_ambition",
+          "prevalence": "present"
+        }
+      ],
+      "top_tracks": [
+        {
+          "album": "Different Night Same Rodeo",
+          "artist": "Bailey Zimmerman",
+          "depth_label": "engaged",
+          "depth_score": 0.5840099707025928,
+          "emotion_scores": {
+            "anger_defiance": 0.2789869282315873,
+            "joyful_activation": 0.0052464316243991515,
+            "nostalgia_longing": 0.06555797375536489,
+            "peacefulness": 0.003355802451901447,
+            "sadness_melancholy": 0.1526049172706518,
+            "tenderness": 0.010430128389428585,
+            "tension_anxiety": 0.3218298168451115,
+            "triumphant_power": 0.1619880014315553
+          },
+          "name": "Backup Plan (feat. Luke Combs)",
+          "theme_scores": {
+            "adversity_resilience": 0.2604983956149294,
+            "existentialism_spirituality": 0.10223979627188005,
+            "heartbreak_loss": 0.19431757086997914,
+            "hedonism_escape": 0.04467379698878642,
+            "identity_autonomy": 0.11174254131351202,
+            "interpersonal_devotion": 0.08743616056198898,
+            "place_heritage": 0.08786909841993756,
+            "status_ambition": 0.11122263995898644
+          },
+          "uri": "spotify:track:6BZaRf4Zh9Y07qnELLboGu",
+          "weight": 0.04952784009918523
+        },
+        {
+          "album": "Poets & Old Souls",
+          "artist": "Bryan Martin",
+          "depth_label": "engaged",
+          "depth_score": 0.5462926373503172,
+          "emotion_scores": {
+            "anger_defiance": 0.22023733437846468,
+            "joyful_activation": 0.16174791242749179,
+            "nostalgia_longing": 0.22664191739657552,
+            "peacefulness": 0.00026343930436289933,
+            "sadness_melancholy": 0.05710601398161131,
+            "tenderness": 0.005685709014201164,
+            "tension_anxiety": 0.16453845990404595,
+            "triumphant_power": 0.1637792135932467
+          },
+          "name": "We Ride",
+          "theme_scores": {
+            "adversity_resilience": 0.12524139880392146,
+            "existentialism_spirituality": 0.11439683425090319,
+            "heartbreak_loss": 0.2703808797653478,
+            "hedonism_escape": 0.339972223338918,
+            "identity_autonomy": 0.014854524688049502,
+            "interpersonal_devotion": 0.04373282235371756,
+            "place_heritage": 0.09142131679914248,
+            "status_ambition": 0.0
+          },
+          "uri": "spotify:track:72kGuWpRiuA149Bn5lDkIO",
+          "weight": 0.04216461052371528
+        },
+        {
+          "album": "Whitsitt Chapel",
+          "artist": "Jelly Roll",
+          "depth_label": "engaged",
+          "depth_score": 0.37139794158114825,
+          "emotion_scores": {
+            "anger_defiance": 0.13106893052240587,
+            "joyful_activation": 0.0891510959737891,
+            "nostalgia_longing": 0.17033204802696766,
+            "peacefulness": 0.010425344308973407,
+            "sadness_melancholy": 0.10623741085303234,
+            "tenderness": 0.11117613766569645,
+            "tension_anxiety": 0.20284016792671922,
+            "triumphant_power": 0.17876886472241596
+          },
+          "name": "Need A Favor",
+          "theme_scores": {
+            "adversity_resilience": 0.2766822098046036,
+            "existentialism_spirituality": 0.3649408723456026,
+            "heartbreak_loss": 0.3583769178497938,
+            "hedonism_escape": 0.0,
+            "identity_autonomy": 0.0,
+            "interpersonal_devotion": 0.0,
+            "place_heritage": 0.0,
+            "status_ambition": 0.0
+          },
+          "uri": "spotify:track:07on0OB2cdPt79IFsgdRUy",
+          "weight": 0.04163296478504994
+        },
+        {
+          "album": "The Gambler",
+          "artist": "Kenny Rogers",
+          "depth_label": "engaged",
+          "depth_score": 0.5738090084584607,
+          "emotion_scores": {
+            "anger_defiance": 0.027502147743175206,
+            "joyful_activation": 0.0024074814212533473,
+            "nostalgia_longing": 0.23041455836606212,
+            "peacefulness": 0.1351041285192657,
+            "sadness_melancholy": 0.18685774223111806,
+            "tenderness": 0.09964798504810071,
+            "tension_anxiety": 0.2158193519946651,
+            "triumphant_power": 0.10224660467635975
+          },
+          "name": "The Gambler",
+          "theme_scores": {
+            "adversity_resilience": 0.23839831321676294,
+            "existentialism_spirituality": 0.11575378225062452,
+            "heartbreak_loss": 0.2621145610474067,
+            "hedonism_escape": 0.16860772421013162,
+            "identity_autonomy": 0.0,
+            "interpersonal_devotion": 0.025581773389118656,
+            "place_heritage": 0.05071697191836987,
+            "status_ambition": 0.13882687396758567
+          },
+          "uri": "spotify:track:5KqldkCunQ2rWxruMEtGh0",
+          "weight": 0.041462723822301976
+        },
+        {
+          "album": "And You Are Me",
+          "artist": "Uncle Lucius",
+          "depth_label": "immersive",
+          "depth_score": 0.739937021512878,
+          "emotion_scores": {
+            "anger_defiance": 0.19617585051888553,
+            "joyful_activation": 0.010001535263453902,
+            "nostalgia_longing": 0.16000257751596267,
+            "peacefulness": 5.80124972075435e-05,
+            "sadness_melancholy": 0.23546860498073127,
+            "tenderness": 0.021462860073017478,
+            "tension_anxiety": 0.20411182578393483,
+            "triumphant_power": 0.17271873336680674
+          },
+          "name": "Keep The Wolves Away",
+          "theme_scores": {
+            "adversity_resilience": 0.19330226214846075,
+            "existentialism_spirituality": 0.06367140682351244,
+            "heartbreak_loss": 0.21387921038195365,
+            "hedonism_escape": 0.10664030165628408,
+            "identity_autonomy": 0.09077799478328606,
+            "interpersonal_devotion": 0.08763640741615958,
+            "place_heritage": 0.16438316925882981,
+            "status_ambition": 0.07970924753151364
+          },
+          "uri": "spotify:track:1YzIpqwnj5M8qylwn1Tr9Z",
+          "weight": 0.041452217861117975
+        }
+      ]
+    },
+    "trait": {
+      "depth_label": "engaged",
+      "top_artists": [
+        {
+          "artist": "J. Cole",
+          "weight": 15.931176680624935
+        },
+        {
+          "artist": "BigXthaPlug",
+          "weight": 11.622692020084642
+        },
+        {
+          "artist": "Mobb Deep",
+          "weight": 9.623355971216533
+        },
+        {
+          "artist": "Pop Smoke",
+          "weight": 8.255599100826583
+        },
+        {
+          "artist": "50 Cent",
+          "weight": 7.011088034150174
+        }
+      ],
+      "top_emotions": [
+        {
+          "category": "nostalgia_longing",
+          "prevalence": "high"
+        },
+        {
+          "category": "tension_anxiety",
+          "prevalence": "high"
+        },
+        {
+          "category": "anger_defiance",
+          "prevalence": "high"
+        },
+        {
+          "category": "triumphant_power",
+          "prevalence": "moderate"
+        },
+        {
+          "category": "sadness_melancholy",
+          "prevalence": "moderate"
+        },
+        {
+          "category": "joyful_activation",
+          "prevalence": "moderate"
+        },
+        {
+          "category": "tenderness",
+          "prevalence": "present"
+        },
+        {
+          "category": "peacefulness",
+          "prevalence": "present"
+        }
+      ],
+      "top_themes": [
+        {
+          "category": "heartbreak_loss",
+          "prevalence": "high"
+        },
+        {
+          "category": "hedonism_escape",
+          "prevalence": "moderate"
+        },
+        {
+          "category": "adversity_resilience",
+          "prevalence": "moderate"
+        },
+        {
+          "category": "status_ambition",
+          "prevalence": "moderate"
+        },
+        {
+          "category": "identity_autonomy",
+          "prevalence": "moderate"
+        },
+        {
+          "category": "interpersonal_devotion",
+          "prevalence": "moderate"
+        },
+        {
+          "category": "place_heritage",
+          "prevalence": "moderate"
+        },
+        {
+          "category": "existentialism_spirituality",
+          "prevalence": "present"
+        }
+      ],
+      "top_tracks": [
+        {
+          "album": "The Infamous",
+          "artist": "Mobb Deep",
+          "depth_label": "engaged",
+          "depth_score": 0.6205092496524658,
+          "emotion_scores": {
+            "anger_defiance": 0.32294961164782493,
+            "joyful_activation": 0.000703662890953193,
+            "nostalgia_longing": 0.07166838184016691,
+            "peacefulness": 7.403255122329329e-05,
+            "sadness_melancholy": 0.17535388683571432,
+            "tenderness": 0.0005583923091157995,
+            "tension_anxiety": 0.3291621560770579,
+            "triumphant_power": 0.0995298758479437
+          },
+          "name": "Survival of the Fittest",
+          "theme_scores": {
+            "adversity_resilience": 0.21623029813634878,
+            "existentialism_spirituality": 0.0541727530546154,
+            "heartbreak_loss": 0.1665258976648355,
+            "hedonism_escape": 0.16647937296827092,
+            "identity_autonomy": 0.12558119211864352,
+            "interpersonal_devotion": 0.016958781493482507,
+            "place_heritage": 0.04755947529003037,
+            "status_ambition": 0.206492229273773
+          },
+          "uri": "spotify:track:7N1Vjtzr1lmmCW9iasQ8YO",
+          "weight": 3.1940047183247238
+        },
+        {
+          "album": "AMAR",
+          "artist": "BigXthaPlug",
+          "depth_label": "engaged",
+          "depth_score": 0.563315289525234,
+          "emotion_scores": {
+            "anger_defiance": 0.15007789187065923,
+            "joyful_activation": 0.04204711035190357,
+            "nostalgia_longing": 0.13862762490846373,
+            "peacefulness": 0.013680123805965188,
+            "sadness_melancholy": 0.14675826058737781,
+            "tenderness": 0.19339841044308845,
+            "tension_anxiety": 0.1559795475202553,
+            "triumphant_power": 0.1594310305122867
+          },
+          "name": "Levels",
+          "theme_scores": {
+            "adversity_resilience": 0.2569273900136817,
+            "existentialism_spirituality": 0.0,
+            "heartbreak_loss": 0.19209155739549014,
+            "hedonism_escape": 0.16360623384369427,
+            "identity_autonomy": 0.1511718135686681,
+            "interpersonal_devotion": 0.05377135142153345,
+            "place_heritage": 0.04897533271419539,
+            "status_ambition": 0.133456321042737
+          },
+          "uri": "spotify:track:6vOeokRJNZjouabFGDLH1C",
+          "weight": 3.107464333579053
+        },
+        {
+          "album": "Unforgettable",
+          "artist": "Nat King Cole",
+          "depth_label": "engaged",
+          "depth_score": 0.6101304434509847,
+          "emotion_scores": {
+            "anger_defiance": 7.522412687219128e-05,
+            "joyful_activation": 0.2377343263796319,
+            "nostalgia_longing": 0.27079487069952346,
+            "peacefulness": 0.029015863491135507,
+            "sadness_melancholy": 0.0017891010404051974,
+            "tenderness": 0.2501479200023935,
+            "tension_anxiety": 0.022058896875844343,
+            "triumphant_power": 0.18838379738419395
+          },
+          "name": "Unforgettable",
+          "theme_scores": {
+            "adversity_resilience": 0.07349022549525627,
+            "existentialism_spirituality": 0.013442382001147299,
+            "heartbreak_loss": 0.24600945451262668,
+            "hedonism_escape": 0.04254052329345006,
+            "identity_autonomy": 0.08180234914931701,
+            "interpersonal_devotion": 0.31737939192040954,
+            "place_heritage": 0.21225854709120726,
+            "status_ambition": 0.013077126536585916
+          },
+          "uri": "spotify:track:648TTtYB0bH0P8Hfy0FmkL",
+          "weight": 3.0090452877828398
+        },
+        {
+          "album": "Billie Holiday",
+          "artist": "Billie Holiday",
+          "depth_label": "engaged",
+          "depth_score": 0.5894756785298304,
+          "emotion_scores": {
+            "anger_defiance": 0.006903437326883581,
+            "joyful_activation": 0.17685398700311952,
+            "nostalgia_longing": 0.1939444845024202,
+            "peacefulness": 0.17900501875459585,
+            "sadness_melancholy": 0.06734996263930788,
+            "tenderness": 0.1928670861531596,
+            "tension_anxiety": 0.020869694988682897,
+            "triumphant_power": 0.1622063286318305
+          },
+          "name": "I'll Be Seeing You",
+          "theme_scores": {
+            "adversity_resilience": 0.08320938982709318,
+            "existentialism_spirituality": 0.08110700740221168,
+            "heartbreak_loss": 0.17982854027960288,
+            "hedonism_escape": 0.1513782206243541,
+            "identity_autonomy": 0.06298452307578414,
+            "interpersonal_devotion": 0.14820426083535873,
+            "place_heritage": 0.28440971706466256,
+            "status_ambition": 0.008878340890932784
+          },
+          "uri": "spotify:track:4smkJW6uzoHxGReZqqwHS5",
+          "weight": 2.9952463343188134
+        },
+        {
+          "album": "Satchmo Serenades",
+          "artist": "Louis Armstrong",
+          "depth_label": "immersive",
+          "depth_score": 0.7596490758365295,
+          "emotion_scores": {
+            "anger_defiance": 0.01705051508660531,
+            "joyful_activation": 0.30808246211967427,
+            "nostalgia_longing": 0.5727444242189812,
+            "peacefulness": 0.0003324664083642833,
+            "sadness_melancholy": 0.02872360178978115,
+            "tenderness": 0.016256094279350302,
+            "tension_anxiety": 0.01921330848760315,
+            "triumphant_power": 0.037597127609640395
+          },
+          "name": "La vie en rose - Single Version",
+          "theme_scores": {
+            "adversity_resilience": 0.11743701556140741,
+            "existentialism_spirituality": 0.06079250087984778,
+            "heartbreak_loss": 0.25251128524062294,
+            "hedonism_escape": 0.15663531812057113,
+            "identity_autonomy": 0.060081802894398205,
+            "interpersonal_devotion": 0.14423561841039786,
+            "place_heritage": 0.1524808917358028,
+            "status_ambition": 0.0558255671569519
+          },
+          "uri": "spotify:track:0zDVclPMSsjeyvbnqhWOmt",
+          "weight": 2.981822744223534
+        }
+      ]
+    }
+  }
+}

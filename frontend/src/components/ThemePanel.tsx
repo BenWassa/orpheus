@@ -1,4 +1,5 @@
 import { THEME_ORDER, THEMES } from '../taxonomy';
+import { moodColorRGBA } from '../lib/moodColor';
 import type { ThemeCategory, WindowScores } from '../types';
 
 interface ThemePanelProps {
@@ -31,8 +32,15 @@ export function ThemePanel({ activeWindow, comparisonWindow, selected, onSelect 
               key={category}
               type="button"
               onClick={() => onSelect(isSelected ? null : category)}
+              title={`${theme.label} — val:${(theme.valence ?? 0).toFixed(2)}, ar:${(theme.arousal ?? 0).toFixed(2)}`}
             >
-              <span className="theme-swatch" style={{ background: theme.color }} />
+              {
+                // use moodColor for swatch
+              }
+              <span
+                className="theme-swatch"
+                style={{ background: moodColorRGBA(theme.valence ?? 0, theme.arousal ?? 0, 0.16).background }}
+              />
               <span className="theme-main">
                 <strong>{theme.label}</strong>
                 <span>{isSelected ? theme.description : `${(score * 100).toFixed(0)}% of recent listening`}</span>

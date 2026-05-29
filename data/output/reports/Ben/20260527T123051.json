@@ -1,0 +1,24 @@
+{
+  "clusters": [],
+  "co_occurrences": [],
+  "generated_at": "2026-05-27T12:30:51.441351+00:00",
+  "model_version": "facebook/bart-large-mnli+sentence-transformers/all-mpnet-base-v2",
+  "safety_flags": [],
+  "shifts": [],
+  "windows": {
+    "state": {
+      "depth_label": "engaged",
+      "top_artists": [],
+      "top_emotions": [],
+      "top_themes": [],
+      "top_tracks": []
+    },
+    "trait": {
+      "depth_label": "engaged",
+      "top_artists": [],
+      "top_emotions": [],
+      "top_themes": [],
+      "top_tracks": []
+    }
+  }
+}

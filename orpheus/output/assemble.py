@@ -77,12 +77,19 @@ def _format_window(window: dict, config: OrpheusConfig) -> dict:
         if score > 0.03
     ]
 
+    # Enrich top tracks with depth labels
+    top_tracks = []
+    for t in window.get("top_tracks", [])[:9]:
+        depth_score = t.get("depth_score", 0.5)
+        t["depth_label"] = depth_label_from_score(depth_score, config)
+        top_tracks.append(t)
+
     return {
         "top_emotions": top_emotions,
         "top_themes": top_themes,
         "depth_label": depth_label_from_score(window["avg_depth"], config),
         "top_artists": window.get("top_artists", [])[:5],
-        "top_tracks": window.get("top_tracks", [])[:5],
+        "top_tracks": top_tracks,
     }
 
 

@@ -1,0 +1,461 @@
+{
+  "clusters": [],
+  "co_occurrences": [
+    {
+      "expected": 16.1,
+      "narrative": "Peacefulness and interpersonal devotion co-occur frequently in your listening.",
+      "observed": 40,
+      "pair": [
+        "peacefulness",
+        "interpersonal_devotion"
+      ],
+      "strength": "strong"
+    },
+    {
+      "expected": 23.6,
+      "narrative": "Tenderness and place and heritage co-occur more often than separately in your listening.",
+      "observed": 46,
+      "pair": [
+        "tenderness",
+        "place_heritage"
+      ],
+      "strength": "moderate"
+    },
+    {
+      "expected": 37.5,
+      "narrative": "Tenderness and interpersonal devotion co-occur more often than separately in your listening.",
+      "observed": 72,
+      "pair": [
+        "tenderness",
+        "interpersonal_devotion"
+      ],
+      "strength": "moderate"
+    },
+    {
+      "expected": 22.2,
+      "narrative": "Peacefulness and adversity and resilience co-occur more often than separately in your listening.",
+      "observed": 41,
+      "pair": [
+        "peacefulness",
+        "adversity_resilience"
+      ],
+      "strength": "moderate"
+    },
+    {
+      "expected": 102.9,
+      "narrative": "Anger and defiance and status and ambition co-occur more often than separately in your listening.",
+      "observed": 157,
+      "pair": [
+        "anger_defiance",
+        "status_ambition"
+      ],
+      "strength": "moderate"
+    },
+    {
+      "expected": 57.2,
+      "narrative": "Joyful activation and interpersonal devotion co-occur more often than separately in your listening.",
+      "observed": 87,
+      "pair": [
+        "joyful_activation",
+        "interpersonal_devotion"
+      ],
+      "strength": "moderate"
+    },
+    {
+      "expected": 14.5,
+      "narrative": "Tension and anxiety and existentialism and spirituality co-occur more often than separately in your listening.",
+      "observed": 22,
+      "pair": [
+        "tension_anxiety",
+        "existentialism_spirituality"
+      ],
+      "strength": "moderate"
+    }
+  ],
+  "generated_at": "2026-05-29T00:47:18.586748+00:00",
+  "model_version": "facebook/bart-large-mnli+sentence-transformers/all-mpnet-base-v2",
+  "safety_flags": [],
+  "shifts": [
+    {
+      "axis": "theme",
+      "category": "status_ambition",
+      "delta": -0.077,
+      "direction": "faded",
+      "narrative": "Status and ambition has faded from recent listening relative to the long-term pattern."
+    },
+    {
+      "axis": "theme",
+      "category": "identity_autonomy",
+      "delta": -0.062,
+      "direction": "faded",
+      "narrative": "Identity and autonomy has faded from recent listening relative to the long-term pattern."
+    },
+    {
+      "axis": "theme",
+      "category": "heartbreak_loss",
+      "delta": 0.057,
+      "direction": "elevated",
+      "narrative": "Heartbreak and loss is elevated in recent listening compared to the long-term baseline."
+    },
+    {
+      "axis": "theme",
+      "category": "existentialism_spirituality",
+      "delta": 0.043,
+      "direction": "elevated",
+      "narrative": "Existentialism and spirituality is elevated in recent listening compared to the long-term baseline."
+    },
+    {
+      "axis": "theme",
+      "category": "place_heritage",
+      "delta": 0.04,
+      "direction": "elevated",
+      "narrative": "Place and heritage is elevated in recent listening compared to the long-term baseline."
+    }
+  ],
+  "trends": [
+    {
+      "axis": "emotion",
+      "category": "joyful_activation",
+      "direction": "declining",
+      "magnitude": "notable",
+      "narrative": "Joyful activation has been declining steadily."
+    },
+    {
+      "axis": "emotion",
+      "category": "triumphant_power",
+      "direction": "declining",
+      "magnitude": "notable",
+      "narrative": "Triumphant power has been declining steadily."
+    },
+    {
+      "axis": "emotion",
+      "category": "peacefulness",
+      "direction": "declining",
+      "magnitude": "notable",
+      "narrative": "Peacefulness has been declining steadily."
+    },
+    {
+      "axis": "emotion",
+      "category": "tenderness",
+      "direction": "declining",
+      "magnitude": "notable",
+      "narrative": "Tenderness has been declining steadily."
+    },
+    {
+      "axis": "emotion",
+      "category": "nostalgia_longing",
+      "direction": "declining",
+      "magnitude": "notable",
+      "narrative": "Nostalgia and longing has been declining steadily."
+    },
+    {
+      "axis": "emotion",
+      "category": "sadness_melancholy",
+      "direction": "declining",
+      "magnitude": "notable",
+      "narrative": "Sadness and melancholy has been declining steadily."
+    },
+    {
+      "axis": "emotion",
+      "category": "tension_anxiety",
+      "direction": "declining",
+      "magnitude": "notable",
+      "narrative": "Tension and anxiety has been declining steadily."
+    },
+    {
+      "axis": "emotion",
+      "category": "anger_defiance",
+      "direction": "declining",
+      "magnitude": "notable",
+      "narrative": "Anger and defiance has been declining steadily."
+    },
+    {
+      "axis": "theme",
+      "category": "interpersonal_devotion",
+      "direction": "declining",
+      "magnitude": "notable",
+      "narrative": "Interpersonal devotion has been declining steadily."
+    },
+    {
+      "axis": "theme",
+      "category": "heartbreak_loss",
+      "direction": "declining",
+      "magnitude": "notable",
+      "narrative": "Heartbreak and loss has been declining steadily."
+    },
+    {
+      "axis": "theme",
+      "category": "adversity_resilience",
+      "direction": "declining",
+      "magnitude": "notable",
+      "narrative": "Adversity and resilience has been declining steadily."
+    },
+    {
+      "axis": "theme",
+      "category": "identity_autonomy",
+      "direction": "declining",
+      "magnitude": "notable",
+      "narrative": "Identity and autonomy has been declining steadily."
+    },
+    {
+      "axis": "theme",
+      "category": "status_ambition",
+      "direction": "declining",
+      "magnitude": "notable",
+      "narrative": "Status and ambition has been declining steadily."
+    },
+    {
+      "axis": "theme",
+      "category": "hedonism_escape",
+      "direction": "declining",
+      "magnitude": "notable",
+      "narrative": "Hedonism and escape has been declining steadily."
+    },
+    {
+      "axis": "theme",
+      "category": "place_heritage",
+      "direction": "declining",
+      "magnitude": "notable",
+      "narrative": "Place and heritage has been declining steadily."
+    },
+    {
+      "axis": "theme",
+      "category": "existentialism_spirituality",
+      "direction": "declining",
+      "magnitude": "notable",
+      "narrative": "Existentialism and spirituality has been declining steadily."
+    }
+  ],
+  "windows": {
+    "state": {
+      "depth_label": "engaged",
+      "top_artists": [
+        {
+          "artist": "Bailey Zimmerman",
+          "weight": 0.05634637802242775
+        },
+        {
+          "artist": "Bryan Martin",
+          "weight": 0.047935350272407785
+        },
+        {
+          "artist": "Jelly Roll",
+          "weight": 0.04733094234862483
+        },
+        {
+          "artist": "Kenny Rogers",
+          "weight": 0.04713740183968438
+        },
+        {
+          "artist": "Uncle Lucius",
+          "weight": 0.047125458009940696
+        }
+      ],
+      "top_emotions": [
+        {
+          "category": "tension_anxiety",
+          "prevalence": "high"
+        },
+        {
+          "category": "nostalgia_longing",
+          "prevalence": "high"
+        },
+        {
+          "category": "anger_defiance",
+          "prevalence": "moderate"
+        },
+        {
+          "category": "sadness_melancholy",
+          "prevalence": "moderate"
+        },
+        {
+          "category": "triumphant_power",
+          "prevalence": "moderate"
+        },
+        {
+          "category": "tenderness",
+          "prevalence": "moderate"
+        },
+        {
+          "category": "joyful_activation",
+          "prevalence": "present"
+        },
+        {
+          "category": "peacefulness",
+          "prevalence": "present"
+        }
+      ],
+      "top_themes": [
+        {
+          "category": "heartbreak_loss",
+          "prevalence": "high"
+        },
+        {
+          "category": "adversity_resilience",
+          "prevalence": "high"
+        },
+        {
+          "category": "hedonism_escape",
+          "prevalence": "moderate"
+        },
+        {
+          "category": "place_heritage",
+          "prevalence": "moderate"
+        },
+        {
+          "category": "existentialism_spirituality",
+          "prevalence": "moderate"
+        },
+        {
+          "category": "interpersonal_devotion",
+          "prevalence": "moderate"
+        },
+        {
+          "category": "identity_autonomy",
+          "prevalence": "present"
+        },
+        {
+          "category": "status_ambition",
+          "prevalence": "present"
+        }
+      ],
+      "top_tracks": [
+        {
+          "track_uri": "spotify:track:6BZaRf4Zh9Y07qnELLboGu",
+          "weight": 0.0563063273655742
+        },
+        {
+          "track_uri": "spotify:track:72kGuWpRiuA149Bn5lDkIO",
+          "weight": 0.047935350272407785
+        },
+        {
+          "track_uri": "spotify:track:07on0OB2cdPt79IFsgdRUy",
+          "weight": 0.04733094234862483
+        },
+        {
+          "track_uri": "spotify:track:5KqldkCunQ2rWxruMEtGh0",
+          "weight": 0.04713740183968438
+        },
+        {
+          "track_uri": "spotify:track:1YzIpqwnj5M8qylwn1Tr9Z",
+          "weight": 0.047125458009940696
+        }
+      ]
+    },
+    "trait": {
+      "depth_label": "engaged",
+      "top_artists": [
+        {
+          "artist": "J. Cole",
+          "weight": 15.999439965739791
+        },
+        {
+          "artist": "BigXthaPlug",
+          "weight": 11.672493937110277
+        },
+        {
+          "artist": "Mobb Deep",
+          "weight": 9.66459096004343
+        },
+        {
+          "artist": "Pop Smoke",
+          "weight": 8.290973406598933
+        },
+        {
+          "artist": "50 Cent",
+          "weight": 7.041129751157974
+        }
+      ],
+      "top_emotions": [
+        {
+          "category": "nostalgia_longing",
+          "prevalence": "high"
+        },
+        {
+          "category": "tension_anxiety",
+          "prevalence": "high"
+        },
+        {
+          "category": "anger_defiance",
+          "prevalence": "high"
+        },
+        {
+          "category": "triumphant_power",
+          "prevalence": "moderate"
+        },
+        {
+          "category": "sadness_melancholy",
+          "prevalence": "moderate"
+        },
+        {
+          "category": "joyful_activation",
+          "prevalence": "moderate"
+        },
+        {
+          "category": "tenderness",
+          "prevalence": "present"
+        },
+        {
+          "category": "peacefulness",
+          "prevalence": "present"
+        }
+      ],
+      "top_themes": [
+        {
+          "category": "heartbreak_loss",
+          "prevalence": "high"
+        },
+        {
+          "category": "hedonism_escape",
+          "prevalence": "moderate"
+        },
+        {
+          "category": "adversity_resilience",
+          "prevalence": "moderate"
+        },
+        {
+          "category": "status_ambition",
+          "prevalence": "moderate"
+        },
+        {
+          "category": "identity_autonomy",
+          "prevalence": "moderate"
+        },
+        {
+          "category": "interpersonal_devotion",
+          "prevalence": "moderate"
+        },
+        {
+          "category": "place_heritage",
+          "prevalence": "moderate"
+        },
+        {
+          "category": "existentialism_spirituality",
+          "prevalence": "present"
+        }
+      ],
+      "top_tracks": [
+        {
+          "track_uri": "spotify:track:7N1Vjtzr1lmmCW9iasQ8YO",
+          "weight": 3.207690666269194
+        },
+        {
+          "track_uri": "spotify:track:6vOeokRJNZjouabFGDLH1C",
+          "weight": 3.1207794657905588
+        },
+        {
+          "track_uri": "spotify:track:648TTtYB0bH0P8Hfy0FmkL",
+          "weight": 3.02193870554609
+        },
+        {
+          "track_uri": "spotify:track:4smkJW6uzoHxGReZqqwHS5",
+          "weight": 3.0080806251315884
+        },
+        {
+          "track_uri": "spotify:track:0zDVclPMSsjeyvbnqhWOmt",
+          "weight": 2.994599516475296
+        }
+      ]
+    }
+  }
+}

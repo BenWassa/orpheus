@@ -92,53 +92,72 @@ export const EMOTIONS: Record<
   },
 };
 
-export const THEMES: Record<ThemeCategory, { label: string; short: string; color: string; description: string }> = {
+export const THEMES: Record<
+  ThemeCategory,
+  { label: string; short: string; color: string; valence?: number; arousal?: number; description: string }
+> = {
   interpersonal_devotion: {
     label: 'Connection & Devotion',
     short: 'Connection',
     color: 'oklch(0.56 0.13 238)',
+    valence: 0.6,
+    arousal: -0.1,
     description: 'Romantic, familial, and friendly bonding.',
   },
   heartbreak_loss: {
     label: 'Heartbreak & Loss',
     short: 'Loss',
     color: 'oklch(0.58 0.17 28)',
+    valence: -0.7,
+    arousal: -0.2,
     description: 'Relational ending, mourning, and absence.',
   },
   adversity_resilience: {
     label: 'Resilience & Adversity',
     short: 'Resilience',
     color: 'oklch(0.55 0.15 286)',
+    valence: 0.15,
+    arousal: 0.25,
     description: 'Survival, endurance, and standing up through difficult weather.',
   },
   identity_autonomy: {
     label: 'Identity & Autonomy',
     short: 'Identity',
     color: 'oklch(0.68 0.15 74)',
+    valence: 0.2,
+    arousal: 0.05,
     description: 'Self-actualization, anti-conformity, and finding one’s raw truth.',
   },
   status_ambition: {
     label: 'Ambition & Status',
     short: 'Ambition',
     color: 'oklch(0.52 0.15 274)',
+    valence: 0.25,
+    arousal: 0.45,
     description: 'Competitive drive, material elevation, and victory.',
   },
   hedonism_escape: {
     label: 'Pleasure & Escapism',
     short: 'Escape',
     color: 'oklch(0.64 0.15 342)',
+    valence: 0.4,
+    arousal: 0.6,
     description: 'Sensory delight, party dynamics, drift, and urgent fun.',
   },
   place_heritage: {
     label: 'Place & Heritage',
     short: 'Place',
     color: 'oklch(0.64 0.14 136)',
+    valence: 0.3,
+    arousal: -0.05,
     description: 'Hometown roots, memory landmarks, and historical soil.',
   },
   existentialism_spirituality: {
     label: 'Meaning & Spirituality',
     short: 'Meaning',
     color: 'oklch(0.59 0.15 312)',
+    valence: -0.05,
+    arousal: -0.15,
     description: 'Mortality, faith, cosmic scale, and searching for answers.',
   },
 };
