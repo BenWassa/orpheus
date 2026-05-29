@@ -41,6 +41,8 @@ export interface WindowScores {
   depth_label: DepthLabel;
   top_artists: Array<{ artist: string; weight: number }>;
   top_tracks: Track[];
+  from_date?: string; // ISO date string e.g. "2026-03-01"
+  to_date?: string;   // ISO date string e.g. "2026-05-29"
 }
 
 export interface Track {

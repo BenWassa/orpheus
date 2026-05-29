@@ -94,6 +94,8 @@ def _format_window(window: dict, config: OrpheusConfig) -> dict:
         "depth_label": depth_label_from_score(window["avg_depth"], config),
         "top_artists": window.get("top_artists", [])[:5],
         "top_tracks": top_tracks,
+        "from_date": window.get("from_date"),
+        "to_date": window.get("to_date"),
     }
 
 

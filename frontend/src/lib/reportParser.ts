@@ -96,6 +96,8 @@ function normalizeWindow(value: unknown): WindowScores {
     top_emotions: topEmotions,
     top_themes: topThemes,
     depth_label: asDepthLabel(source.depth_label),
+    from_date: typeof source.from_date === 'string' ? source.from_date : undefined,
+    to_date: typeof source.to_date === 'string' ? source.to_date : undefined,
     top_artists: Array.isArray(source.top_artists)
       ? source.top_artists.map((artist) => {
           const row = asRecord(artist);

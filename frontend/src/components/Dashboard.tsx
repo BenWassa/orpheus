@@ -72,7 +72,7 @@ export function Dashboard({ report, onReset, profileName, onReload }: DashboardP
         onReset={onReset}
         onAddData={profileName ? () => setShowAddData(true) : undefined}
       />
-      <ViewToggle value={viewMode} onChange={setViewMode} />
+      <ViewToggle value={viewMode} onChange={setViewMode} stateWindow={report.state} traitWindow={report.trait} />
 
       <div className="reader-layout">
         <EmotionMap

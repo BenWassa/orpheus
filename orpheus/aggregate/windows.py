@@ -135,6 +135,32 @@ def aggregate_window(
         key=lambda x: (-x[1], track_info[x[0]].get("name") or x[0]),
     )[:10]
 
+    # Collect timestamps of plays with positive weight for date range labels
+    from_date: str | None = None
+    to_date: str | None = None
+    dated_plays: list[str] = []
+    for row in rows:
+        t_play = datetime.fromisoformat(row["ts"].replace("Z", "+00:00"))
+        if t_play.tzinfo is None:
+            t_play = t_play.replace(tzinfo=timezone.utc)
+        w0 = engagement_weight(
+            ms_played=row["ms_played"],
+            duration_ms=row["duration_ms"],
+            reason_end=row["reason_end"],
+            shuffle=bool(row["shuffle"]),
+            skipped=bool(row["skipped"]),
+            reason_start=row["reason_start"],
+            engagement_weights=ew_dict,
+        )
+        w = time_decay_weight(t_play, t_now, half_life_days, w0)
+        if w > 0:
+            dated_plays.append(row["ts"])
+
+    if dated_plays:
+        sorted_plays = sorted(dated_plays)
+        from_date = sorted_plays[0][:10]
+        to_date = sorted_plays[-1][:10]
+
     return {
         "emotions": dict(top_emotions),
         "themes": dict(top_themes),
@@ -146,6 +172,8 @@ def aggregate_window(
         ],
         "total_weight": total_weight,
         "play_count": len(rows),
+        "from_date": from_date,
+        "to_date": to_date,
     }
 
 
