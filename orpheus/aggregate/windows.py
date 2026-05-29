@@ -183,25 +183,14 @@ def aggregate_window(
         ),
     )[:10]
 
-    # Collect timestamps of plays with positive weight for date range labels
+    # Date range spans plays within the window's effective lookback
+    # (same cutoff as frequency_start so state/trait show distinct ranges)
+    window_start = t_now - timedelta(days=half_life_days * FREQUENCY_WINDOW_HALF_LIVES)
+    dated_plays: list[str] = [
+        row["ts"] for row in rows if _parse_ts(row["ts"]) >= window_start
+    ]
     from_date: str | None = None
     to_date: str | None = None
-    dated_plays: list[str] = []
-    for row in rows:
-        t_play = _parse_ts(row["ts"])
-        w0 = engagement_weight(
-            ms_played=row["ms_played"],
-            duration_ms=row["duration_ms"],
-            reason_end=row["reason_end"],
-            shuffle=bool(row["shuffle"]),
-            skipped=bool(row["skipped"]),
-            reason_start=row["reason_start"],
-            engagement_weights=ew_dict,
-        )
-        w = time_decay_weight(t_play, t_now, half_life_days, w0)
-        if w > 0:
-            dated_plays.append(row["ts"])
-
     if dated_plays:
         sorted_plays = sorted(dated_plays)
         from_date = sorted_plays[0][:10]
