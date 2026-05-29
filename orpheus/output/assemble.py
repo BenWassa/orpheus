@@ -94,6 +94,13 @@ def _format_window(window: dict, config: OrpheusConfig) -> dict:
     ]
 
     return {
+        # Numeric proportions (already normalized to sum to 1.0 in aggregation).
+        # These are the source of truth for the UI; `top_*` prevalence labels are
+        # a coarse 5-bucket summary kept for backward compatibility. Emit the full
+        # maps (not just the > 0.03 slice) so the frontend can render real shares
+        # and percentage-point deltas instead of quantizing labels back to numbers.
+        "emotion": {cat: round(score, 6) for cat, score in window["emotions"].items()},
+        "theme": {cat: round(score, 6) for cat, score in window["themes"].items()},
         "top_emotions": top_emotions,
         "top_themes": top_themes,
         "depth_label": depth_label_from_score(window["avg_depth"], config),

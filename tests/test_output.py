@@ -84,6 +84,20 @@ def test_assemble_report_prevalence_labels(tmp_config):
     assert nostalgia[0]["prevalence"] == "dominant"
 
 
+def test_assemble_report_emits_numeric_score_maps(tmp_config):
+    report = assemble_report(_make_window(), _make_window(), [], [], [], tmp_config)
+    window = report["windows"]["state"]
+
+    # Full numeric maps are present for every category, not just the top slice.
+    assert set(window["emotion"]) == set(EMOTION_CATEGORIES)
+    assert set(window["theme"]) == set(THEME_CATEGORIES)
+    # Proportions pass through verbatim (not quantized into prevalence buckets).
+    assert window["theme"]["heartbreak_loss"] == round(1.0 / len(THEME_CATEGORIES), 6)
+    # Aggregation normalizes the maps, so they sum to ~1.0.
+    assert abs(sum(window["theme"].values()) - 1.0) < 1e-6
+    assert abs(sum(window["emotion"].values()) - 1.0) < 1e-6
+
+
 def test_assemble_report_copies_tracks_and_defaults_missing_depth(tmp_config):
     state = _make_window()
     source_track = {"uri": "spotify:track:test", "weight": 1.0, "depth_score": None}
