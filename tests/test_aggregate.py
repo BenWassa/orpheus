@@ -191,9 +191,10 @@ class TestPrimaryTracks:
         sad = json.dumps({c: (1.0 if c == "sadness_melancholy" else 0.0) for c in EMOTION_CATEGORIES})
         themes = _scores()[1]
 
+        # Confidence is stored as the scorer's per-axis JSON object.
         for uri, emo, conf in (
-            ("spotify:track:hi", joyful, "0.85"),
-            ("spotify:track:lo", sad, "0.1"),
+            ("spotify:track:hi", joyful, '{"emotion": 0.85, "theme": 0.75, "depth": 0.8}'),
+            ("spotify:track:lo", sad, '{"emotion": 0.1, "theme": 0.1, "depth": 0.5}'),
         ):
             tmp_db.execute(
                 """INSERT INTO tracks

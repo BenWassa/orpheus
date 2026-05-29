@@ -27,19 +27,43 @@ def _is_qualified_frequency_play(ms_played: int | None) -> bool:
     return (ms_played or 0) >= QUALIFIED_LISTEN_MS
 
 
-def _parse_confidence(value) -> float:
-    """Coerce the TEXT confidence column to a [0,1] multiplier.
+def _clamp01(x: float) -> float:
+    return max(0.0, min(1.0, x))
 
-    Missing or unparseable confidence is treated as neutral (1.0) so legacy
-    rows without a confidence value are not silently penalised.
+
+def _confidence_weights(value) -> tuple[float, float, float]:
+    """Per-axis confidence multipliers (emotion, theme, depth), each in [0,1].
+
+    The scorer stores confidence as a JSON object
+    ``{"emotion": .., "theme": .., "depth": ..}``. A bare scalar (string or
+    number) is accepted as a uniform confidence across axes. Anything missing
+    or unparseable is treated as neutral (1.0) so rows without confidence are
+    not silently penalised.
     """
     if value is None:
-        return 1.0
+        return 1.0, 1.0, 1.0
+    # Bare numeric → uniform across axes.
+    if isinstance(value, (int, float)):
+        c = _clamp01(float(value))
+        return c, c, c
     try:
-        c = float(value)
+        parsed = json.loads(value)
     except (TypeError, ValueError):
-        return 1.0
-    return max(0.0, min(1.0, c))
+        try:
+            c = _clamp01(float(value))
+        except (TypeError, ValueError):
+            return 1.0, 1.0, 1.0
+        return c, c, c
+    if isinstance(parsed, dict):
+        return (
+            _clamp01(float(parsed.get("emotion", 1.0))),
+            _clamp01(float(parsed.get("theme", 1.0))),
+            _clamp01(float(parsed.get("depth", 1.0))),
+        )
+    if isinstance(parsed, (int, float)):
+        c = _clamp01(float(parsed))
+        return c, c, c
+    return 1.0, 1.0, 1.0
 
 
 def aggregate_window(
@@ -71,6 +95,7 @@ def aggregate_window(
     emotion_agg = {cat: 0.0 for cat in EMOTION_CATEGORIES}
     theme_agg = {cat: 0.0 for cat in THEME_CATEGORIES}
     depth_weighted_sum = 0.0
+    depth_weight_total = 0.0
     total_weight = 0.0
 
     artist_weights: dict[str, float] = {}
@@ -135,22 +160,28 @@ def aggregate_window(
         if w <= 0:
             continue
 
-        # Down-weight the mood mixture by per-track classification confidence so
-        # that low-confidence scores (e.g. the 0.1 uniform fallback when neither
-        # audio features nor lyrics were available) don't drag every window
-        # toward uniform. Track/artist *ranking* stays on pure engagement (w) —
-        # how much you engaged is independent of how sure we are about the mood.
-        wm = w * _parse_confidence(row["confidence"])
+        # Down-weight each mood axis by its own per-track classification
+        # confidence so that low-confidence scores (e.g. the 0.1 uniform
+        # fallback when neither audio features nor lyrics were available) don't
+        # drag the window toward uniform. Confidence is per-axis (emotion /
+        # theme / depth), so weight each accumulator independently. Track/artist
+        # *ranking* stays on pure engagement (w) — how much you engaged is
+        # independent of how sure we are about the mood.
+        c_emotion, c_theme, c_depth = _confidence_weights(row["confidence"])
+        w_emotion = w * c_emotion
+        w_theme = w * c_theme
+        w_depth = w * c_depth
 
         for cat in EMOTION_CATEGORIES:
-            emotion_agg[cat] += wm * emotions.get(cat, 0.0)
+            emotion_agg[cat] += w_emotion * emotions.get(cat, 0.0)
 
         for cat in THEME_CATEGORIES:
-            theme_agg[cat] += wm * themes.get(cat, 0.0)
+            theme_agg[cat] += w_theme * themes.get(cat, 0.0)
 
         depth = row["depth_score"] or 0.5
-        depth_weighted_sum += wm * depth
-        total_weight += wm
+        depth_weighted_sum += w_depth * depth
+        depth_weight_total += w_depth
+        total_weight += w
 
     emotion_total = sum(emotion_agg.values())
     if emotion_total > 0:
@@ -160,7 +191,7 @@ def aggregate_window(
     if theme_total > 0:
         theme_agg = {k: v / theme_total for k, v in theme_agg.items()}
 
-    avg_depth = depth_weighted_sum / total_weight if total_weight > 0 else 0.5
+    avg_depth = depth_weighted_sum / depth_weight_total if depth_weight_total > 0 else 0.5
 
     top_emotions = sorted(emotion_agg.items(), key=lambda x: x[1], reverse=True)
     top_themes = sorted(theme_agg.items(), key=lambda x: x[1], reverse=True)
