@@ -27,7 +27,9 @@ def aggregate_window(
            FROM plays p
            JOIN tracks t ON p.track_uri = t.track_uri
            JOIN track_scores ts ON p.track_uri = ts.track_uri
-           ORDER BY p.ts DESC"""
+                              AND ts.model_version = ?
+           ORDER BY p.ts DESC""",
+        (config.model_version,),
     ).fetchall()
 
     emotion_agg = {cat: 0.0 for cat in EMOTION_CATEGORIES}
@@ -37,6 +39,7 @@ def aggregate_window(
 
     artist_weights: dict[str, float] = {}
     track_weights: dict[str, float] = {}
+    track_play_counts: dict[str, int] = {}
     track_info: dict[str, dict] = {}
 
     ew_dict = {
@@ -65,21 +68,11 @@ def aggregate_window(
 
         w = time_decay_weight(t_play, t_now, half_life_days, w0)
 
-        if w <= 0:
+        if w == 0:
             continue
 
         emotions = json.loads(row["emotion_scores"])
         themes = json.loads(row["theme_scores"])
-
-        for cat in EMOTION_CATEGORIES:
-            emotion_agg[cat] += w * emotions.get(cat, 0.0)
-
-        for cat in THEME_CATEGORIES:
-            theme_agg[cat] += w * themes.get(cat, 0.0)
-
-        depth = row["depth_score"] or 0.5
-        depth_weighted_sum += w * depth
-        total_weight += w
 
         artist = row["primary_artist"]
         if artist:
@@ -87,6 +80,7 @@ def aggregate_window(
 
         track_uri = row["track_uri"]
         track_weights[track_uri] = track_weights.get(track_uri, 0.0) + w
+        track_play_counts[track_uri] = track_play_counts.get(track_uri, 0) + 1
 
         if track_uri not in track_info:
             track_info[track_uri] = {
@@ -98,6 +92,21 @@ def aggregate_window(
                 "emotion_scores": emotions,
                 "theme_scores": themes,
             }
+
+        # Negative engagement is anti-evidence for ranking tracks/artists, but
+        # should not subtract a skipped track's profile from the mood mixture.
+        if w <= 0:
+            continue
+
+        for cat in EMOTION_CATEGORIES:
+            emotion_agg[cat] += w * emotions.get(cat, 0.0)
+
+        for cat in THEME_CATEGORIES:
+            theme_agg[cat] += w * themes.get(cat, 0.0)
+
+        depth = row["depth_score"] or 0.5
+        depth_weighted_sum += w * depth
+        total_weight += w
 
     emotion_total = sum(emotion_agg.values())
     if emotion_total > 0:
@@ -111,8 +120,20 @@ def aggregate_window(
 
     top_emotions = sorted(emotion_agg.items(), key=lambda x: x[1], reverse=True)
     top_themes = sorted(theme_agg.items(), key=lambda x: x[1], reverse=True)
-    top_artists = sorted(artist_weights.items(), key=lambda x: x[1], reverse=True)[:10]
-    top_tracks = sorted(track_weights.items(), key=lambda x: x[1], reverse=True)[:10]
+    positive_artist_weights = {
+        artist: weight for artist, weight in artist_weights.items() if weight > 0
+    }
+    positive_track_weights = {
+        track_uri: weight for track_uri, weight in track_weights.items() if weight > 0
+    }
+    top_artists = sorted(
+        positive_artist_weights.items(),
+        key=lambda x: (-x[1], x[0]),
+    )[:10]
+    top_tracks = sorted(
+        positive_track_weights.items(),
+        key=lambda x: (-x[1], track_info[x[0]].get("name") or x[0]),
+    )[:10]
 
     return {
         "emotions": dict(top_emotions),
@@ -120,7 +141,8 @@ def aggregate_window(
         "avg_depth": avg_depth,
         "top_artists": [{"artist": a, "weight": w} for a, w in top_artists],
         "top_tracks": [
-            {**track_info[t], "weight": w} for t, w in top_tracks
+            {**track_info[t], "weight": w, "play_count": track_play_counts[t]}
+            for t, w in top_tracks
         ],
         "total_weight": total_weight,
         "play_count": len(rows),

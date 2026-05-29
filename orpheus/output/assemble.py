@@ -80,9 +80,13 @@ def _format_window(window: dict, config: OrpheusConfig) -> dict:
     # Enrich top tracks with depth labels
     top_tracks = []
     for t in window.get("top_tracks", [])[:9]:
-        depth_score = t.get("depth_score", 0.5)
-        t["depth_label"] = depth_label_from_score(depth_score, config)
-        top_tracks.append(t)
+        depth_score = t.get("depth_score")
+        if not isinstance(depth_score, int | float):
+            depth_score = 0.5
+        top_tracks.append({
+            **t,
+            "depth_label": depth_label_from_score(float(depth_score), config),
+        })
 
     return {
         "top_emotions": top_emotions,

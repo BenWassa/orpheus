@@ -149,6 +149,7 @@ See [CLAUDE.md](CLAUDE.md) for the full architecture reference and design notes.
 - **[docs/PRD.md](docs/PRD.md)** — product requirements.
 - **[docs/C2_methodology_spec.md](docs/C2_methodology_spec.md)** — scoring & aggregation methodology.
 - **[docs/C3_data_pipeline_spec.md](docs/C3_data_pipeline_spec.md)** — data pipeline & audio-feature sourcing.
+- **[docs/D1_primary_tracks.md](docs/D1_primary_tracks.md)** — primary-track decision rule, rationale, and data contract.
 
 ---
 

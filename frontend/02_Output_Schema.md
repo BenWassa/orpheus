@@ -37,7 +37,7 @@ interface BackendWindow {
   top_themes: PrevalenceItem[]
   depth_label: DepthLabel
   top_artists: Array<{ artist: string; weight: number }>
-  top_tracks: Array<{ track_uri: string; weight: number }>
+  top_tracks: TopTrack[]
 }
 
 interface PrevalenceItem {
@@ -89,11 +89,28 @@ interface WindowScores {
   top_themes: PrevalenceItem[]
   depth_label: DepthLabel
   top_artists: Array<{ artist: string; weight: number }>
-  top_tracks: Array<{ track_uri: string; weight: number }>
+  top_tracks: TopTrack[]
+}
+
+interface TopTrack {
+  uri: string
+  name?: string
+  artist?: string
+  album?: string
+  weight?: number
+  play_count?: number
+  depth_score?: number
+  depth_label?: DepthLabel
+  emotion_scores?: Partial<Record<EmotionCategory, number>>
+  theme_scores?: Partial<Record<ThemeCategory, number>>
 }
 ```
 
 `emotion` and `theme` are `Partial` during the compatibility period because `ReportV0` does not emit numeric distributions. Once the backend emits the full maps, the frontend can tighten these to complete `Record` types.
+
+`top_tracks` are "Primary tracks": tracks ranked by positive net signed,
+time-decayed engagement contribution for the selected window. They are not a raw
+play-count list. See `../docs/D1_primary_tracks.md`.
 
 ---
 

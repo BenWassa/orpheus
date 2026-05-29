@@ -167,12 +167,17 @@ where `λ = ln(2) / T_half`.
 - Primary artist credit: 1.0
 - Featured artist credit: 0.3 (matches Spotify's logic)
 - Artist-level aggregate computed in parallel to track-level for artist-as-prior layer
+- Primary tracks are not raw play counts. They are `top_tracks`: tracks with the
+  largest positive net signed, time-decayed engagement contribution in the
+  selected window. See `docs/D1_primary_tracks.md`.
 
 **Aggregate computation per category:**
 ```
 category_score(c) = Σ over all plays p of [ W(p) × P(c | track of p) ]
 ```
 Normalize across categories per window to produce ratios suitable for ranking and comparison.
+Negative play weights demote track and artist evidence but are not subtracted
+from emotion/theme mixtures.
 
 ---
 

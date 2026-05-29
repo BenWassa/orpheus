@@ -81,6 +81,17 @@ def test_assemble_report_prevalence_labels(tmp_config):
     assert nostalgia[0]["prevalence"] == "dominant"
 
 
+def test_assemble_report_copies_tracks_and_defaults_missing_depth(tmp_config):
+    state = _make_window()
+    source_track = {"uri": "spotify:track:test", "weight": 1.0, "depth_score": None}
+    state["top_tracks"] = [source_track]
+
+    report = assemble_report(state, _make_window(), [], [], [], tmp_config)
+
+    assert source_track == {"uri": "spotify:track:test", "weight": 1.0, "depth_score": None}
+    assert report["windows"]["state"]["top_tracks"][0]["depth_label"] == "engaged"
+
+
 def test_write_report_deterministic(tmp_path, tmp_config):
     state = _make_window()
     report = assemble_report(state, _make_window(), [], [], [], tmp_config)

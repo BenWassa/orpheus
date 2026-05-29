@@ -17,6 +17,7 @@ orpheus-v2/
 │   ├── T1_taxonomy_v1.md
 │   ├── C2_methodology_spec.md
 │   ├── C3_data_pipeline_spec.md
+│   ├── D1_primary_tracks.md
 │   └── PRD.md
 ├── orpheus/                # main package
 │   ├── __init__.py
@@ -297,6 +298,7 @@ End-to-end run flow:
 
 [5] orpheus analyze
       → apply time-decay weights, compute state + trait window scores
+      → rank primary tracks by positive net signed engagement per window
       → run DBSCAN noise filter
       → run GMM clustering
       → detect trends, co-occurrences, shifts
@@ -309,6 +311,9 @@ End-to-end run flow:
 ```
 
 Each step writes its own artifacts. Failures at step N do not require redoing steps 1 to N-1.
+
+Primary track ranking is part of aggregation, not frontend presentation. The
+full decision rule and data contract are documented in `docs/D1_primary_tracks.md`.
 
 ---
 
