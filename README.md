@@ -13,6 +13,36 @@ yourself, not a corporate analytics dashboard.
 
 ---
 
+## Current stack and approach
+
+Orpheus is now a local-first analysis pipeline with a static-first audio-feature
+strategy. It does **not** depend on Spotify's retired `/audio-features` API.
+
+| Layer | Stack |
+|-------|-------|
+| **CLI and pipeline** | Python 3.11+, Click |
+| **Storage** | SQLite at `data/cache/orpheus.db` |
+| **Listening data** | Spotify Extended Streaming History JSON |
+| **Audio features** | Bulk import from Kaggle/static CSV or SQLite archives, then optional ReccoBeats gap fill |
+| **Lyrics** | Genius API via `lyricsgenius` |
+| **Scoring** | Hugging Face models: `facebook/bart-large-mnli` and `sentence-transformers/all-mpnet-base-v2` |
+| **Patterns** | scikit-learn DBSCAN noise filtering and Gaussian Mixture clustering over valence/arousal/depth |
+| **Frontend** | React 19, TypeScript, Vite, lucide-react |
+| **Quality** | pytest and Ruff |
+
+The data approach is:
+
+1. Ingest Spotify export files into `plays` and `tracks`.
+2. Import audio features by matching Spotify track IDs from `track_uri` against a static archive such as Kaggle's pre-deprecation datasets.
+3. Fill any remaining audio-feature gaps through ReccoBeats, which is free, keyless, and Spotify-ID keyed.
+4. Fetch lyrics from Genius where available.
+5. Score tracks, aggregate state/trait windows, detect patterns, and write the report consumed by the frontend.
+
+This gives the clustering layer real valence/arousal/energy inputs again while
+keeping the tool reproducible and mostly offline after the initial data import.
+
+---
+
 ## How it works
 
 Orpheus runs a linear, re-runnable pipeline. Each step reads the SQLite database
@@ -23,7 +53,8 @@ Orpheus runs a linear, re-runnable pipeline. Each step reads the SQLite database
 | Step | What it does |
 |------|--------------|
 | **Ingest** | Parses your Spotify Extended Streaming History JSON into `plays` and `tracks`. |
-| **Enrich** | Fetches lyrics (Genius) and audio features (local archive only — see note below). |
+| **Archive** | Imports audio features from CSV/SQLite archives and fills residual gaps with ReccoBeats. |
+| **Enrich** | Fetches lyrics from Genius and marks tracks ready for scoring. |
 | **Score** | Classifies emotion (`bart-large-mnli`) and themes (`all-mpnet-base-v2`) per track. |
 | **Aggregate** | Computes a recent **state** window (3-day half-life) and a long-term **trait** window (90-day half-life). |
 | **Pattern** | Clusters listening in valence/arousal/depth space and detects weekly trends. |
@@ -51,17 +82,19 @@ python scripts/bootstrap.py
 #   genius:
 #     access_token: "YOUR_TOKEN_HERE"
 
-# Run the full pipeline
-orpheus run-all --source "path/to/Spotify Extended Streaming History/"
-
-# ...or step by step
+# Recommended data-complete path
 orpheus ingest --source "path/to/Spotify Extended Streaming History/"
+orpheus archive import data/raw/tracks_features.csv
+orpheus archive fill-gaps    # optional: uses ReccoBeats for tracks not found in the archive
 orpheus enrich
 orpheus score
 orpheus analyze
 orpheus report
 
 orpheus status   # check progress at any time
+
+# Convenience path if you do not have an audio-feature archive yet
+orpheus run-all --source "path/to/Spotify Extended Streaming History/"
 ```
 
 See **[SETUP.md](SETUP.md)** for credentials, runtimes, and troubleshooting.
@@ -73,18 +106,6 @@ cd frontend
 npm install
 npm run dev      # opens the dashboard locally (Vite)
 ```
-
----
-
-## Audio features (note)
-
-Audio features (valence, arousal, tempo, energy) drive the clustering step.
-There is currently **no working live source** — the RapidAPI option was removed
-for being too rate-limited to use. Everything else works without them: emotion
-and theme scoring run off lyrics, so you still get a full report. The `clusters`
-section simply reports `no_audio_features` until a source is wired up (or a local
-archive cache is supplied). See
-[docs/C3_data_pipeline_spec.md](docs/C3_data_pipeline_spec.md) for details.
 
 ---
 

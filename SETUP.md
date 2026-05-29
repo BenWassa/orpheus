@@ -28,9 +28,11 @@ This creates:
 - `data/output/reports/` — report output directory
 - `config.yaml` — configuration file (from template)
 
-## API Credentials
+## Data Sources and Credentials
 
-Before running the pipeline, you need **one** API key in `config.yaml` (Genius, for lyrics). Spotify is optional and audio features are deferred — see below:
+Before running the pipeline, you need a Spotify export and, for best results, an
+audio-feature archive CSV. The only API key needed is Genius, for lyrics.
+ReccoBeats can fill residual audio-feature gaps without a key.
 
 ### 1. Genius Access Token
 
@@ -49,24 +51,30 @@ genius:
   access_token: "YOUR_TOKEN_HERE"
 ```
 
-### 2. Audio Features (Deferred — No Live Source)
+### 2. Audio Features
 
 **Purpose:** Audio features (valence, arousal, tempo, energy) drive the V/A/D
-clustering step. There is currently **no working live source** for them.
+clustering step.
 
-The RapidAPI "track-analysis" (SoundNet) API was evaluated and removed — its
-BASIC tier allows only 5 requests/day, which is unusable for a multi-thousand
-track corpus. See [docs/C3_data_pipeline_spec.md](docs/C3_data_pipeline_spec.md)
-for the full rationale and candidate replacement sources under consideration.
+Spotify's `/audio-features` API is retired for new apps, so Orpheus uses a
+static-first approach:
 
-**Impact:** Everything except clustering works without audio features. Emotion
-and theme scoring run off lyrics, so the pipeline produces a full report — the
-`clusters` section will simply report `no_audio_features` until a source is wired
-up. If you have a local archive cache of audio features, point `orpheus enrich`
-at it; otherwise audio features are skipped.
+1. Bulk import a Kaggle/static CSV or SQLite archive keyed by Spotify track ID.
+2. Optionally fill tracks not found in the archive with ReccoBeats.
+
+```bash
+orpheus archive import data/raw/tracks_features.csv
+orpheus archive fill-gaps
+```
+
+The importer accepts CSV files with `id`, `track_id`, or `spotify_id` columns,
+plus SQLite archives with an `audio_features` table. If no audio features are
+available, the rest of the report still works, but clustering reports
+`no_audio_features`.
 
 **Cost estimate:**
 - Genius: free, unlimited
+- ReccoBeats: free, no API key
 
 ### 3. Spotify (Optional)
 
@@ -86,22 +94,26 @@ This becomes relevant only if you enable live sync (`orpheus live sync`) in Phas
 Once credentials are in place:
 
 ```bash
-# Full pipeline end-to-end
-orpheus run-all --source path/to/Spotify\ Extended\ Streaming\ History/
-
-# Or step-by-step
+# Recommended data-complete path
 orpheus ingest --source path/to/Spotify\ Extended\ Streaming\ History/
+orpheus archive import data/raw/tracks_features.csv
+orpheus archive fill-gaps
 orpheus enrich
 orpheus score
 orpheus analyze
 orpheus report
+
+# Convenience path without an audio-feature archive
+orpheus run-all --source path/to/Spotify\ Extended\ Streaming\ History/
 
 # Check status
 orpheus status
 ```
 
 **Expected runtime:**
-- Enrich: fast — lyrics only (Genius), plus any local audio-feature archive lookups
+- Archive import: seconds to minutes, depending on archive size
+- Gap fill: rate-limited by ReccoBeats batch delay
+- Enrich: fast, lyrics only via Genius
 - Score: ~5–10 min (transformer models load once)
 - Analyze: < 1 min
 - Report: < 1 sec
@@ -115,8 +127,9 @@ Output JSON will be written to `data/output/reports/YYYYMMDDTHHMMSS.json`.
 - Verify it's your access token, not the API base URL
 
 **"clusters: no_audio_features" in the report**
-- Expected — there is no live audio-feature source (see section 2 above)
-- Everything else in the report is unaffected
+- Run `orpheus archive import <path-to-csv-or-sqlite>` after ingesting tracks
+- Then run `orpheus archive fill-gaps` to try ReccoBeats for remaining misses
+- Everything else in the report works even without audio features
 
 **"No lyrics found for track"**
 - Genius coverage is ~85% of Spotify catalog
@@ -133,6 +146,8 @@ See `config.yaml` for tunable parameters:
 | `engagement_weights.*` | varies | Play behavior scoring: full play (1.0) → early skip (-0.5) |
 | `dbscan_min_pts` | 5 | Clustering noise threshold |
 | `gmm_components` | 3 | Number of emotion/theme clusters |
+| `reccobeats.batch_size` | 20 | Spotify IDs per ReccoBeats request |
+| `reccobeats.delay` | 0.5 | Delay between ReccoBeats batches, in seconds |
 | `safety.active` | false | Rumination detection (experimental) |
 
 Do not modify these without understanding the aggregation model — see `docs/C3_data_pipeline_spec.md`.
