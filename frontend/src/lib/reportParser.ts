@@ -112,7 +112,10 @@ function normalizeWindow(value: unknown): WindowScores {
             album: typeof row.album === 'string' ? row.album : undefined,
             weight: typeof row.weight === 'number' ? row.weight : undefined,
             depth_score: typeof row.depth_score === 'number' ? row.depth_score : undefined,
-            depth_label: asDepthLabel(row.depth_label),
+            depth_label:
+              row.depth_label === 'surface' || row.depth_label === 'engaged' || row.depth_label === 'immersive'
+                ? row.depth_label
+                : undefined,
             play_count: typeof row.play_count === 'number' ? row.play_count : undefined,
             emotion_scores: normalizeScores(row.emotion_scores, EMOTION_ORDER),
             theme_scores: normalizeScores(row.theme_scores, THEME_ORDER),
