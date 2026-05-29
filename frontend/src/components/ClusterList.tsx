@@ -3,11 +3,19 @@ import type { ClusterSummary } from '../types';
 
 interface ClusterListProps {
   clusters: ClusterSummary[];
+  status?: string;
   selected: number | null;
   onSelect: (index: number | null) => void;
 }
 
-export function ClusterList({ clusters, selected, onSelect }: ClusterListProps) {
+function clusterStatusCopy(status?: string) {
+  if (status === 'no_audio_features') return 'No audio features are available for clustering yet.';
+  if (status === 'insufficient_audio_data') return 'There was not enough audio feature data to form clusters.';
+  if (status === 'no_clusters_found') return 'The backend did not find stable listening clusters in this report.';
+  return 'No clusters were emitted in this report.';
+}
+
+export function ClusterList({ clusters, status, selected, onSelect }: ClusterListProps) {
   return (
     <section className="panel" aria-labelledby="cluster-title">
       <div className="section-heading">
@@ -19,7 +27,7 @@ export function ClusterList({ clusters, selected, onSelect }: ClusterListProps) 
 
       <div className="cluster-list">
         {clusters.length === 0 ? (
-          <p className="muted-copy">No clusters were emitted in this report.</p>
+          <p className="muted-copy">{clusterStatusCopy(status)}</p>
         ) : (
           clusters.map((cluster, index) => {
             const isSelected = selected === index;

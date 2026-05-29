@@ -42,6 +42,7 @@ export interface Track {
   name?: string;
   artist?: string;
   album?: string;
+  weight?: number;
   emotion_scores?: Partial<Record<EmotionCategory, number>>;
   theme_scores?: Partial<Record<ThemeCategory, number>>;
   depth_score?: number;
@@ -86,7 +87,7 @@ export interface CoOccurrence {
 }
 
 export interface SafetyFlag {
-  flag_type: 'rumination_alert' | 'other';
+  flag_type: 'rumination_alert' | 'potential_rumination' | 'other';
   severity: 'warning' | 'caution' | 'info';
   message: string;
   recommendation?: string;
@@ -111,6 +112,7 @@ export interface OrpheusReport {
   shifts: Shift[];
   trends: TrendEvent[];
   clusters: ClusterSummary[];
+  clusters_status?: 'ok' | 'no_audio_features' | 'insufficient_audio_data' | 'no_clusters_found' | string;
   co_occurrences: CoOccurrence[];
   safety_flags: SafetyFlag[];
   narrative?: NarrativeSummary;

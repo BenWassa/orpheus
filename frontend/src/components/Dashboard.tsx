@@ -26,7 +26,7 @@ export function Dashboard({ report, onReset }: DashboardProps) {
 
   const activeWindow = viewMode === 'state' ? report.state : report.trait;
   const comparisonWindow = viewMode === 'state' ? report.trait : report.state;
-  const tracks = useMemo(() => activeWindow.top_tracks.filter((track) => track.name || track.artist), [activeWindow.top_tracks]);
+  const tracks = useMemo(() => activeWindow.top_tracks, [activeWindow.top_tracks]);
 
   function exportReport() {
     const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
@@ -60,7 +60,12 @@ export function Dashboard({ report, onReset }: DashboardProps) {
         />
         <CoOccurrenceMatrix report={report} selected={selectedPair} onSelect={setSelectedPair} />
         <TrendEvents trends={report.trends} />
-        <ClusterList clusters={report.clusters} selected={selectedCluster} onSelect={setSelectedCluster} />
+        <ClusterList
+          clusters={report.clusters}
+          status={report.clusters_status}
+          selected={selectedCluster}
+          onSelect={setSelectedCluster}
+        />
         <EvidenceTracks tracks={tracks} />
       </div>
     </main>

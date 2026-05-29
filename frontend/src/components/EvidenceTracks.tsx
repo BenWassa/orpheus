@@ -23,9 +23,10 @@ export function EvidenceTracks({ tracks }: EvidenceTracksProps) {
             <span className="track-depth">{track.depth_label ?? 'track'}</span>
             <h3>{track.name ?? track.uri}</h3>
             <p>
-              {[track.artist, track.album].filter(Boolean).join(', ') || 'Metadata was not included in this report.'}
+              {[track.artist, track.album].filter(Boolean).join(', ') || track.uri}
             </p>
             {track.play_count && <small>{track.play_count} plays in this window</small>}
+            {!track.play_count && typeof track.weight === 'number' && <small>Window weight {track.weight.toFixed(2)}</small>}
             <div className="chip-stack">
               {Object.entries(track.emotion_scores ?? {})
                 .slice(0, 3)
