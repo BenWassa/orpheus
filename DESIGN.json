@@ -1,0 +1,126 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-05-29T14:26:21Z",
+  "title": "Design System: Project Orpheus",
+  "extensions": {
+    "colorMeta": {
+      "paper": {
+        "role": "neutral",
+        "displayName": "Warm Paper",
+        "canonical": "oklch(0.982 0.007 116)",
+        "tonalRamp": ["oklch(0.992 0.006 116)", "oklch(0.982 0.007 116)", "oklch(0.952 0.011 122)"]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Botanical Ink",
+        "canonical": "oklch(0.245 0.025 142)",
+        "tonalRamp": ["oklch(0.51 0.024 152)", "oklch(0.245 0.025 142)", "oklch(0.18 0.02 142)"]
+      },
+      "accent": {
+        "role": "primary",
+        "displayName": "Deep Listening Teal",
+        "canonical": "oklch(0.46 0.105 172)",
+        "tonalRamp": ["oklch(0.915 0.045 172)", "oklch(0.46 0.105 172)", "oklch(0.36 0.09 172)"]
+      },
+      "plum": {
+        "role": "secondary",
+        "displayName": "Cluster Plum",
+        "canonical": "oklch(0.46 0.105 316)",
+        "tonalRamp": ["oklch(0.9 0.04 316)", "oklch(0.46 0.105 316)", "oklch(0.34 0.08 316)"]
+      },
+      "warn": {
+        "role": "tertiary",
+        "displayName": "Ochre Warning",
+        "canonical": "oklch(0.46 0.09 72)",
+        "tonalRamp": ["oklch(0.93 0.038 82)", "oklch(0.46 0.09 72)", "oklch(0.34 0.07 72)"]
+      },
+      "danger": {
+        "role": "tertiary",
+        "displayName": "Clay Danger",
+        "canonical": "oklch(0.51 0.145 28)",
+        "tonalRamp": ["oklch(0.925 0.036 28)", "oklch(0.51 0.145 28)", "oklch(0.39 0.11 28)"]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Narrative Display",
+        "purpose": "Hero report headlines and first-run upload headlines."
+      },
+      "headline": {
+        "displayName": "Evidence Headline",
+        "purpose": "Section headings inside panels and evidence areas."
+      },
+      "body": {
+        "displayName": "Readable Body",
+        "purpose": "Narrative copy, explanations, metadata, and evidence prose."
+      },
+      "label": {
+        "displayName": "Quiet Label",
+        "purpose": "Eyebrows, pills, category labels, chart labels, and tabs."
+      }
+    },
+    "elevation": {
+      "philosophy": "Flat by default. Depth is communicated with tinted surfaces, fine borders, dividers, and selected states.",
+      "tokens": {
+        "profileHover": "0 4px 12px rgba(24, 35, 29, 0.05)",
+        "overlayPanel": "0 20px 40px rgba(24, 35, 29, 0.15)"
+      }
+    },
+    "motion": {
+      "duration": {
+        "fast": "180ms",
+        "standard": "200ms"
+      },
+      "easing": {
+        "standard": "ease-out"
+      },
+      "rules": [
+        "Animate opacity, transform, border color, and background color.",
+        "Do not animate layout properties.",
+        "Avoid bounce and elastic easing."
+      ]
+    },
+    "breakpoints": {
+      "narrow": "620px",
+      "medium": "920px",
+      "contentMax": "1180px"
+    },
+    "componentMeta": {
+      "uploadPanel": {
+        "character": "A centered, quiet intake surface with one clear action path.",
+        "states": ["default", "dragging", "hover", "error"]
+      },
+      "heroSummary": {
+        "character": "A narrative report header, closer to a letter than a dashboard summary.",
+        "states": ["default", "withAddDataAction", "withCaveats"]
+      },
+      "segmentedControls": {
+        "character": "Paper-toned controls with active options set into a lighter panel.",
+        "states": ["default", "hover", "focus", "active"]
+      },
+      "evidenceRows": {
+        "character": "Compact, selectable proof surfaces that stay readable when repeated.",
+        "states": ["default", "hover", "selected"]
+      },
+      "rankedTrackCards": {
+        "character": "Slightly larger evidence cards with prominent rank numerals and compact chips.",
+        "states": ["default", "hover"]
+      }
+    },
+    "rules": {
+      "northStar": "The Listening Journal",
+      "dos": [
+        "Keep the product observational, personal, and readable.",
+        "Use teal only for action, selection, and evidence.",
+        "Let warm paper neutrals carry most of the surface.",
+        "Use flat bordered panels before considering elevation."
+      ],
+      "donts": [
+        "Do not make the interface feel like a corporate analytics dashboard.",
+        "Do not use side-stripe borders, gradient text, decorative glassmorphism, or hero metric templates.",
+        "Do not make dense identical card grids.",
+        "Do not introduce pure black or pure white as new tokens."
+      ]
+    }
+  }
+}
