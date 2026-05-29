@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { THEME_ORDER, THEMES } from '../../../taxonomy';
 import { moodColorRGBA } from '../../../lib/moodColor';
 import type { ThemeCategory, WindowScores } from '../../../types';
@@ -10,6 +11,21 @@ interface ThemePanelProps {
 }
 
 export function ThemePanel({ activeWindow, comparisonWindow, selected, onSelect }: ThemePanelProps) {
+  const orderedThemes = useMemo(
+    () =>
+      [...THEME_ORDER].sort((left, right) => {
+        const rightScore = activeWindow.theme[right] ?? 0;
+        const leftScore = activeWindow.theme[left] ?? 0;
+
+        if (rightScore !== leftScore) {
+          return rightScore - leftScore;
+        }
+
+        return THEME_ORDER.indexOf(left) - THEME_ORDER.indexOf(right);
+      }),
+    [activeWindow.theme]
+  );
+
   return (
     <section className="panel" aria-labelledby="theme-title">
       <div className="section-heading">
@@ -20,7 +36,7 @@ export function ThemePanel({ activeWindow, comparisonWindow, selected, onSelect 
       </div>
 
       <div className="theme-list">
-        {THEME_ORDER.map((category) => {
+        {orderedThemes.map((category) => {
           const theme = THEMES[category];
           const score = activeWindow.theme[category] ?? 0;
           const baseline = comparisonWindow.theme[category] ?? 0;

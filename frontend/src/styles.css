@@ -91,6 +91,13 @@ button {
   color: var(--muted);
 }
 
+.detail-scope-note {
+  margin: 0 0 16px;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-style: italic;
+}
+
 .hero-actions button,
 .view-toggle button {
   border: 1px solid var(--line);

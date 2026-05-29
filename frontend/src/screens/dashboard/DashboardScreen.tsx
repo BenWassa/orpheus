@@ -144,6 +144,9 @@ export function DashboardScreen({ report, onReset, profileName, onReload, reload
               aria-labelledby={`tab-${item.id}`}
               hidden={detailView !== item.id}
             >
+              {item.scope === 'global' && item.scopeNote && detailView === item.id && (
+                <p className="detail-scope-note">{item.scopeNote}</p>
+              )}
               {item.id === 'connections' && detailView === 'connections' && (
                 <CoOccurrenceMatrix report={report} selected={selectedPair} onSelect={setSelectedPair} />
               )}
