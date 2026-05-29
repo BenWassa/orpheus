@@ -27,6 +27,21 @@ def _is_qualified_frequency_play(ms_played: int | None) -> bool:
     return (ms_played or 0) >= QUALIFIED_LISTEN_MS
 
 
+def _parse_confidence(value) -> float:
+    """Coerce the TEXT confidence column to a [0,1] multiplier.
+
+    Missing or unparseable confidence is treated as neutral (1.0) so legacy
+    rows without a confidence value are not silently penalised.
+    """
+    if value is None:
+        return 1.0
+    try:
+        c = float(value)
+    except (TypeError, ValueError):
+        return 1.0
+    return max(0.0, min(1.0, c))
+
+
 def aggregate_window(
     conn: sqlite3.Connection,
     t_now: datetime,
@@ -37,7 +52,7 @@ def aggregate_window(
         """SELECT p.ts, p.ms_played, p.track_uri, p.reason_start, p.reason_end,
                   p.shuffle, p.skipped,
                   t.duration_ms, t.track_name, t.primary_artist, t.album_name,
-                  ts.emotion_scores, ts.theme_scores, ts.depth_score
+                  ts.emotion_scores, ts.theme_scores, ts.depth_score, ts.confidence
            FROM plays p
            JOIN tracks t ON p.track_uri = t.track_uri
            JOIN track_scores ts ON p.track_uri = ts.track_uri
@@ -120,15 +135,22 @@ def aggregate_window(
         if w <= 0:
             continue
 
+        # Down-weight the mood mixture by per-track classification confidence so
+        # that low-confidence scores (e.g. the 0.1 uniform fallback when neither
+        # audio features nor lyrics were available) don't drag every window
+        # toward uniform. Track/artist *ranking* stays on pure engagement (w) —
+        # how much you engaged is independent of how sure we are about the mood.
+        wm = w * _parse_confidence(row["confidence"])
+
         for cat in EMOTION_CATEGORIES:
-            emotion_agg[cat] += w * emotions.get(cat, 0.0)
+            emotion_agg[cat] += wm * emotions.get(cat, 0.0)
 
         for cat in THEME_CATEGORIES:
-            theme_agg[cat] += w * themes.get(cat, 0.0)
+            theme_agg[cat] += wm * themes.get(cat, 0.0)
 
         depth = row["depth_score"] or 0.5
-        depth_weighted_sum += w * depth
-        total_weight += w
+        depth_weighted_sum += wm * depth
+        total_weight += wm
 
     emotion_total = sum(emotion_agg.values())
     if emotion_total > 0:

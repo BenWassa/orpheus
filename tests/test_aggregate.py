@@ -183,6 +183,42 @@ class TestPrimaryTracks:
         assert window["top_frequency_tracks"][0]["qualified_play_count"] == 2
         assert window["top_frequency_tracks"][0]["play_count"] == 2
 
+    def test_low_confidence_track_is_downweighted_in_mood(self, tmp_db, tmp_config):
+        # A high-confidence joyful track vs. a low-confidence sad track, both
+        # played identically. The mood mixture should lean toward the confident
+        # one even though engagement is equal.
+        joyful = json.dumps({c: (1.0 if c == "joyful_activation" else 0.0) for c in EMOTION_CATEGORIES})
+        sad = json.dumps({c: (1.0 if c == "sadness_melancholy" else 0.0) for c in EMOTION_CATEGORIES})
+        themes = _scores()[1]
+
+        for uri, emo, conf in (
+            ("spotify:track:hi", joyful, "0.85"),
+            ("spotify:track:lo", sad, "0.1"),
+        ):
+            tmp_db.execute(
+                """INSERT INTO tracks
+                   (track_uri, track_name, primary_artist, album_name, duration_ms)
+                   VALUES (?, ?, ?, ?, ?)""",
+                (uri, uri, "Artist", "Album", 200000),
+            )
+            tmp_db.execute(
+                """INSERT INTO track_scores
+                   (track_uri, model_version, emotion_scores, theme_scores, depth_score, confidence)
+                   VALUES (?, ?, ?, ?, ?, ?)""",
+                (uri, tmp_config.model_version, emo, themes, 0.5, conf),
+            )
+            _insert_play(tmp_db, uri, "2025-01-10T00:00:00Z", 200000)
+        tmp_db.commit()
+
+        window = aggregate_window(
+            tmp_db,
+            datetime(2025, 1, 10, tzinfo=timezone.utc),
+            half_life_days=3.0,
+            config=tmp_config,
+        )
+
+        assert window["emotions"]["joyful_activation"] > window["emotions"]["sadness_melancholy"]
+
     def test_frequency_tracks_use_effective_window_horizon(self, tmp_db, tmp_config):
         _insert_track(tmp_db, "spotify:track:recent", "Recent", tmp_config.model_version)
         _insert_track(tmp_db, "spotify:track:old", "Old", tmp_config.model_version)
