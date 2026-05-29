@@ -248,6 +248,15 @@ There is currently **no live audio-feature source** wired into the pipeline.
 - Auth: OAuth 2.0 Authorization Code flow
 - Scopes: `user-read-recently-played`, `user-top-read`, `user-library-read`, `playlist-read-private`
 - Note: audio-features and recommendations endpoints are dead (Nov 2024). Do not call them.
+- **Completeness limitation (why `orpheus live sync` stays deferred):** there is no
+  Web API endpoint for full streaming history. `GET /me/player/recently-played`
+  returns only the **last 50 plays** and cannot page back further. So a live sync
+  is only a top-up, and only stays complete if run frequently (roughly daily) —
+  a once-a-month pull would silently drop every play beyond the 50 most recent.
+  The complete record still comes solely from the GDPR **Extended Streaming
+  History** export (requested from Spotify's privacy page, emailed as a ZIP after
+  several days, ingested via `orpheus ingest`). Revisit `live sync` only as a
+  frequently-run incremental top-up between exports, never as the primary source.
 - Endpoints in use:
   - `GET /me/top/tracks?time_range={short|medium|long}_term`
   - `GET /me/top/artists?time_range={short|medium|long}_term`

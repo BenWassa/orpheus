@@ -7,11 +7,18 @@ interface ProfileSelectionScreenProps {
   onSelect: (profile: ProfileInfo) => void;
   loadingProfile: string | null;
   loadError: string | null;
+  isLoadingProfiles?: boolean;
 }
 
-export function ProfileSelectionScreen({ profiles, onSelect, loadingProfile, loadError }: ProfileSelectionScreenProps) {
+export function ProfileSelectionScreen({
+  profiles,
+  onSelect,
+  loadingProfile,
+  loadError,
+  isLoadingProfiles = false,
+}: ProfileSelectionScreenProps) {
   return (
-    <main className="profiles-shell">
+    <main className="profiles-shell" aria-busy={isLoadingProfiles}>
       <header className="brand-header">
         <div className="brand-mark" aria-hidden="true">
           <Music2 size={32} />
@@ -31,6 +38,13 @@ export function ProfileSelectionScreen({ profiles, onSelect, loadingProfile, loa
       )}
 
       <div className="profile-grid">
+        {isLoadingProfiles && (
+          <>
+            <div className="profile-card profile-skeleton" aria-hidden="true" />
+            <div className="profile-card profile-skeleton" aria-hidden="true" />
+          </>
+        )}
+
         {profiles.map((profile) => (
           <ProfileCard
             key={profile.name}
@@ -40,17 +54,19 @@ export function ProfileSelectionScreen({ profiles, onSelect, loadingProfile, loa
           />
         ))}
 
-        <div className="profile-card new-profile">
-          <div className="profile-icon" aria-hidden="true">
-            <Plus size={24} />
+        {!isLoadingProfiles && (
+          <div className="profile-card new-profile">
+            <div className="profile-icon" aria-hidden="true">
+              <Plus size={24} />
+            </div>
+            <div className="profile-info">
+              <h3>New profile</h3>
+              <p className="instruction">
+                Run <code>orpheus run-all --profile &lt;name&gt;</code> in your terminal to create a new profile.
+              </p>
+            </div>
           </div>
-          <div className="profile-info">
-            <h3>New profile</h3>
-            <p className="instruction">
-              Run <code>orpheus run-all --profile &lt;name&gt;</code> in your terminal to create a new profile.
-            </p>
-          </div>
-        </div>
+        )}
       </div>
     </main>
   );

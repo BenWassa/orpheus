@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 from time import sleep
 
@@ -32,6 +33,33 @@ def _missing_audio_feature_tracks(conn, limit: int | None = None) -> list[dict]:
         params = (limit,)
 
     return [dict(row) for row in conn.execute(query, params).fetchall()]
+
+
+_PROFILE_NAME_RE = re.compile(r"^[a-zA-Z0-9_\- ]+$")
+
+
+def _resolve_report_path(cfg, out: str | None, profile: str | None) -> Path | None:
+    """Resolve where a report should be written.
+
+    ``--out`` (an explicit path) and ``--profile`` are mutually exclusive. With a
+    profile, the report is timestamped into ``<reports_dir>/<profile>/`` — the
+    per-profile subdir the dashboard's dev server reads from. With neither, the
+    caller's default (timestamp in the reports-dir root) is used.
+    """
+    if out and profile:
+        raise click.UsageError("--out and --profile are mutually exclusive.")
+    if out:
+        return Path(out)
+    if profile:
+        if not _PROFILE_NAME_RE.match(profile):
+            raise click.UsageError(
+                "Invalid --profile name; allowed characters: letters, digits, space, '-', '_'."
+            )
+        from datetime import datetime, timezone
+
+        ts = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S")
+        return cfg.reports_dir / profile / f"{ts}.json"
+    return None
 
 
 def _write_current_report(cfg, output_path: Path | None = None) -> tuple[Path, str, str]:
@@ -252,15 +280,16 @@ def analyze(ctx):
 
 
 @main.command()
-@click.option("--out", type=click.Path(), default=None, help="Output path for JSON report")
+@click.option("--out", type=click.Path(), default=None, help="Explicit output path for JSON report")
+@click.option("--profile", default=None, help="Write a timestamped report into <reports_dir>/<profile>/ (where the dashboard reads it)")
 @click.pass_context
-def report(ctx, out):
+def report(ctx, out, profile):
     """Assemble and write the JSON report."""
     _load_cfg(ctx)
     cfg = ctx.obj["config"]
     output_path, run_id, output_hash = _write_current_report(
         cfg,
-        Path(out) if out else None,
+        _resolve_report_path(cfg, out, profile),
     )
 
     click.echo(f"Report written to {output_path}")
@@ -268,15 +297,16 @@ def report(ctx, out):
 
 
 @main.command()
-@click.option("--out", type=click.Path(), default=None, help="Output path for JSON report")
+@click.option("--out", type=click.Path(), default=None, help="Explicit output path for JSON report")
+@click.option("--profile", default=None, help="Write a timestamped report into <reports_dir>/<profile>/ (where the dashboard reads it)")
 @click.pass_context
-def refresh(ctx, out):
+def refresh(ctx, out, profile):
     """Refresh the report from the current database."""
     _load_cfg(ctx)
     cfg = ctx.obj["config"]
     output_path, run_id, output_hash = _write_current_report(
         cfg,
-        Path(out) if out else None,
+        _resolve_report_path(cfg, out, profile),
     )
 
     click.echo(f"Latest report: {output_path}")
@@ -286,11 +316,14 @@ def refresh(ctx, out):
 
 @main.command("run-all")
 @click.option("--source", type=click.Path(exists=True), default=None, help="Path to Spotify export (optional if already ingested)")
+@click.option("--out", type=click.Path(), default=None, help="Explicit output path for JSON report")
+@click.option("--profile", default=None, help="Write a timestamped report into <reports_dir>/<profile>/ (where the dashboard reads it)")
 @click.pass_context
-def run_all(ctx, source):
+def run_all(ctx, source, out, profile):
     """Run the full pipeline end-to-end."""
     _load_cfg(ctx)
     cfg = ctx.obj["config"]
+    report_path = _resolve_report_path(cfg, out, profile)
 
     conn = get_db(cfg.db_path)
     ensure_schema(conn)
@@ -341,8 +374,10 @@ def run_all(ctx, source):
         clusters_status=cl_status,
     )
 
-    ts = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S")
-    output_path = cfg.reports_dir / f"{ts}.json"
+    if report_path is None:
+        ts = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S")
+        report_path = cfg.reports_dir / f"{ts}.json"
+    output_path = report_path
     output_hash = write_report(report_data, output_path)
     run_id = record_run(conn, cfg, output_path, output_hash, started_at)
     conn.close()
@@ -363,6 +398,13 @@ def live_group():
 def live_sync(ctx):
     """Pull latest data from Spotify Web API."""
     click.echo("Deferred — not yet implemented.")
+    click.echo(
+        "Note: the Web API has no full-history endpoint. /me/player/recently-played\n"
+        "returns only the last 50 plays, so a live sync can only ever be a frequent\n"
+        "(roughly daily) top-up — a monthly pull would drop plays beyond the most\n"
+        "recent 50. The complete record comes from the GDPR Extended Streaming\n"
+        "History export ingested via `orpheus ingest`. See docs/C3_data_pipeline_spec.md."
+    )
 
 
 @main.group("archive")

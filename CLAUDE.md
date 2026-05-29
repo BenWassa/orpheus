@@ -11,37 +11,49 @@ Rules:
 - If graphify-out/wiki/index.md exists, navigate it instead of reading raw files
 - After modifying code files in this session, run `graphify update .` to keep the graph current (AST-only, no API cost)
 
+## Python environment
+
+All CLI commands (`orpheus`, `python`, `pytest`, `ruff`) live in `.venv/bin/`. Always
+prefix with `.venv/bin/` or activate first:
+
+```bash
+source .venv/bin/activate   # then use orpheus / python / pytest directly
+# or call directly:
+.venv/bin/orpheus ...
+.venv/bin/python ...
+```
+
 ## Commands
 
 ```bash
 # Setup
-python scripts/bootstrap.py          # Create dirs, copy config template, init DB
+.venv/bin/python scripts/bootstrap.py   # Create dirs, copy config template, init DB
 
 # Development
-pip install -e ".[dev]"              # Install with dev dependencies
+.venv/bin/pip install -e ".[dev]"        # Install with dev dependencies
 
 # Linting
-ruff check orpheus/ tests/           # Lint
-ruff format orpheus/ tests/          # Format (line length: 100, target: py311)
+.venv/bin/ruff check orpheus/ tests/           # Lint
+.venv/bin/ruff format orpheus/ tests/          # Format (line length: 100, target: py311)
 
 # Tests
-pytest                               # All tests
-pytest -m "not slow"                 # Skip transformer-loading tests
-pytest tests/test_pipeline_e2e.py   # Full end-to-end with synthetic data
-pytest tests/test_score.py -v       # Single test file
+.venv/bin/pytest                               # All tests
+.venv/bin/pytest -m "not slow"                 # Skip transformer-loading tests
+.venv/bin/pytest tests/test_pipeline_e2e.py   # Full end-to-end with synthetic data
+.venv/bin/pytest tests/test_score.py -v       # Single test file
 
 # CLI (requires config.yaml to exist)
-orpheus config validate
-orpheus db migrate
-orpheus status
-orpheus ingest --source data/raw/<export>.json
-orpheus enrich
-orpheus score
-orpheus analyze
-orpheus report [--out data/output/reports/my_report.json]
-orpheus refresh
-orpheus run-all --source data/raw/
-orpheus archive missing-audio --out data/output/missing_audio_features.json
+.venv/bin/orpheus config validate
+.venv/bin/orpheus db migrate
+.venv/bin/orpheus status
+.venv/bin/orpheus ingest --source data/raw/<export>.json
+.venv/bin/orpheus enrich
+.venv/bin/orpheus score
+.venv/bin/orpheus analyze
+.venv/bin/orpheus report [--out PATH | --profile NAME]
+.venv/bin/orpheus refresh [--out PATH | --profile NAME]
+.venv/bin/orpheus run-all --source data/raw/ [--out PATH | --profile NAME]
+.venv/bin/orpheus archive missing-audio --out data/output/missing_audio_features.json
 ```
 
 ## Generating a report (recurring task)
@@ -56,13 +68,20 @@ The action set, as it stands:
 1. Decide scope: `orpheus refresh` re-assembles from existing DB state (fast);
    `orpheus run-all --source <Spotify export dir>` re-runs ingest → enrich → score
    → analyze first (use when underlying data or scoring changed).
-2. Run it; the JSON lands in `data/output/reports/YYYYMMDDTHHMMSS.json`.
+2. **Always pass `--profile <name>` (e.g. `--profile Ben`).** The report lands in
+   `data/output/reports/<profile>/YYYYMMDDTHHMMSS.json`. The dashboard's dev server
+   serves each profile's *newest* JSON from its own subdir — a bare `orpheus refresh`
+   writes to the reports-dir **root**, which the profile UI never reads, so the
+   dashboard won't change. (`--out PATH` still works for a one-off explicit path;
+   `--out` and `--profile` are mutually exclusive.)
 3. Read the JSON and write a human summary: state vs. trait windows, trends,
    shifts, co-occurrences, clusters.
 4. **Sanity-check before presenting** — flag likely artifacts rather than
    reporting them as signal. Known ones: `clusters_status` other than `ok` means
    no/insufficient audio features (clusters legitimately empty); a stale trailing
    week can still skew trends. Call these out explicitly.
+5. To view in the dashboard: hard-reload the browser (no rebuild needed — reports
+   are fetched at runtime via `/api/reports/latest`) with the profile selected.
 
 ## Architecture
 
@@ -86,6 +105,8 @@ The pipeline runs linearly: **Ingest → Enrich → Score → Aggregate → Patt
 **Scoring keys** in `track_scores` are composite `(track_uri, model_version)` where `model_version = emotion_classifier + "+" + semantic_embedding`. This allows the table to hold scores across model generations without collisions.
 
 **Engagement weighting** maps play behaviour to `[-0.5, 1.0]`: full play = 1.0, partial = 0.7, early skip = −0.5. These weights combine multiplicatively with exponential time-decay before aggregation, so recent skips can outweigh old full-plays.
+
+**Window evidence span vs. decay** (`orpheus/aggregate/windows.py`): the mood mixture is decay-weighted by half-life (state 3-day, trait 90-day), but the *evidence* shown alongside it — the date range, frequency tracks, and coverage — spans a separate lookback. The trait window derives this from the half-life (`half_life × 4`), but the state ("Recent") window uses a fixed `RECENT_EVIDENCE_LOOKBACK_DAYS = 30` so the headline stays reactive to the last few days while the listening evidence reads as "the past month". Frequency tracks carry `emotion_scores`/`theme_scores` (attached regardless of decay weight) so the frontend renders the same mood chips as the influence view.
 
 **Emotion categories** (8): `joyful_activation`, `triumphant_power`, `peacefulness`, `tenderness`, `nostalgia_longing`, `sadness_melancholy`, `tension_anxiety`, `anger_defiance` — derived from valence/arousal position.
 

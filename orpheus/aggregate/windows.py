@@ -15,6 +15,13 @@ logger = logging.getLogger(__name__)
 FREQUENCY_WINDOW_HALF_LIVES = 4
 QUALIFIED_LISTEN_MS = 30_000
 
+# Evidence lookback for the recent ("state") window: the span over which the
+# date range, frequency tracks, and coverage are computed. Deliberately
+# decoupled from the mood decay half-life — the mood mixture stays reactive to
+# the last few days (3-day half-life), while the listening *evidence* shown
+# alongside it covers the past month, which reads more naturally to users.
+RECENT_EVIDENCE_LOOKBACK_DAYS = 30
+
 
 def _parse_ts(ts: str) -> datetime:
     t_play = datetime.fromisoformat(ts.replace("Z", "+00:00"))
@@ -71,7 +78,18 @@ def aggregate_window(
     t_now: datetime,
     half_life_days: float,
     config: OrpheusConfig,
+    *,
+    evidence_lookback_days: float | None = None,
 ) -> dict:
+    # Span for date range, frequency tracks, and coverage. Defaults to the
+    # decay-derived lookback (4 half-lives, beyond which a play's weight is
+    # <~6%) so the trait window is unaffected; callers can override it to
+    # decouple the evidence span from the mood decay (see the state window).
+    lookback_days = (
+        evidence_lookback_days
+        if evidence_lookback_days is not None
+        else half_life_days * FREQUENCY_WINDOW_HALF_LIVES
+    )
     rows = conn.execute(
         """SELECT p.ts, p.ms_played, p.track_uri, p.reason_start, p.reason_end,
                   p.shuffle, p.skipped,
@@ -102,6 +120,10 @@ def aggregate_window(
     track_weights: dict[str, float] = {}
     track_play_counts: dict[str, int] = {}
     track_info: dict[str, dict] = {}
+    # Mood scores per scored track, captured regardless of decay weight so the
+    # frequency view (which ranks by raw play count, not engagement) can still
+    # show emotion/theme chips for tracks whose decayed weight is ~0.
+    score_lookup: dict[str, dict] = {}
     frequency_counts: dict[str, int] = {}
     frequency_latest: dict[str, str] = {}
     frequency_info: dict[str, dict] = {}
@@ -116,6 +138,15 @@ def aggregate_window(
     }
 
     for row in rows:
+        track_uri = row["track_uri"]
+        if track_uri not in score_lookup:
+            score_lookup[track_uri] = {
+                "emotion_scores": json.loads(row["emotion_scores"]),
+                "theme_scores": json.loads(row["theme_scores"]),
+            }
+        emotions = score_lookup[track_uri]["emotion_scores"]
+        themes = score_lookup[track_uri]["theme_scores"]
+
         t_play = _parse_ts(row["ts"])
 
         w0 = engagement_weight(
@@ -133,14 +164,10 @@ def aggregate_window(
         if w == 0:
             continue
 
-        emotions = json.loads(row["emotion_scores"])
-        themes = json.loads(row["theme_scores"])
-
         artist = row["primary_artist"]
         if artist:
             artist_weights[artist] = artist_weights.get(artist, 0.0) + w
 
-        track_uri = row["track_uri"]
         track_weights[track_uri] = track_weights.get(track_uri, 0.0) + w
         track_play_counts[track_uri] = track_play_counts.get(track_uri, 0) + 1
 
@@ -210,7 +237,7 @@ def aggregate_window(
         key=lambda x: (-x[1], track_info[x[0]].get("name") or x[0]),
     )[:10]
 
-    frequency_start = t_now - timedelta(days=half_life_days * FREQUENCY_WINDOW_HALF_LIVES)
+    frequency_start = t_now - timedelta(days=lookback_days)
     for row in play_rows:
         t_play = _parse_ts(row["ts"])
         if t_play < frequency_start or not _is_qualified_frequency_play(row["ms_played"]):
@@ -242,7 +269,7 @@ def aggregate_window(
     # happen to be scored. Effective lookback = 4 half-lives, beyond which a
     # play's decayed weight is <~6%; same cutoff as frequency_start so state and
     # trait show distinct ranges.
-    window_start = t_now - timedelta(days=half_life_days * FREQUENCY_WINDOW_HALF_LIVES)
+    window_start = t_now - timedelta(days=lookback_days)
     window_play_ts: list[str] = [
         row["ts"] for row in play_rows if _parse_ts(row["ts"]) >= window_start
     ]
@@ -280,10 +307,21 @@ def aggregate_window(
         "top_frequency_tracks": [
             {
                 **frequency_info[t],
+                # Attach mood scores when the track was scored so the frequency
+                # view renders the same emotion/theme chips as the influence view.
+                # Unscored tracks (no audio features / lyrics) simply omit them.
+                **(
+                    {
+                        "emotion_scores": score_lookup[t]["emotion_scores"],
+                        "theme_scores": score_lookup[t]["theme_scores"],
+                    }
+                    if t in score_lookup
+                    else {}
+                ),
                 "qualified_play_count": count,
                 "play_count": count,
                 "last_played": frequency_latest[t],
-                "frequency_window_days": half_life_days * FREQUENCY_WINDOW_HALF_LIVES,
+                "frequency_window_days": lookback_days,
             }
             for t, count in top_frequency_tracks
         ],
@@ -298,7 +336,13 @@ def aggregate_window(
 def compute_state_and_trait(conn: sqlite3.Connection, config: OrpheusConfig) -> dict:
     t_now = datetime.now(timezone.utc)
 
-    state = aggregate_window(conn, t_now, config.windows.state_half_life_days, config)
+    state = aggregate_window(
+        conn,
+        t_now,
+        config.windows.state_half_life_days,
+        config,
+        evidence_lookback_days=RECENT_EVIDENCE_LOOKBACK_DAYS,
+    )
     trait = aggregate_window(conn, t_now, config.windows.trait_half_life_days, config)
 
     return {"state": state, "trait": trait, "computed_at": t_now.isoformat()}
