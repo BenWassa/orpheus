@@ -1,81 +1,127 @@
-# 🎵 Project Orpheus 
- 
-**Decode your emotional underworld through the music that moves you** 
+# 🎵 Project Orpheus
+
+**Decode your emotional underworld through the music that moves you.**
+
+Orpheus is a personal music-analysis tool. It reads your Spotify listening
+history and surfaces the emotional and thematic patterns hidden in it — turning
+raw play data into a reflective narrative that reads like a letter about
+yourself, not a corporate analytics dashboard.
+
+> Just as Orpheus journeyed into the underworld with music as his guide, Project
+> Orpheus helps you descend into your emotional depths to retrieve hidden truths
+> and fresh self-understanding.
 
 ---
 
-## 🚀 **Quick Start**
+## How it works
 
-```powershell 
-# Navigate to project
-cd "c:\Users\benjamin.haddon\Documents\orpheus"
+Orpheus runs a linear, re-runnable pipeline. Each step reads the SQLite database
+(`data/cache/orpheus.db`) and skips work already done.
 
-# Test everything works
-.\orpheus_venv\Scripts\python.exe 01_setup\test_setup.py
+**Ingest → Enrich → Score → Aggregate → Pattern → Output**
 
-# Launch dashboard
-.\launch_orpheus.bat
-``` 
+| Step | What it does |
+|------|--------------|
+| **Ingest** | Parses your Spotify Extended Streaming History JSON into `plays` and `tracks`. |
+| **Enrich** | Fetches lyrics (Genius) and audio features (local archive only — see note below). |
+| **Score** | Classifies emotion (`bart-large-mnli`) and themes (`all-mpnet-base-v2`) per track. |
+| **Aggregate** | Computes a recent **state** window (3-day half-life) and a long-term **trait** window (90-day half-life). |
+| **Pattern** | Clusters listening in valence/arousal/depth space and detects weekly trends. |
+| **Output** | Assembles a JSON report with windows, trends, clusters, and safety flags. |
 
-**Dashboard opens at**: http://localhost:8501
-
----
-
-## 📁 **Clean Project Structure**
-
-- **`01_setup/`** - Installation, testing, and launch scripts 
-- **`02_core/`** - Core analysis modules (data processing, patterns, emotions) 
-- **`03_interface/`** - Streamlit web dashboard 
-- **`04_data/`** - Raw and processed music data 
-- **`05_output/`** - Analysis results and visualizations 
-- **`06_docs/`** - Documentation and guides
+The report lands in `data/output/reports/YYYYMMDDTHHMMSS.json`. The React
+frontend in [`frontend/`](frontend/) renders it as a readable narrative.
 
 ---
 
-## 🎯 **Key Features**
+## Quick start
 
-- **🔥 Obsession Detection**: Find your most-played artists/tracks
-- **📈 Temporal Analysis**: See how your taste evolves over time  
-- **🌐 Interactive Dashboard**: Web interface for exploration
-- **📊 Rich Visualizations**: Charts and insights
-- **💾 Data Export**: Download your analysis results
-- **💡 Corporate Friendly**: Works completely offline
+Requires **Python 3.11+** and a Spotify Extended Streaming History export
+(request it at [spotify.com/account/privacy](https://www.spotify.com/account/privacy)).
 
----
+```bash
+# Install
+python3.11 -m venv .venv && source .venv/bin/activate
+pip install -e ".[dev]"
 
-## 📚 **Documentation**
+# Initialize database and config
+python scripts/bootstrap.py
 
-- **Quick Start**: `06_docs/QUICK_START_FINAL.md` - Complete setup guide
-- **User Guide**: `06_docs/USER_GUIDE.md` - Full feature walkthrough  
-- **Technical**: `06_docs/TECHNICAL_SUMMARY.md` - Architecture details
-- **Data Format**: `06_docs/exportify_data_dictionary.md` - CSV reference
+# Add your Genius access token to config.yaml (for lyrics)
+#   genius:
+#     access_token: "YOUR_TOKEN_HERE"
 
----
+# Run the full pipeline
+orpheus run-all --source "path/to/Spotify Extended Streaming History/"
 
-## 🔧 **Requirements**
+# ...or step by step
+orpheus ingest --source "path/to/Spotify Extended Streaming History/"
+orpheus enrich
+orpheus score
+orpheus analyze
+orpheus report
 
-- **Windows PowerShell** 
-- **Python 3.11+** (included in `orpheus_venv/`)
-- **Spotify CSV files** from [Exportify](https://github.com/watsonbox/exportify)
+orpheus status   # check progress at any time
+```
 
----
+See **[SETUP.md](SETUP.md)** for credentials, runtimes, and troubleshooting.
 
-## 💡 **Sample Data Included**
+### Viewing the report
 
-- **119 tracks** ready to analyze (`04_data/raw/x_rap_x.csv`)
-- **82 unique artists** 
-- **Complete analysis pipeline** working out-of-the-box
-
----
-
-## 🆘 **Need Help?**
-
-1. **Run health check**: `.\orpheus_venv\Scripts\python.exe 01_setup\test_setup.py`
-2. **Check documentation**: `06_docs/QUICK_START_FINAL.md`
-3. **Verify structure**: All files in numbered folders (01-06)
+```bash
+cd frontend
+npm install
+npm run dev      # opens the dashboard locally (Vite)
+```
 
 ---
 
-*Just as Orpheus journeyed into the underworld with music as his guide, Project Orpheus helps you descend into your emotional depths to retrieve hidden truths and fresh self-understanding.*
+## Audio features (note)
 
-**🎵 Ready to decode your musical soul? Start with `.\launch_orpheus.bat` 🎵** 
+Audio features (valence, arousal, tempo, energy) drive the clustering step.
+There is currently **no working live source** — the RapidAPI option was removed
+for being too rate-limited to use. Everything else works without them: emotion
+and theme scoring run off lyrics, so you still get a full report. The `clusters`
+section simply reports `no_audio_features` until a source is wired up (or a local
+archive cache is supplied). See
+[docs/C3_data_pipeline_spec.md](docs/C3_data_pipeline_spec.md) for details.
+
+---
+
+## Project layout
+
+- **[`orpheus/`](orpheus/)** — the Python package and CLI (ingest, enrich, score, aggregate, pattern, output).
+- **[`frontend/`](frontend/)** — React + Vite dashboard that renders the report JSON.
+- **[`scripts/`](scripts/)** — bootstrap and utility scripts.
+- **[`docs/`](docs/)** — product requirements, methodology, and data-pipeline specs.
+- **[`tests/`](tests/)** — pytest suite, including a synthetic end-to-end test.
+- **`config.yaml`** — all tunable parameters (half-lives, weights, clustering, model names, API keys).
+
+---
+
+## Development
+
+```bash
+ruff check orpheus/ tests/    # lint
+ruff format orpheus/ tests/   # format
+pytest                        # all tests
+pytest -m "not slow"          # skip transformer-loading tests
+```
+
+See [CLAUDE.md](CLAUDE.md) for the full architecture reference and design notes.
+
+---
+
+## Documentation
+
+- **[SETUP.md](SETUP.md)** — installation, API credentials, troubleshooting.
+- **[docs/PRD.md](docs/PRD.md)** — product requirements.
+- **[docs/C2_methodology_spec.md](docs/C2_methodology_spec.md)** — scoring & aggregation methodology.
+- **[docs/C3_data_pipeline_spec.md](docs/C3_data_pipeline_spec.md)** — data pipeline & audio-feature sourcing.
+
+---
+
+## License
+
+Dual-licensed: code under the **MIT License**, creative content under
+**CC BY-NC-ND 4.0**. See [LICENSE.md](LICENSE.md).
