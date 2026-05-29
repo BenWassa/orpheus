@@ -20,29 +20,50 @@ export function EmotionMap({ report, activeWindow, comparisonWindow, selected, o
         </div>
         <span className="depth-pill">{activeWindow.depth_label}</span>
       </div>
-      <div className="mood-legend" aria-hidden>
-        <div className="legend-item"><span className="swatch" style={{ background: 'rgba(255, 204, 0, 0.7)' }} /> High energy, bright</div>
-        <div className="legend-item"><span className="swatch" style={{ background: 'rgba(255, 71, 71, 0.7)' }} /> High energy, heavy</div>
-        <div className="legend-item"><span className="swatch" style={{ background: 'rgba(74, 222, 128, 0.7)' }} /> Low energy, bright</div>
-        <div className="legend-item"><span className="swatch" style={{ background: 'rgba(59, 130, 246, 0.7)' }} /> Low energy, heavy</div>
-      </div>
 
       <div className="emotion-plot" role="img" aria-label="Emotion categories plotted by feeling and energy">
         <svg viewBox="-112 -112 224 224">
+          <defs>
+            {/* Quadrant washes — stronger opacity so colour reads clearly, fade stops at ~55% radius so centre stays neutral */}
+            <radialGradient id="grad-tr" cx="100%" cy="0%" r="100%" gradientUnits="objectBoundingBox">
+              <stop offset="0%"  stopColor="rgb(255,204,0)"  stopOpacity="0.28" />
+              <stop offset="55%" stopColor="rgb(255,204,0)"  stopOpacity="0.06" />
+              <stop offset="100%" stopColor="rgb(255,204,0)" stopOpacity="0" />
+            </radialGradient>
+            <radialGradient id="grad-tl" cx="0%" cy="0%" r="100%" gradientUnits="objectBoundingBox">
+              <stop offset="0%"  stopColor="rgb(255,71,71)"  stopOpacity="0.28" />
+              <stop offset="55%" stopColor="rgb(255,71,71)"  stopOpacity="0.06" />
+              <stop offset="100%" stopColor="rgb(255,71,71)" stopOpacity="0" />
+            </radialGradient>
+            <radialGradient id="grad-br" cx="100%" cy="100%" r="100%" gradientUnits="objectBoundingBox">
+              <stop offset="0%"  stopColor="rgb(74,222,128)"  stopOpacity="0.28" />
+              <stop offset="55%" stopColor="rgb(74,222,128)"  stopOpacity="0.06" />
+              <stop offset="100%" stopColor="rgb(74,222,128)" stopOpacity="0" />
+            </radialGradient>
+            <radialGradient id="grad-bl" cx="0%" cy="100%" r="100%" gradientUnits="objectBoundingBox">
+              <stop offset="0%"  stopColor="rgb(59,130,246)"  stopOpacity="0.28" />
+              <stop offset="55%" stopColor="rgb(59,130,246)"  stopOpacity="0.06" />
+              <stop offset="100%" stopColor="rgb(59,130,246)" stopOpacity="0" />
+            </radialGradient>
+          </defs>
+
+          {/* Quadrant colour wash */}
+          <rect x="-112" y="-112" width="224" height="224" fill="url(#grad-tr)" />
+          <rect x="-112" y="-112" width="224" height="224" fill="url(#grad-tl)" />
+          <rect x="-112" y="-112" width="224" height="224" fill="url(#grad-br)" />
+          <rect x="-112" y="-112" width="224" height="224" fill="url(#grad-bl)" />
+
+          {/* Axis lines */}
           <line x1="-100" y1="0" x2="100" y2="0" />
           <line x1="0" y1="-100" x2="0" y2="100" />
-          <text x="-100" y="8">heavier</text>
-          <text x="74" y="8">brighter</text>
-          <text x="4" y="-94">higher energy</text>
-          <text x="4" y="100">lower energy</text>
 
-          {/* Quadrant legend markers */}
-          <rect x="42" y="-96" width="16" height="16" fill="rgba(255, 204, 0, 0.7)" stroke="rgba(0,0,0,0.06)" />
-          <rect x="-96" y="-96" width="16" height="16" fill="rgba(255, 71, 71, 0.7)" stroke="rgba(0,0,0,0.06)" />
-          <rect x="42" y="80" width="16" height="16" fill="rgba(74, 222, 128, 0.7)" stroke="rgba(0,0,0,0.06)" />
-          <rect x="-96" y="80" width="16" height="16" fill="rgba(59, 130, 246, 0.7)" stroke="rgba(0,0,0,0.06)" />
+          {/* Axis labels */}
+          <text x="-96" y="-4" textAnchor="start" className="axis-label">heavier</text>
+          <text x="96" y="-4" textAnchor="end" className="axis-label">brighter</text>
+          <text x="0" y="-104" textAnchor="middle" className="axis-label">high energy</text>
+          <text x="0" y="112" textAnchor="middle" className="axis-label">low energy</text>
 
-          {EMOTION_ORDER.map((category) => {
+        {EMOTION_ORDER.map((category) => {
             const emotion = EMOTIONS[category];
             const score = activeWindow.emotion[category] ?? 0;
             const comparisonScore = comparisonWindow.emotion[category] ?? 0;
@@ -51,7 +72,7 @@ export function EmotionMap({ report, activeWindow, comparisonWindow, selected, o
             const cy = -emotion.arousal * 92;
             const isSelected = selected === category;
 
-            const { background, border, color } = moodColorRGBA(emotion.valence, emotion.arousal, 0.22);
+            const { solid } = moodColorRGBA(emotion.valence, emotion.arousal, 0.22);
             return (
               <g key={category}>
                 <circle className="comparison-dot" cx={cx + comparisonScore * 12} cy={cy} r={3 + comparisonScore * 14} />
@@ -61,10 +82,10 @@ export function EmotionMap({ report, activeWindow, comparisonWindow, selected, o
                     cx={cx}
                     cy={cy}
                     r={radius}
-                    style={{ fill: background, stroke: border } as React.CSSProperties}
+                    style={{ fill: solid } as React.CSSProperties}
                   />
                 </button>
-                <text className="dot-label" x={cx} y={cy - radius - 5} textAnchor="middle" style={{ fill: color }}>
+                <text className="dot-label" x={cx} y={cy - radius - 5} textAnchor="middle">
                   {emotion.short}
                 </text>
               </g>

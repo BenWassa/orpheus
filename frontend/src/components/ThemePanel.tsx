@@ -26,26 +26,23 @@ export function ThemePanel({ activeWindow, comparisonWindow, selected, onSelect 
           const baseline = comparisonWindow.theme[category] ?? 0;
           const isSelected = selected === category;
 
+          const mc = moodColorRGBA(theme.valence ?? 0, theme.arousal ?? 0, 0.22);
           return (
             <button
               className={isSelected ? 'theme-row selected' : 'theme-row'}
               key={category}
               type="button"
               onClick={() => onSelect(isSelected ? null : category)}
-              title={`${theme.label} — val:${(theme.valence ?? 0).toFixed(2)}, ar:${(theme.arousal ?? 0).toFixed(2)}`}
             >
-              {
-                // use moodColor for swatch
-              }
               <span
                 className="theme-swatch"
-                style={{ background: moodColorRGBA(theme.valence ?? 0, theme.arousal ?? 0, 0.16).background }}
+                style={{ background: mc.background, border: `1px solid ${mc.border}` }}
               />
               <span className="theme-main">
                 <strong>{theme.label}</strong>
                 <span>{isSelected ? theme.description : `${(score * 100).toFixed(0)}% of recent listening`}</span>
                 <span className="theme-bar">
-                  <span style={{ width: `${Math.max(4, score * 100)}%`, background: theme.color }} />
+                  <span style={{ width: `${Math.max(4, score * 100)}%`, background: mc.solid }} />
                 </span>
               </span>
               <span className={score >= baseline ? 'delta up' : 'delta down'}>

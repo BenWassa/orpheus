@@ -413,10 +413,12 @@ button {
   stroke-width: 0.8;
 }
 
-.emotion-plot text {
+.axis-label {
   fill: var(--muted);
   font-size: 5px;
   font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .emotion-plot button {
@@ -428,28 +430,30 @@ button {
 }
 
 .emotion-dot {
-  fill: var(--dot-color);
-  opacity: 0.76;
+  opacity: 0.82;
   stroke: var(--panel);
-  stroke-width: 1.2;
+  stroke-width: 2;
   transition:
     opacity 180ms ease-out,
-    transform 180ms ease-out;
+    r 180ms ease-out;
 }
 
 .emotion-dot:hover,
 .emotion-dot.selected {
-  opacity: 0.96;
+  opacity: 1;
 }
 
 .comparison-dot {
   fill: transparent;
-  stroke: color-mix(in oklch, var(--muted), transparent 35%);
+  stroke: color-mix(in oklch, var(--ink), transparent 72%);
   stroke-width: 0.8;
+  stroke-dasharray: 2 2;
 }
 
 .dot-label {
   pointer-events: none;
+  fill: var(--muted);
+  font-size: 5px;
 }
 
 .detail-well {
@@ -789,11 +793,10 @@ button {
   font-size: 0.75rem;
   font-weight: 600;
   padding: 3px 7px;
-  background: color-mix(in oklch, var(--plum), transparent 70%);
-  color: color-mix(in oklch, var(--plum), var(--ink) 20%);
   border-radius: 3px;
   line-height: 1.2;
-  border: 1px solid color-mix(in oklch, var(--plum), transparent 85%);
+  border: 1px solid transparent;
+  transition: opacity 180ms ease-out;
 }
 
 .track-themes {
@@ -806,12 +809,12 @@ button {
   font-size: 0.75rem;
   font-weight: 600;
   padding: 3px 7px;
-  background: color-mix(in oklch, var(--accent), transparent 75%);
-  color: color-mix(in oklch, var(--accent), var(--ink) 15%);
   border-radius: 3px;
   line-height: 1.2;
-  border: 1px solid color-mix(in oklch, var(--accent), transparent 85%);
+  border: 1px solid transparent;
+  transition: opacity 180ms ease-out;
 }
+
 
 @media (max-width: 920px) {
   .track-grid-bento {
@@ -826,28 +829,6 @@ button {
 
   .emotion-plot {
     min-height: 320px;
-  }
-
-  .mood-legend {
-    display: flex;
-    gap: 12px;
-    align-items: center;
-    margin-top: 8px;
-    font-size: 0.85rem;
-    color: var(--muted);
-  }
-
-  .mood-legend .legend-item {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-  }
-
-  .mood-legend .swatch {
-    width: 14px;
-    height: 14px;
-    border-radius: 3px;
-    border: 1px solid rgba(0,0,0,0.06);
   }
 
   .view-toggle span {
