@@ -141,8 +141,11 @@ class ThemeScorer:
         if valence > 0.7 and energy > 0.7:
             scores["hedonism_escape"] += 0.3
         if valence < 0.3 and energy > 0.7:
+            # Low valence + high energy reads as struggle/defiance. Bump the
+            # matching *theme* categories only — anger/defiance is an emotion
+            # category and must not be written into theme scores.
             scores["adversity_resilience"] += 0.2
-            scores["anger_defiance"] = scores.get("anger_defiance", 0.1)
+            scores["identity_autonomy"] += 0.1
         if valence > 0.6 and energy < 0.4:
             scores["interpersonal_devotion"] += 0.2
             scores["place_heritage"] += 0.1
