@@ -1,5 +1,5 @@
 import { ShieldCheck } from 'lucide-react';
-import type { SafetyFlag } from '../types';
+import type { SafetyFlag } from '../../../types';
 
 interface SafetyFlagsProps {
   flags: SafetyFlag[];

@@ -1,6 +1,6 @@
 import { ArrowDownRight, ArrowUpRight } from 'lucide-react';
-import { categoryColor, categoryLabel } from '../taxonomy';
-import type { TrendEvent } from '../types';
+import { categoryColor, categoryLabel } from '../../../taxonomy';
+import type { TrendEvent } from '../../../types';
 
 interface TrendEventsProps {
   trends: TrendEvent[];

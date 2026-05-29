@@ -1,18 +1,20 @@
 import { useMemo, useRef, useState } from 'react';
 import { AlertCircle } from 'lucide-react';
-import { ClusterList } from './ClusterList';
-import { CoOccurrenceMatrix } from './CoOccurrenceMatrix';
-import { EmotionMap } from './EmotionMap';
-import { EvidenceTracks } from './EvidenceTracks';
-import { HeroSummary } from './HeroSummary';
-import { SafetyFlags } from './SafetyFlags';
-import { ThemePanel } from './ThemePanel';
-import { TrendEvents } from './TrendEvents';
-import { ViewToggle } from './ViewToggle';
-import { AddDataPanel } from './AddDataPanel';
-import type { EmotionCategory, OrpheusReport, ThemeCategory } from '../types';
+import { AddDataPanel } from './components/AddDataPanel';
+import { ClusterList } from './components/ClusterList';
+import { CoOccurrenceMatrix } from './components/CoOccurrenceMatrix';
+import { EmotionMap } from './components/EmotionMap';
+import { EvidenceTracks } from './components/EvidenceTracks';
+import { HeroSummary } from './components/HeroSummary';
+import { SafetyFlags } from './components/SafetyFlags';
+import { ThemePanel } from './components/ThemePanel';
+import { TrendEvents } from './components/TrendEvents';
+import { ViewToggle } from './components/ViewToggle';
+import { DETAIL_VIEWS, detailViewForKey, type DetailView } from './lib/detailViews';
+import { exportReport } from './lib/exportReport';
+import type { EmotionCategory, OrpheusReport, ThemeCategory } from '../../types';
 
-interface DashboardProps {
+interface DashboardScreenProps {
   report: OrpheusReport;
   onReset: () => void;
   profileName?: string;
@@ -21,17 +23,8 @@ interface DashboardProps {
 }
 
 type ViewMode = 'state' | 'trait';
-type DetailView = 'connections' | 'movement' | 'loops' | 'tracks' | 'frequency';
 
-const DETAIL_VIEWS: Array<{ id: DetailView; label: string }> = [
-  { id: 'connections', label: 'Connections' },
-  { id: 'movement', label: 'Movement' },
-  { id: 'loops', label: 'Loops' },
-  { id: 'tracks', label: 'Influence' },
-  { id: 'frequency', label: 'Frequency' },
-];
-
-export function Dashboard({ report, onReset, profileName, onReload, reloadError }: DashboardProps) {
+export function DashboardScreen({ report, onReset, profileName, onReload, reloadError }: DashboardScreenProps) {
   const [viewMode, setViewMode] = useState<ViewMode>('state');
   const [detailView, setDetailView] = useState<DetailView>('connections');
   const [selectedEmotion, setSelectedEmotion] = useState<EmotionCategory | null>(null);
@@ -51,16 +44,6 @@ export function Dashboard({ report, onReset, profileName, onReload, reloadError 
     [activeWindow.top_frequency_tracks]
   );
 
-  function exportReport() {
-    const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement('a');
-    anchor.href = url;
-    anchor.download = `orpheus_report_${report.metadata.generated_at.split('T')[0]}.json`;
-    anchor.click();
-    URL.revokeObjectURL(url);
-  }
-
   function handleReload() {
     setShowAddData(false);
     onReload?.();
@@ -73,21 +56,10 @@ export function Dashboard({ report, onReset, profileName, onReload, reloadError 
   }
 
   function handleTabKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
-    const idx = DETAIL_VIEWS.findIndex((v) => v.id === detailView);
-    if (e.key === 'ArrowRight') {
+    const nextView = detailViewForKey(e.key, detailView);
+    if (nextView) {
       e.preventDefault();
-      const next = DETAIL_VIEWS[(idx + 1) % DETAIL_VIEWS.length];
-      setDetailView(next.id);
-    } else if (e.key === 'ArrowLeft') {
-      e.preventDefault();
-      const prev = DETAIL_VIEWS[(idx - 1 + DETAIL_VIEWS.length) % DETAIL_VIEWS.length];
-      setDetailView(prev.id);
-    } else if (e.key === 'Home') {
-      e.preventDefault();
-      setDetailView(DETAIL_VIEWS[0].id);
-    } else if (e.key === 'End') {
-      e.preventDefault();
-      setDetailView(DETAIL_VIEWS[DETAIL_VIEWS.length - 1].id);
+      setDetailView(nextView);
     }
   }
 
@@ -109,7 +81,7 @@ export function Dashboard({ report, onReset, profileName, onReload, reloadError 
       <SafetyFlags flags={report.safety_flags} />
       <HeroSummary
         report={report}
-        onExport={exportReport}
+        onExport={() => exportReport(report)}
         onReset={onReset}
         onAddData={profileName ? () => setShowAddData(true) : undefined}
         addDataTriggerRef={profileName ? addDataTriggerRef : undefined}

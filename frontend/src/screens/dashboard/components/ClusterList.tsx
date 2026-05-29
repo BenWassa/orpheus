@@ -1,5 +1,5 @@
-import { categoryColor, categoryLabel } from '../taxonomy';
-import type { ClusterSummary } from '../types';
+import { categoryColor, categoryLabel } from '../../../taxonomy';
+import type { ClusterSummary } from '../../../types';
 
 interface ClusterListProps {
   clusters: ClusterSummary[];

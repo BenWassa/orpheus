@@ -1,7 +1,7 @@
 import { type RefObject } from 'react';
 import { CalendarClock, Download, RotateCcw, PlusSquare } from 'lucide-react';
-import { categoryLabel } from '../taxonomy';
-import type { OrpheusReport } from '../types';
+import { categoryLabel } from '../../../taxonomy';
+import type { OrpheusReport } from '../../../types';
 
 interface HeroSummaryProps {
   report: OrpheusReport;

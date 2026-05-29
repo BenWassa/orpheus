@@ -1,15 +1,15 @@
 import { Music2, Plus, AlertCircle } from 'lucide-react';
-import type { ProfileInfo } from '../types';
-import { ProfileCard } from './ProfileCard';
+import type { ProfileInfo } from '../../types';
+import { ProfileCard } from './components/ProfileCard';
 
-interface ProfileSelectionViewProps {
+interface ProfileSelectionScreenProps {
   profiles: ProfileInfo[];
   onSelect: (profile: ProfileInfo) => void;
   loadingProfile: string | null;
   loadError: string | null;
 }
 
-export function ProfileSelectionView({ profiles, onSelect, loadingProfile, loadError }: ProfileSelectionViewProps) {
+export function ProfileSelectionScreen({ profiles, onSelect, loadingProfile, loadError }: ProfileSelectionScreenProps) {
   return (
     <main className="profiles-shell">
       <header className="brand-header">

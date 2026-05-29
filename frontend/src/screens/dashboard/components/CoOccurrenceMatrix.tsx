@@ -1,5 +1,5 @@
-import { EMOTION_ORDER, EMOTIONS, THEME_ORDER, THEMES } from '../taxonomy';
-import type { CoOccurrence, EmotionCategory, OrpheusReport, ThemeCategory } from '../types';
+import { EMOTION_ORDER, EMOTIONS, THEME_ORDER, THEMES } from '../../../taxonomy';
+import type { CoOccurrence, EmotionCategory, OrpheusReport, ThemeCategory } from '../../../types';
 
 interface CoOccurrenceMatrixProps {
   report: OrpheusReport;

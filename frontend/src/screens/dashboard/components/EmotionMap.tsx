@@ -1,6 +1,6 @@
-import { EMOTION_ORDER, EMOTIONS } from '../taxonomy';
-import { moodColorRGBA } from '../lib/moodColor';
-import type { EmotionCategory, OrpheusReport, WindowScores } from '../types';
+import { EMOTION_ORDER, EMOTIONS } from '../../../taxonomy';
+import { moodColorRGBA } from '../../../lib/moodColor';
+import type { EmotionCategory, OrpheusReport, WindowScores } from '../../../types';
 
 interface EmotionMapProps {
   report: OrpheusReport;

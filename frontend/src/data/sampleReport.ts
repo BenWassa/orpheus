@@ -78,6 +78,8 @@ export const sampleReport: OrpheusReport = {
         play_count: 14,
         last_played: '2026-05-20T18:42:00Z',
         frequency_window_days: 12,
+        emotion_scores: { nostalgia_longing: 0.45, sadness_melancholy: 0.48, peacefulness: 0.07 },
+        theme_scores: { heartbreak_loss: 0.5, existentialism_spirituality: 0.4, place_heritage: 0.1 },
       },
       {
         uri: 'spotify:track:12093',
@@ -88,6 +90,8 @@ export const sampleReport: OrpheusReport = {
         play_count: 12,
         last_played: '2026-05-18T21:15:00Z',
         frequency_window_days: 12,
+        emotion_scores: { nostalgia_longing: 0.52, peacefulness: 0.38, sadness_melancholy: 0.1 },
+        theme_scores: { place_heritage: 0.45, existentialism_spirituality: 0.35, adversity_resilience: 0.2 },
       },
     ],
   },

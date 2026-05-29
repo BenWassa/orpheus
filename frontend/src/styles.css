@@ -722,10 +722,6 @@ button {
   margin-top: 24px;
 }
 
-.track-grid-frequency {
-  grid-template-columns: repeat(4, 1fr);
-  gap: 14px;
-}
 
 .evidence-tracks-heading {
   align-items: flex-end;
@@ -760,9 +756,6 @@ button {
   background: color-mix(in oklch, var(--panel-soft), var(--panel) 15%);
 }
 
-.track-card-ranked.frequency-card {
-  min-height: auto;
-}
 
 .track-rank {
   position: absolute;
@@ -851,11 +844,6 @@ button {
     gap: 16px;
   }
 
-  .track-grid-frequency {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 12px;
-  }
-
   .evidence-tracks-desc {
     display: none;
   }
@@ -884,8 +872,7 @@ button {
 }
 
 @media (max-width: 620px) {
-  .track-grid-bento,
-  .track-grid-frequency {
+  .track-grid-bento {
     grid-template-columns: 1fr;
     gap: 12px;
   }
@@ -980,38 +967,38 @@ button {
 
 .profile-card {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 16px;
-  padding: 24px;
+  padding: 22px;
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: 8px;
   text-align: left;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: border-color 180ms ease-out, background-color 180ms ease-out;
   width: 100%;
 }
 
 .profile-card:hover:not(:disabled) {
   border-color: var(--accent);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  background: var(--panel);
 }
 
 .profile-card.is-loading {
-  opacity: 0.7;
+  opacity: 0.65;
   cursor: wait;
 }
 
 .profile-icon {
   flex-shrink: 0;
-  width: 48px;
-  height: 48px;
+  width: 40px;
+  height: 40px;
   display: grid;
   place-items: center;
-  border-radius: 50%;
+  border-radius: 6px;
   background: var(--panel-soft);
   color: var(--muted);
+  transition: background-color 180ms ease-out, color 180ms ease-out;
 }
 
 .profile-card:hover .profile-icon {
@@ -1021,28 +1008,34 @@ button {
 
 .profile-card.new-profile {
   border-style: dashed;
+  border-color: var(--accent-soft);
   background: transparent;
   cursor: default;
 }
 
 .profile-card.new-profile:hover {
-  transform: none;
-  box-shadow: none;
-  border-color: var(--line);
+  border-color: var(--accent);
+}
+
+.profile-info {
+  flex: 1;
+  min-width: 0;
 }
 
 .profile-info h3 {
-  margin: 0 0 6px;
-  font-size: 1.25rem;
+  margin: 0 0 8px;
+  font-size: 1.05rem;
   font-weight: 600;
+  line-height: 1.3;
 }
 
 .profile-stats {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  font-size: 0.85rem;
+  gap: 3px;
+  font-size: 0.82rem;
   color: var(--muted);
+  line-height: 1.4;
 }
 
 .profile-stats span {

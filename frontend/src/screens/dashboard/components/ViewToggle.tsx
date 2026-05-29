@@ -1,4 +1,4 @@
-import type { WindowScores } from '../types';
+import type { WindowScores } from '../../../types';
 
 type ViewMode = 'state' | 'trait';
 

@@ -1,6 +1,6 @@
-import { THEME_ORDER, THEMES } from '../taxonomy';
-import { moodColorRGBA } from '../lib/moodColor';
-import type { ThemeCategory, WindowScores } from '../types';
+import { THEME_ORDER, THEMES } from '../../../taxonomy';
+import { moodColorRGBA } from '../../../lib/moodColor';
+import type { ThemeCategory, WindowScores } from '../../../types';
 
 interface ThemePanelProps {
   activeWindow: WindowScores;

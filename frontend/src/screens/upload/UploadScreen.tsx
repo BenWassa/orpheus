@@ -1,13 +1,13 @@
 import { FileJson, Music2, Upload } from 'lucide-react';
 import { useRef, useState } from 'react';
 
-interface UploadPanelProps {
+interface UploadScreenProps {
   error: string | null;
   onFile: (file: File) => void;
   onDemo: () => void;
 }
 
-export function UploadPanel({ error, onFile, onDemo }: UploadPanelProps) {
+export function UploadScreen({ error, onFile, onDemo }: UploadScreenProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
 

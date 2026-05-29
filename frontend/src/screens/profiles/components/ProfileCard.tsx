@@ -1,5 +1,5 @@
 import { Music2, Clock, BarChart3, Loader2 } from 'lucide-react';
-import type { ProfileInfo } from '../types';
+import type { ProfileInfo } from '../../../types';
 
 interface ProfileCardProps {
   profile: ProfileInfo;

@@ -1,6 +1,6 @@
-import { categoryLabel, EMOTIONS, THEMES } from '../taxonomy';
-import { moodColorRGBA } from '../lib/moodColor';
-import type { Track } from '../types';
+import { categoryLabel, EMOTIONS, THEMES } from '../../../taxonomy';
+import { moodColorRGBA } from '../../../lib/moodColor';
+import type { Track } from '../../../types';
 
 interface EvidenceTracksProps {
   tracks: Track[];
@@ -32,12 +32,9 @@ export function EvidenceTracks({ tracks, variant = 'primary' }: EvidenceTracksPr
             : 'No influence tracks were attached to this report.'}
         </p>
       ) : (
-        <div className={`track-grid-bento${isFrequency ? ' track-grid-frequency' : ''}`}>
+        <div className="track-grid-bento">
           {tracks.map((track, index) => (
-            <article
-              className={`track-card-ranked${isFrequency ? ' frequency-card' : ''}`}
-              key={track.uri}
-            >
+            <article className="track-card-ranked" key={track.uri}>
               <div className="track-rank">{index + 1}</div>
               <div className="track-content">
                 <h3 className="track-title">{track.name || track.uri}</h3>
@@ -46,19 +43,7 @@ export function EvidenceTracks({ tracks, variant = 'primary' }: EvidenceTracksPr
                     {[track.artist, track.album].filter(Boolean).join(' — ')}
                   </p>
                 )}
-                <div className="track-footer">
-                  {isFrequency && typeof track.qualified_play_count === 'number' && (
-                    <span className="track-stat">{track.qualified_play_count} qualified listens</span>
-                  )}
-                  {!isFrequency && track.play_count && <span className="track-stat">{track.play_count} plays</span>}
-                  {!isFrequency && !track.play_count && typeof track.weight === 'number' && (
-                    <span className="track-stat">Weight {track.weight.toFixed(2)}</span>
-                  )}
-                  {isFrequency && track.last_played && (
-                    <span className="track-stat">{track.last_played.slice(0, 10)}</span>
-                  )}
-                </div>
-                {!isFrequency && <div className="track-badges">
+                <div className="track-badges">
                   <div className="track-emotions">
                     {Object.entries(track.emotion_scores ?? {})
                       .sort(([, a], [, b]) => (b ?? 0) - (a ?? 0))
@@ -105,7 +90,19 @@ export function EvidenceTracks({ tracks, variant = 'primary' }: EvidenceTracksPr
                         );
                       })}
                   </div>
-                </div>}
+                </div>
+                <div className="track-footer">
+                  {isFrequency && typeof track.qualified_play_count === 'number' && (
+                    <span className="track-stat">{track.qualified_play_count} qualified listens</span>
+                  )}
+                  {!isFrequency && track.play_count && <span className="track-stat">{track.play_count} plays</span>}
+                  {!isFrequency && !track.play_count && typeof track.weight === 'number' && (
+                    <span className="track-stat">Weight {track.weight.toFixed(2)}</span>
+                  )}
+                  {isFrequency && track.last_played && (
+                    <span className="track-stat">{track.last_played.slice(0, 10)}</span>
+                  )}
+                </div>
               </div>
             </article>
           ))}
