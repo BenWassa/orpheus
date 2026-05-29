@@ -36,33 +36,17 @@ button {
   font: inherit;
 }
 
-.upload-shell,
 .app-shell {
   width: min(1180px, calc(100vw - 32px));
   margin: 0 auto;
 }
 
-.upload-shell {
-  min-height: 100vh;
-  display: grid;
-  place-items: center;
-}
-
-.upload-panel,
 .hero-summary,
 .panel,
 .safety-note {
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: 8px;
-}
-
-.upload-panel {
-  width: min(680px, 100%);
-  padding: clamp(24px, 5vw, 48px);
-  display: grid;
-  gap: 24px;
-  border-color: color-mix(in oklch, var(--line), var(--accent) 18%);
 }
 
 .brand-mark {
@@ -75,7 +59,6 @@ button {
   color: var(--accent);
 }
 
-.upload-copy h1,
 .hero-summary h1 {
   margin: 0;
   max-width: 780px;
@@ -85,7 +68,6 @@ button {
   letter-spacing: 0;
 }
 
-.upload-copy p,
 .hero-summary p,
 .detail-well p,
 .event-row p,
@@ -104,47 +86,18 @@ button {
   text-transform: uppercase;
 }
 
-.dropzone {
-  border: 1px solid color-mix(in oklch, var(--accent), var(--line) 50%);
-  background: var(--panel-soft);
-  border-radius: 8px;
-  min-height: 170px;
-  display: grid;
-  place-items: center;
-  gap: 8px;
-  padding: 28px;
-  text-align: center;
-  cursor: pointer;
-  transition:
-    border-color 180ms ease-out,
-    background 180ms ease-out,
-    transform 180ms ease-out;
-}
-
-.dropzone input {
-  display: none;
-}
-
-.dropzone.is-dragging,
-.dropzone:hover,
-.dropzone:focus-visible {
-  border-color: var(--accent);
-  background: var(--accent-soft);
-  transform: translateY(-1px);
-  outline: none;
-}
-
-.dropzone span {
-  font-weight: 700;
-}
-
-.dropzone small,
 .muted-copy,
 .caveat {
   color: var(--muted);
 }
 
-.primary-action,
+.detail-scope-note {
+  margin: 0 0 16px;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-style: italic;
+}
+
 .hero-actions button,
 .view-toggle button {
   border: 1px solid var(--line);
@@ -160,7 +113,6 @@ button {
   gap: 8px;
 }
 
-.primary-action:hover,
 .hero-actions button:hover {
   background: var(--accent);
 }
@@ -174,15 +126,6 @@ button {
 .hero-actions button + button:focus-visible {
   background: var(--panel-soft);
   color: var(--ink);
-}
-
-.error-message {
-  display: flex;
-  gap: 10px;
-  padding: 14px;
-  color: var(--danger);
-  background: var(--danger-soft);
-  border-radius: 8px;
 }
 
 .app-shell {
@@ -893,7 +836,6 @@ button {
     font-size: 1rem;
   }
 
-  .upload-shell,
   .app-shell {
     width: min(100vw - 20px, 1180px);
   }
@@ -903,19 +845,16 @@ button {
     justify-content: flex-start;
   }
 
-  .hero-actions button,
-  .primary-action {
+  .hero-actions button {
     width: 100%;
   }
 
-  .upload-copy h1,
   .hero-summary h1 {
     font-size: 2.25rem;
   }
 
   .panel,
-  .hero-summary,
-  .upload-panel {
+  .hero-summary {
     padding: 18px;
   }
 
@@ -987,6 +926,52 @@ button {
 .profile-card.is-loading {
   opacity: 0.65;
   cursor: wait;
+}
+
+.profile-skeleton {
+  min-height: 112px;
+  cursor: wait;
+  overflow: hidden;
+  position: relative;
+  background:
+    linear-gradient(90deg, transparent, color-mix(in oklch, var(--paper), var(--panel) 20%), transparent),
+    var(--panel);
+  background-size: 220px 100%, 100% 100%;
+  animation: profile-skeleton-sheen 1.2s ease-out infinite;
+}
+
+.profile-skeleton::before,
+.profile-skeleton::after {
+  content: '';
+  display: block;
+  border-radius: 6px;
+  background: var(--panel-soft);
+}
+
+.profile-skeleton::before {
+  width: 40px;
+  height: 40px;
+}
+
+.profile-skeleton::after {
+  width: min(180px, 50vw);
+  height: 44px;
+}
+
+@keyframes profile-skeleton-sheen {
+  from {
+    background-position: -220px 0, 0 0;
+  }
+
+  to {
+    background-position: calc(100% + 220px) 0, 0 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .profile-skeleton {
+    animation: none;
+  }
 }
 
 .profile-icon {

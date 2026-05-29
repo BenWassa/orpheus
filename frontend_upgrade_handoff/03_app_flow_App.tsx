@@ -1,18 +1,16 @@
 import { useEffect, useState } from 'react';
-import { sampleReport } from '../data/sampleReport';
 import { DashboardScreen } from '../screens/dashboard/DashboardScreen';
 import { ProfileSelectionScreen } from '../screens/profiles/ProfileSelectionScreen';
-import { UploadScreen } from '../screens/upload/UploadScreen';
-import { loadLatestReport, loadProfiles, parseLocalReportFile } from '../services/reportService';
+import { loadLatestReport, loadProfiles } from '../services/reportService';
 import type { OrpheusReport, ProfileInfo } from '../types';
 
 type AppView =
+  | { tag: 'loading' }
   | { tag: 'profiles'; profiles: ProfileInfo[]; loadError: string | null }
-  | { tag: 'profile'; profile: ProfileInfo; report: OrpheusReport; reloadError: string | null }
-  | { tag: 'upload'; error: string | null };
+  | { tag: 'profile'; profile: ProfileInfo; report: OrpheusReport; reloadError: string | null };
 
 export function App() {
-  const [view, setView] = useState<AppView>({ tag: 'upload', error: null });
+  const [view, setView] = useState<AppView>({ tag: 'loading' });
   const [loadingProfile, setLoadingProfile] = useState<string | null>(null);
 
   useEffect(() => {
@@ -21,12 +19,15 @@ export function App() {
     async function loadAvailableProfiles() {
       try {
         const profiles = await loadProfiles(controller.signal);
-        if (profiles.length > 0) {
-          setView({ tag: 'profiles', profiles, loadError: null });
-        }
+        setView({ tag: 'profiles', profiles, loadError: null });
       } catch (error) {
         if (!controller.signal.aborted) {
           console.info('Orpheus profiles were not auto-loaded.', error);
+          setView({
+            tag: 'profiles',
+            profiles: [],
+            loadError: 'Could not load profiles. Run the local server and try again.',
+          });
         }
       }
     }
@@ -81,26 +82,17 @@ export function App() {
     } catch (e) {
       console.info('Failed to refresh profiles on reset', e);
     }
-    setView({ tag: 'upload', error: null });
+    setView({ tag: 'profiles', profiles: [], loadError: null });
   }
 
-  async function handleFile(file: File) {
-    try {
-      const report = await parseLocalReportFile(file);
-      const dummyProfile: ProfileInfo = { name: 'Local File', reportCount: 1, latestReportAt: null };
-      setView({ tag: 'profile', profile: dummyProfile, report, reloadError: null });
-    } catch {
-      setView({ tag: 'upload', error: 'This file is not a valid Orpheus JSON report.' });
-    }
-  }
-
-  if (view.tag === 'profiles') {
+  if (view.tag === 'loading' || view.tag === 'profiles') {
     return (
       <ProfileSelectionScreen
-        profiles={view.profiles}
+        profiles={view.tag === 'profiles' ? view.profiles : []}
         onSelect={handleProfileSelect}
         loadingProfile={loadingProfile}
-        loadError={view.loadError}
+        loadError={view.tag === 'profiles' ? view.loadError : null}
+        isLoadingProfiles={view.tag === 'loading'}
       />
     );
   }
@@ -117,18 +109,5 @@ export function App() {
     );
   }
 
-  return (
-    <UploadScreen
-      error={view.error}
-      onFile={handleFile}
-      onDemo={() =>
-        setView({
-          tag: 'profile',
-          profile: { name: 'Demo', reportCount: 1, latestReportAt: null },
-          report: sampleReport,
-          reloadError: null,
-        })
-      }
-    />
-  );
+  return null;
 }

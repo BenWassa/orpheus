@@ -38,8 +38,8 @@ export function ThemePanel({ activeWindow, comparisonWindow, selected, onSelect 
       <div className="theme-list">
         {orderedThemes.map((category) => {
           const theme = THEMES[category];
-          const score = activeWindow.theme?.[category] ?? 0;
-          const baseline = comparisonWindow.theme?.[category] ?? 0;
+          const score = activeWindow.theme[category] ?? 0;
+          const baseline = comparisonWindow.theme[category] ?? 0;
           const isSelected = selected === category;
 
           const mc = moodColorRGBA(theme.valence ?? 0, theme.arousal ?? 0, 0.22);
