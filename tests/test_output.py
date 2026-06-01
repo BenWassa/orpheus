@@ -70,13 +70,19 @@ def test_assemble_report_attaches_per_window_co_occurrences(tmp_config):
                  "observed": 60, "expected": 30.0, "narrative": "recent"}]
     trait_co = [{"pair": ["nostalgia_longing", "heartbreak_loss"], "strength": "moderate",
                  "observed": 40, "expected": 25.0, "narrative": "usual"}]
+    state_matrix = [{"emotion": "joyful_activation", "theme": "hedonism_escape", "lift": 1.21}]
+    trait_matrix = [{"emotion": "nostalgia_longing", "theme": "heartbreak_loss", "lift": 1.05}]
     report = assemble_report(
         _make_window(), _make_window(), [], [{"pair": ["x", "y"]}], [], tmp_config,
         state_co_occurrences=state_co, trait_co_occurrences=trait_co,
+        state_co_occurrence_matrix=state_matrix, trait_co_occurrence_matrix=trait_matrix,
     )
     # Per-window connections live inside each window and are independent.
     assert report["windows"]["state"]["co_occurrences"] == state_co
     assert report["windows"]["trait"]["co_occurrences"] == trait_co
+    # Dense lift matrix (for the heatmap) is attached per window too.
+    assert report["windows"]["state"]["co_occurrence_matrix"] == state_matrix
+    assert report["windows"]["trait"]["co_occurrence_matrix"] == trait_matrix
     # Top-level remains the global set (backward compatible).
     assert report["co_occurrences"] == [{"pair": ["x", "y"]}]
 
@@ -85,6 +91,8 @@ def test_assemble_report_window_co_occurrences_default_empty(tmp_config):
     report = assemble_report(_make_window(), _make_window(), [], [], [], tmp_config)
     assert report["windows"]["state"]["co_occurrences"] == []
     assert report["windows"]["trait"]["co_occurrences"] == []
+    assert report["windows"]["state"]["co_occurrence_matrix"] == []
+    assert report["windows"]["trait"]["co_occurrence_matrix"] == []
 
 
 def test_assemble_report_clusters_status_passthrough(tmp_config):

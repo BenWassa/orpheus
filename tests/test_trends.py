@@ -221,3 +221,42 @@ def test_co_occurrence_since_below_floor_returns_empty(tmp_db):
     tmp_db.commit()
 
     assert detect_co_occurrences(tmp_db, since=now - timedelta(days=30)) == []
+
+
+def test_co_occurrence_matrix_is_dense_and_unthresholded(tmp_db):
+    """The heatmap matrix carries a lift for every populated cell, including
+    near-baseline ones the notable shortlist filters out."""
+    from orpheus.pattern.trends import _co_occurrence_matrix, detect_co_occurrences
+
+    # Two graded groups give a populated 8x8 field with a clear over-represented
+    # pair plus many near-baseline cells.
+    group_a_emo = {"joyful_activation": 0.5, "triumphant_power": 0.3, "peacefulness": 0.2}
+    group_a_thm = {"hedonism_escape": 0.5, "status_ambition": 0.3, "identity_autonomy": 0.2}
+    group_b_emo = {"sadness_melancholy": 0.5, "tension_anxiety": 0.3, "anger_defiance": 0.2}
+    group_b_thm = {"heartbreak_loss": 0.5, "adversity_resilience": 0.3, "existentialism_spirituality": 0.2}
+
+    def vec(base, keys):
+        return {c: base.get(c, 0.0) for c in keys}
+
+    now = datetime.now(timezone.utc)
+    for i in range(8):
+        a, b = f"spotify:track:ma{i}", f"spotify:track:mb{i}"
+        _insert_distinct_score(tmp_db, a, vec(group_a_emo, EMOTION_CATEGORIES), vec(group_a_thm, THEME_CATEGORIES))
+        _insert_distinct_score(tmp_db, b, vec(group_b_emo, EMOTION_CATEGORIES), vec(group_b_thm, THEME_CATEGORIES))
+        _add_plays_at(tmp_db, a, now - timedelta(days=2), count=5)
+        _add_plays_at(tmp_db, b, now - timedelta(days=2), count=5)
+    tmp_db.commit()
+
+    from orpheus.pattern.trends import _co_occurrence_cells
+    cells, _ = _co_occurrence_cells(tmp_db, None, min_tracks=10)
+    matrix = _co_occurrence_matrix(cells)
+
+    # Every matrix entry is well-formed with a lift value.
+    assert matrix
+    assert all({"emotion", "theme", "lift"} <= set(m) for m in matrix)
+    assert all(isinstance(m["lift"], (int, float)) for m in matrix)
+    # The matrix is denser than the thresholded shortlist (which caps at 10):
+    # both groups' 3x3 within-group fields are populated (18 cells).
+    notable = detect_co_occurrences(tmp_db)
+    assert len(matrix) >= 18
+    assert len(matrix) > len(notable)

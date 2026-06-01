@@ -48,6 +48,8 @@ export interface WindowScores {
   // Connections scoped to this window's evidence span. May be empty when the
   // span has too few tracks for the lift comparison to be meaningful.
   co_occurrences: CoOccurrence[];
+  // Dense per-cell lift for the heatmap (every populated pair, unthresholded).
+  co_occurrence_matrix: CoOccurrenceCell[];
 }
 
 export interface WindowCoverage {
@@ -110,6 +112,15 @@ export interface CoOccurrence {
   narrative: string;
   emotion: EmotionCategory;
   theme: ThemeCategory;
+}
+
+// Dense per-cell lift for the heatmap — one entry per populated emotion×theme
+// pair, unthresholded. Lift 1.0 = independent; the diverging color scale is
+// centered there.
+export interface CoOccurrenceCell {
+  emotion: EmotionCategory;
+  theme: ThemeCategory;
+  lift: number;
 }
 
 export interface SafetyFlag {

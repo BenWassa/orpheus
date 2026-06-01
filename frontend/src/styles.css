@@ -695,6 +695,52 @@ button {
   background: var(--paper-strong);
 }
 
+/* Diverging legend: cool (avoided) → neutral (expected) → green (elevated). */
+.matrix-lift-legend {
+  margin-bottom: 20px;
+}
+
+.matrix-lift-legend .legend-bar {
+  display: block;
+  height: 8px;
+  border-radius: 4px;
+  background: linear-gradient(
+    90deg,
+    oklch(0.81 0.055 248),
+    var(--paper-strong) 50%,
+    oklch(0.49 0.125 172)
+  );
+}
+
+.matrix-lift-legend .legend-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 0.66rem;
+  letter-spacing: 0.03em;
+}
+
+/* Cells in the thresholded shortlist carry a number; give it a legible chip so
+   it reads on any cell color, and a faint ring so notable cells stand out. */
+.matrix-node-cell.is-notable {
+  border-color: color-mix(in oklch, var(--accent-strong) 35%, transparent);
+}
+
+.matrix-node-cell.is-notable .node-value-indicator {
+  min-width: 1.4em;
+  padding: 1px 4px;
+  border-radius: 999px;
+  background: color-mix(in oklch, var(--paper) 82%, transparent);
+  color: var(--ink);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.annotation-content-card.is-baseline .annotation-eyebrow {
+  color: var(--muted);
+}
+
 .annotation-eyebrow {
   color: var(--accent);
   font-size: 0.68rem;

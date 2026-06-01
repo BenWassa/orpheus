@@ -90,9 +90,11 @@ def _write_current_report(cfg, output_path: Path | None = None) -> tuple[Path, s
 
         report_data = assemble_report(
             state=windows["state"], trait=windows["trait"],
-            shifts=shifts, trends=trends, co_occurrences=co_occurrences["global"],
-            state_co_occurrences=co_occurrences["state"],
-            trait_co_occurrences=co_occurrences["trait"],
+            shifts=shifts, trends=trends, co_occurrences=co_occurrences["global"]["notable"],
+            state_co_occurrences=co_occurrences["state"]["notable"],
+            trait_co_occurrences=co_occurrences["trait"]["notable"],
+            state_co_occurrence_matrix=co_occurrences["state"]["matrix"],
+            trait_co_occurrence_matrix=co_occurrences["trait"]["matrix"],
             clusters=clusters, config=cfg, safety_flags=safety_flags,
             clusters_status=cl_status,
         )
@@ -285,8 +287,9 @@ def analyze(ctx):
     conn.close()
 
     click.echo(f"Done. {len(clusters)} clusters, {len(trends)} trends, "
-               f"{len(co_occurrences['global'])} co-occurrences "
-               f"({len(co_occurrences['state'])} recent, {len(co_occurrences['trait'])} usual), "
+               f"{len(co_occurrences['global']['notable'])} co-occurrences "
+               f"({len(co_occurrences['state']['notable'])} recent, "
+               f"{len(co_occurrences['trait']['notable'])} usual), "
                f"{len(shifts)} shifts, {noise_count} noise tracks filtered.")
 
 
@@ -384,9 +387,11 @@ def run_all(ctx, source, out, profile):
     click.echo("Assembling report...")
     report_data = assemble_report(
         state=windows["state"], trait=windows["trait"],
-        shifts=shifts, trends=trends, co_occurrences=co_occurrences["global"],
-        state_co_occurrences=co_occurrences["state"],
-        trait_co_occurrences=co_occurrences["trait"],
+        shifts=shifts, trends=trends, co_occurrences=co_occurrences["global"]["notable"],
+        state_co_occurrences=co_occurrences["state"]["notable"],
+        trait_co_occurrences=co_occurrences["trait"]["notable"],
+        state_co_occurrence_matrix=co_occurrences["state"]["matrix"],
+        trait_co_occurrence_matrix=co_occurrences["trait"]["matrix"],
         clusters=clusters, config=cfg, safety_flags=safety_flags,
         clusters_status=cl_status,
     )

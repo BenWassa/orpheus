@@ -1,6 +1,7 @@
 import { EMOTION_ORDER, EMOTIONS, THEME_ORDER, THEMES } from '../taxonomy';
 import type {
   CoOccurrence,
+  CoOccurrenceCell,
   DepthLabel,
   EmotionCategory,
   NarrativeSummary,
@@ -133,6 +134,7 @@ function normalizeWindow(value: unknown): WindowScores {
     top_frequency_tracks: normalizeTracks(source.top_frequency_tracks),
     coverage: normalizeCoverage(source.coverage),
     co_occurrences: normalizeCoOccurrences(source.co_occurrences),
+    co_occurrence_matrix: normalizeCoOccurrenceMatrix(source.co_occurrence_matrix),
   };
 }
 
@@ -141,6 +143,20 @@ function normalizeCoOccurrences(value: unknown): CoOccurrence[] {
   return value.flatMap((item) => {
     const normalized = normalizeCoOccurrence(item);
     return normalized ? [normalized] : [];
+  });
+}
+
+function normalizeCoOccurrenceMatrix(value: unknown): CoOccurrenceCell[] {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((item) => {
+    const row = asRecord(item);
+    const emotion = row.emotion;
+    const theme = row.theme;
+    if (typeof emotion !== 'string' || !(emotion in EMOTIONS)) return [];
+    if (typeof theme !== 'string' || !(theme in THEMES)) return [];
+    const lift = row.lift;
+    if (typeof lift !== 'number' || !Number.isFinite(lift)) return [];
+    return [{ emotion: emotion as EmotionCategory, theme: theme as ThemeCategory, lift }];
   });
 }
 

@@ -150,6 +150,7 @@ export function DashboardScreen({ report, onReset, profileName, onReload, reload
               {item.id === 'connections' && detailView === 'connections' && (
                 <CoOccurrenceMatrix
                   coOccurrences={activeWindow.co_occurrences}
+                  liftMatrix={activeWindow.co_occurrence_matrix}
                   scopeLabel={viewMode === 'state' ? 'recent listening' : 'listening history'}
                   selected={selectedPair}
                   onSelect={setSelectedPair}

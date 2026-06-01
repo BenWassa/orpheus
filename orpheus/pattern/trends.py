@@ -127,33 +127,38 @@ def detect_trends(conn: sqlite3.Connection) -> list[dict]:
     return trends
 
 
-def detect_co_occurrences(
+def _co_occurrence_cells(
     conn: sqlite3.Connection,
-    *,
-    since: datetime | None = None,
-    min_tracks: int = 10,
-) -> list[dict]:
-    # Score-weighted co-occurrence. Each track carries a full probability
-    # distribution over the 8 emotions and 8 themes (each axis sums to 1.0). We
-    # accumulate the joint mass e_score x t_score across the catalog rather than
-    # binarising to a "top-3" membership.
-    #
-    # The earlier top-3 approach broke down because the theme classifier is
-    # near-uniform for much of the catalog: a category that barely edges out a
-    # flat field lands in the top-3 ~80% of the time, so its marginal looks
-    # enormous and the expected co-occurrence with everything is so high that no
-    # genuine pairing (e.g. sadness x heartbreak) can clear the lift threshold.
-    # Using the raw scores fixes this: a fully-flat track contributes lift
-    # exactly 1.0 to every pair (no false signal), while a track that genuinely
-    # concentrates on sadness + heartbreak pushes that pair's mass above its
-    # marginals. Lift is then a clean "do these score high on the same tracks
-    # more than their marginal distributions predict?".
-    #
-    # Each track is weighted by its qualified play count, so co-occurrence
-    # reflects listening behaviour rather than catalog composition; tracks never
-    # played do not count. ``since`` scopes the play universe to a window's
-    # evidence span (the expected-vs-observed comparison then uses that window's
-    # own base rates); ``None`` = all-time.
+    since: datetime | None,
+    min_tracks: int,
+) -> tuple[dict[tuple[str, str], dict] | None, float]:
+    """Score-weighted lift for every (emotion, theme) cell.
+
+    Each track carries a full probability distribution over the 8 emotions and 8
+    themes (each axis sums to 1.0). We accumulate the joint mass e_score x t_score
+    across the catalog rather than binarising to a "top-3" membership.
+
+    The earlier top-3 approach broke down because the theme classifier is
+    near-uniform for much of the catalog: a category that barely edges out a flat
+    field lands in the top-3 ~80% of the time, so its marginal looks enormous and
+    the expected co-occurrence with everything is so high that no genuine pairing
+    (e.g. sadness x heartbreak) can clear the lift threshold. Using the raw scores
+    fixes this: a fully-flat track contributes lift exactly 1.0 to every pair (no
+    false signal), while a track that genuinely concentrates on sadness +
+    heartbreak pushes that pair's mass above its marginals. Lift is then a clean
+    "do these score high on the same tracks more than their marginals predict?".
+
+    Each track is weighted by its qualified play count, so co-occurrence reflects
+    listening behaviour rather than catalog composition; tracks never played do
+    not count. ``since`` scopes the play universe to a window's evidence span (the
+    expected-vs-observed comparison then uses that window's own base rates);
+    ``None`` = all-time.
+
+    Returns ``(cells, total)`` where ``cells`` maps ``(emotion, theme)`` to
+    ``{"observed", "expected", "lift"}`` for every populated pair, or
+    ``(None, 0.0)`` when there are too few distinct played-and-scored tracks for
+    the comparison to mean anything (an honest empty state for short windows).
+    """
     rows = conn.execute(
         """SELECT ts.track_uri, ts.emotion_scores, ts.theme_scores
            FROM track_scores ts"""
@@ -192,50 +197,81 @@ def detect_co_occurrences(
 
         total += weight
 
-    # Need a minimum of distinct played-and-scored tracks for the expected-value
-    # comparison to mean anything. A short window (e.g. the 30-day "Recent" span)
-    # can legitimately fall below this and return [] — an honest empty state.
     if scored_tracks_played < min_tracks or total <= 0:
-        return []
+        return None, 0.0
 
-    results = []
+    cells = {}
     for (e_cat, t_cat), observed in co_mass.items():
         expected = emotion_mass[e_cat] * theme_mass[t_cat] / total
-
-        # Guard against surfacing a high-lift pair driven by negligible mass: a
-        # pairing must account for at least a small share of total listening to
-        # be reported, so rare-but-noisy combinations don't crowd out real ones.
-        if observed < total * _CO_OCCURRENCE_MIN_SHARE:
-            continue
-
         lift = observed / expected if expected > 0 else 0.0
+        cells[(e_cat, t_cat)] = {"observed": observed, "expected": expected, "lift": lift}
+    return cells, total
+
+
+def _notable_co_occurrences(cells: dict[tuple[str, str], dict] | None, total: float) -> list[dict]:
+    """The thresholded shortlist of over-represented pairings (with narratives),
+    used for insights and the matrix detail panel."""
+    if not cells:
+        return []
+    results = []
+    for (e_cat, t_cat), stats in cells.items():
+        # Guard against surfacing a high-lift pair driven by negligible mass: a
+        # pairing must account for at least a small share of total listening to be
+        # reported, so rare-but-noisy combinations don't crowd out real ones.
+        if stats["observed"] < total * _CO_OCCURRENCE_MIN_SHARE:
+            continue
+        lift = stats["lift"]
         if lift > _CO_OCCURRENCE_LIFT_MIN:
             strength = "strong" if lift > _CO_OCCURRENCE_STRONG_LIFT else "moderate"
             results.append({
                 "pair": [e_cat, t_cat],
                 "strength": strength,
-                "observed": int(round(observed)),
-                "expected": round(expected, 1),
+                "observed": int(round(stats["observed"])),
+                "expected": round(stats["expected"], 1),
                 "lift": round(lift, 2),
                 "narrative": _co_occurrence_narrative(e_cat, t_cat, strength),
             })
-
     results.sort(key=lambda x: x["lift"], reverse=True)
     return results[:10]
+
+
+def _co_occurrence_matrix(cells: dict[tuple[str, str], dict] | None) -> list[dict]:
+    """Dense per-cell lift for the heatmap: every populated (emotion, theme) pair,
+    no threshold. Coloring this full field (centered at lift 1.0) is honest about
+    how most pairings sit at baseline while a few tilt above or below."""
+    if not cells:
+        return []
+    return [
+        {"emotion": e_cat, "theme": t_cat, "lift": round(stats["lift"], 3)}
+        for (e_cat, t_cat), stats in cells.items()
+    ]
+
+
+def detect_co_occurrences(
+    conn: sqlite3.Connection,
+    *,
+    since: datetime | None = None,
+    min_tracks: int = 10,
+) -> list[dict]:
+    cells, total = _co_occurrence_cells(conn, since, min_tracks)
+    return _notable_co_occurrences(cells, total)
 
 
 def detect_co_occurrences_by_window(
     conn: sqlite3.Connection,
     config,
     t_now: datetime | None = None,
-) -> dict[str, list[dict]]:
+) -> dict[str, dict]:
     """Co-occurrences scoped to each window plus an all-time global set.
 
     Each window's pairings are computed over the plays within that window's
     *evidence* span (state: the fixed 30-day recent span; trait: the decay-derived
     span, half_life x 4) — the same spans the windows use for frequency tracks and
     coverage — so the Recent / Usual toggle changes which connections surface.
-    ``global`` is the all-time set, kept for backward compatibility.
+
+    Returns ``{"global", "state", "trait"}``, each a dict with ``"notable"`` (the
+    thresholded shortlist with narratives) and ``"matrix"`` (dense per-cell lift
+    for the heatmap). ``global`` is the all-time set.
     """
     # Imported here (not at module load) to keep the pattern->aggregate edge
     # one-directional and avoid import-time coupling.
@@ -250,10 +286,18 @@ def detect_co_occurrences_by_window(
     )
     trait_lookback = window_evidence_lookback_days(config.windows.trait_half_life_days)
 
+    def both(since: datetime | None) -> dict:
+        # Compute the mass field once, derive both views from it.
+        cells, total = _co_occurrence_cells(conn, since, min_tracks=10)
+        return {
+            "notable": _notable_co_occurrences(cells, total),
+            "matrix": _co_occurrence_matrix(cells),
+        }
+
     return {
-        "global": detect_co_occurrences(conn),
-        "state": detect_co_occurrences(conn, since=t_now - timedelta(days=state_lookback)),
-        "trait": detect_co_occurrences(conn, since=t_now - timedelta(days=trait_lookback)),
+        "global": both(None),
+        "state": both(t_now - timedelta(days=state_lookback)),
+        "trait": both(t_now - timedelta(days=trait_lookback)),
     }
 
 

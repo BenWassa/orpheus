@@ -1,16 +1,35 @@
+import type { CSSProperties } from 'react';
 import { EMOTION_ORDER, EMOTIONS, THEME_ORDER, THEMES } from '../../../taxonomy';
-import type { CoOccurrence, EmotionCategory, ThemeCategory } from '../../../types';
+import type { CoOccurrence, CoOccurrenceCell, EmotionCategory, ThemeCategory } from '../../../types';
 
 interface CoOccurrenceMatrixProps {
   coOccurrences: CoOccurrence[];
+  liftMatrix: CoOccurrenceCell[];
   scopeLabel: string;
   selected: { emotion: EmotionCategory; theme: ThemeCategory } | null;
   onSelect: (value: { emotion: EmotionCategory; theme: ThemeCategory } | null) => void;
 }
 
-export function CoOccurrenceMatrix({ coOccurrences, scopeLabel, selected, onSelect }: CoOccurrenceMatrixProps) {
+// Lift saturates the diverging scale at ±30% from baseline. The real signal is
+// compressed near 1.0 (the theme classifier is near-uniform), so a tight domain
+// keeps the genuine tilts visible rather than washing everything to neutral.
+const LIFT_SPREAD = 0.3;
+
+export function CoOccurrenceMatrix({
+  coOccurrences,
+  liftMatrix,
+  scopeLabel,
+  selected,
+  onSelect,
+}: CoOccurrenceMatrixProps) {
+  // No matrix means the window had too little data for the lift comparison.
+  const isEmpty = liftMatrix.length === 0;
+
+  const liftByCell = new Map<string, number>();
+  for (const cell of liftMatrix) liftByCell.set(cellKey(cell.emotion, cell.theme), cell.lift);
+
   const activePair = selected ? findPair(coOccurrences, selected.emotion, selected.theme) : null;
-  const isEmpty = coOccurrences.length === 0;
+  const activeLift = selected ? liftByCell.get(cellKey(selected.emotion, selected.theme)) : undefined;
 
   return (
     <section className="editorial-matrix-section" aria-labelledby="co-title">
@@ -18,7 +37,9 @@ export function CoOccurrenceMatrix({ coOccurrences, scopeLabel, selected, onSele
         <p className="eyebrow">Interactive topology</p>
         <h3 id="co-title" className="serif-subhead">Intersecting currents</h3>
         <p className="matrix-context-description">
-          This matrix graphs where distinct feelings meet structural themes during your <strong>{scopeLabel}</strong>.
+          Every feeling × theme square, shaded by how much more (or less) they coincide than chance
+          predicts, across your <strong>{scopeLabel}</strong>. Most pairings sit near baseline — the
+          few that tilt are the real signal.
         </p>
       </div>
 
@@ -44,19 +65,23 @@ export function CoOccurrenceMatrix({ coOccurrences, scopeLabel, selected, onSele
               <div className="matrix-grid-contents-row" key={theme} role="row">
                 <span className="matrix-row-axis-label">{THEMES[theme].short}</span>
                 {EMOTION_ORDER.map((emotion) => {
+                  const lift = liftByCell.get(cellKey(emotion, theme));
                   const pair = findPair(coOccurrences, emotion, theme);
                   const isSelected = selected?.emotion === emotion && selected.theme === theme;
-                  const highLift = pair?.lift !== undefined && pair.lift > 1.2;
+                  const hasData = lift !== undefined;
 
                   return (
                     <button
                       key={`${emotion}-${theme}`}
-                      className={`matrix-node-cell ${pair ? pair.strength : 'is-barren'} ${isSelected ? 'is-focused' : ''} ${highLift ? 'has-high-lift' : ''}`}
+                      className={`matrix-node-cell ${hasData ? '' : 'is-barren'} ${isSelected ? 'is-focused' : ''} ${pair ? 'is-notable' : ''}`}
+                      style={isSelected ? undefined : cellStyle(lift)}
                       type="button"
-                      disabled={!pair}
+                      disabled={!hasData}
                       onClick={() => onSelect(isSelected ? null : { emotion, theme })}
                       aria-label={
-                        pair ? `${EMOTIONS[emotion].label} bounded by ${THEMES[theme].label}` : undefined
+                        hasData
+                          ? `${EMOTIONS[emotion].label} with ${THEMES[theme].label}, ${liftDescriptor(lift)}`
+                          : undefined
                       }
                     >
                       <span className="node-value-indicator">{pair ? pair.observed : ''}</span>
@@ -68,6 +93,15 @@ export function CoOccurrenceMatrix({ coOccurrences, scopeLabel, selected, onSele
           </div>
 
           <aside className="matrix-side-annotation-drawer">
+            <div className="matrix-lift-legend" aria-hidden="true">
+              <span className="legend-bar" />
+              <div className="legend-labels">
+                <span>Avoided</span>
+                <span>Expected</span>
+                <span>Elevated</span>
+              </div>
+            </div>
+
             {activePair ? (
               <div className="annotation-content-card">
                 <span className="annotation-eyebrow">Observed affinity</span>
@@ -88,15 +122,32 @@ export function CoOccurrenceMatrix({ coOccurrences, scopeLabel, selected, onSele
                   </div>
                   {activePair.lift !== undefined && (
                     <div className="stat-datapoint highlighted-lift">
-                      <span className="stat-label">Statistical lift</span>
-                      <span className="stat-value">x{activePair.lift.toFixed(2)}</span>
+                      <span className="stat-label">vs expected</span>
+                      <span className="stat-value">{liftBadge(activePair.lift)}</span>
                     </div>
                   )}
                 </div>
               </div>
+            ) : selected && activeLift !== undefined ? (
+              <div className="annotation-content-card is-baseline">
+                <span className="annotation-eyebrow">Around baseline</span>
+                <h4>
+                  {EMOTIONS[selected.emotion].label} <span className="conjunction">&amp;</span>{' '}
+                  {THEMES[selected.theme].label}
+                </h4>
+                <p className="annotation-narrative-prose">
+                  These appear together {liftDescriptor(activeLift)} — not a standout connection in this window.
+                </p>
+                <div className="annotation-stats-strip">
+                  <div className="stat-datapoint highlighted-lift">
+                    <span className="stat-label">vs expected</span>
+                    <span className="stat-value">{liftBadge(activeLift)}</span>
+                  </div>
+                </div>
+              </div>
             ) : (
               <div className="annotation-placeholder-card">
-                <p>Select an intersecting node in the structural grid to isolate evidence telemetry and thematic breakdowns.</p>
+                <p>Select any square to see how often that feeling and theme coincide versus what chance predicts.</p>
               </div>
             )}
           </aside>
@@ -106,6 +157,42 @@ export function CoOccurrenceMatrix({ coOccurrences, scopeLabel, selected, onSele
   );
 }
 
+function cellKey(emotion: EmotionCategory, theme: ThemeCategory): string {
+  return `${emotion}|${theme}`;
+}
+
 function findPair(items: CoOccurrence[], emotion: EmotionCategory, theme: ThemeCategory): CoOccurrence | undefined {
   return items.find((item) => item.emotion === emotion && item.theme === theme);
+}
+
+// Diverging color centered at lift 1.0: green for elevated, cool slate for
+// avoided, near-neutral at baseline. Background only — text color is handled by
+// CSS reacting to the data-tone attribute would be overkill, so dark elevated
+// cells just keep ink text (numbers only appear on notable cells, which sit in
+// the lighter-to-mid range).
+function cellStyle(lift: number | undefined): CSSProperties | undefined {
+  if (lift === undefined) return undefined;
+  const dev = lift - 1;
+  if (Math.abs(dev) < 0.01) return { background: 'var(--paper-strong)' };
+  const t = Math.min(Math.abs(dev) / LIFT_SPREAD, 1);
+  if (dev > 0) {
+    const L = 0.95 - 0.46 * t;
+    const C = 0.025 + 0.1 * t;
+    return { background: `oklch(${L.toFixed(3)} ${C.toFixed(3)} 172)`, borderColor: 'transparent' };
+  }
+  const L = 0.95 - 0.14 * t;
+  const C = 0.01 + 0.045 * t;
+  return { background: `oklch(${L.toFixed(3)} ${C.toFixed(3)} 248)`, borderColor: 'transparent' };
+}
+
+function liftBadge(lift: number): string {
+  const pct = Math.round((lift - 1) * 100);
+  return pct >= 0 ? `+${pct}%` : `${pct}%`;
+}
+
+function liftDescriptor(lift: number | undefined): string {
+  if (lift === undefined) return 'no data';
+  const pct = Math.round((lift - 1) * 100);
+  if (Math.abs(pct) < 3) return 'about as often as expected';
+  return pct > 0 ? `${pct}% more than expected` : `${Math.abs(pct)}% less than expected`;
 }
