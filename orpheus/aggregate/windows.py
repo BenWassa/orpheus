@@ -345,8 +345,10 @@ def aggregate_window(
     }
 
 
-def compute_state_and_trait(conn: sqlite3.Connection, config: OrpheusConfig) -> dict:
-    t_now = datetime.now(timezone.utc)
+def compute_state_and_trait(
+    conn: sqlite3.Connection, config: OrpheusConfig, t_now: datetime | None = None
+) -> dict:
+    t_now = t_now or datetime.now(timezone.utc)
 
     state = aggregate_window(
         conn,

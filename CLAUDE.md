@@ -11,6 +11,13 @@ Rules:
 - If graphify-out/wiki/index.md exists, navigate it instead of reading raw files
 - After modifying code files in this session, run `graphify update .` to keep the graph current (AST-only, no API cost)
 
+## Project status
+
+`STATUS.md` is the **single status document** — current verified state,
+findings ledger, and the build-out roadmap. Read it before assessing "where
+the project is"; update it (rather than creating new status/TODO files) when
+progress changes.
+
 ## Python environment
 
 All CLI commands (`orpheus`, `python`, `pytest`, `ruff`) live in `.venv/bin/`. Always
@@ -74,13 +81,20 @@ The action set, as it stands:
    writes to the reports-dir **root**, which the profile UI never reads, so the
    dashboard won't change. (`--out PATH` still works for a one-off explicit path;
    `--out` and `--profile` are mutually exclusive.)
-3. Read the JSON and write a human summary: state vs. trait windows, trends,
-   shifts, co-occurrences, clusters.
-4. **Sanity-check before presenting** — flag likely artifacts rather than
+3. **Pass `--as-of latest-play` for static exports.** Exports always end in the
+   past; without the anchor the "recent" window is empty (the CLI warns). The
+   report records the anchor in its `as_of` field.
+4. Read the JSON and write a human summary. Beyond windows/trends/shifts/
+   co-occurrences/clusters, the report carries `narrative` (server-composed
+   headline, insights, archetype, caveats) and `temporal` (full-coverage hours/
+   months/moments/rhythm from raw plays) — lead the summary with those.
+5. **Sanity-check before presenting** — flag likely artifacts rather than
    reporting them as signal. Known ones: `clusters_status` other than `ok` means
    no/insufficient audio features (clusters legitimately empty); a stale trailing
-   week can still skew trends. Call these out explicitly.
-5. To view in the dashboard: hard-reload the browser (no rebuild needed — reports
+   week can still skew trends; low `coverage` ratios mean the mood mixture reads
+   a thin slice (the narrative's `caveats` already enumerate these — reuse them).
+   Call these out explicitly.
+6. To view in the dashboard: hard-reload the browser (no rebuild needed — reports
    are fetched at runtime via `/api/reports/latest`) with the profile selected.
 
 ## Architecture

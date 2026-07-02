@@ -49,10 +49,17 @@ def assemble_report(
     trait_co_occurrences: list[dict] | None = None,
     state_co_occurrence_matrix: list[dict] | None = None,
     trait_co_occurrence_matrix: list[dict] | None = None,
+    temporal: dict | None = None,
+    narrative: dict | None = None,
+    as_of: dict | None = None,
+    experimental: dict | None = None,
 ) -> dict:
     report = {
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "model_version": config.model_version,
+        # Window anchor: {"as_of": ISO timestamp, "anchor": "now"|"latest_play"|"explicit"}.
+        # Lets the UI say "as of your last play on <date>" when reading a stale export.
+        "as_of": as_of,
         "windows": {
             "state": _format_window(
                 state, config,
@@ -71,6 +78,15 @@ def assemble_report(
         "clusters": clusters,
         "clusters_status": clusters_status,
         "safety_flags": safety_flags or [],
+        # Grounding stats over *all* plays (no scoring join) — full coverage
+        # regardless of scoring backlog. See orpheus/output/temporal.py.
+        "temporal": temporal,
+        # Server-composed letter: {headline, key_insights, listening_archetype,
+        # caveats}. The frontend falls back to its own composition when absent.
+        "narrative": narrative,
+        # Exploratory sections (session arcs, novelty). Everything under this
+        # key is labelled experimental and carries its own evidence notes.
+        "experimental": experimental,
     }
 
     return report

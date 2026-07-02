@@ -130,12 +130,29 @@ def test_full_pipeline_e2e(tmp_project, sample_export_path):
     safety_flags = check_rumination(windows["state"], cfg)
     assert safety_flags == []  # safety.active=false in template
 
+    # Step 6b: Temporal grounding + narrative composition
+    from orpheus.output.narrative import compose_narrative
+    from orpheus.output.temporal import compute_temporal
+
+    t_now = datetime.now(timezone.utc)
+    temporal = compute_temporal(conn, t_now)
+    narrative = compose_narrative(
+        state=windows["state"], trait=windows["trait"],
+        shifts=shifts, trends=trends, clusters=clusters,
+        clusters_status=cl_status, temporal=temporal,
+        as_of={"as_of": t_now.isoformat(), "anchor": "now"},
+    )
+    assert set(narrative) == {"headline", "key_insights", "listening_archetype", "caveats"}
+    assert narrative["headline"]
+
     # Step 7: Output assembly
     report_data = assemble_report(
         state=windows["state"], trait=windows["trait"],
         shifts=shifts, trends=trends, co_occurrences=co_occurrences,
         clusters=clusters, config=cfg, safety_flags=safety_flags,
         clusters_status=cl_status,
+        temporal=temporal, narrative=narrative,
+        as_of={"as_of": t_now.isoformat(), "anchor": "now"},
     )
 
     # Verify report structure per C2 schema
@@ -164,6 +181,9 @@ def test_full_pipeline_e2e(tmp_project, sample_export_path):
         "ok", "no_audio_features", "insufficient_audio_data", "no_clusters_found"
     )
     assert "safety_flags" in report_data
+    assert report_data["temporal"]["grounding"]["plays"] >= 0
+    assert report_data["narrative"]["headline"]
+    assert report_data["as_of"]["anchor"] == "now"
 
     # Step 8: Write report
     output_path = cfg.reports_dir / "test_report.json"

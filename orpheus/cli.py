@@ -62,11 +62,46 @@ def _resolve_report_path(cfg, out: str | None, profile: str | None) -> Path | No
     return None
 
 
-def _write_current_report(cfg, output_path: Path | None = None) -> tuple[Path, str, str]:
+def _resolve_as_of(conn, as_of: str | None):
+    """Resolve the window anchor: "now" (default), "latest-play", or an ISO timestamp.
+
+    Spotify exports are always at least a little stale; anchoring to the latest
+    recorded play keeps the state window meaningful when the export ends weeks
+    before the report is generated. Returns (t_now, as_of_info-dict).
+    """
+    from datetime import datetime, timezone
+
+    def _aware(dt: datetime) -> datetime:
+        return dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
+
+    if as_of and as_of == "latest-play":
+        row = conn.execute("SELECT MAX(ts) FROM plays").fetchone()
+        if row and row[0]:
+            t = _aware(datetime.fromisoformat(row[0].replace("Z", "+00:00")))
+            return t, {"as_of": t.isoformat(), "anchor": "latest_play"}
+    elif as_of and as_of != "now":
+        try:
+            t = _aware(datetime.fromisoformat(as_of))
+        except ValueError:
+            raise click.UsageError(
+                f"Invalid --as-of value {as_of!r}; use 'now', 'latest-play', or an ISO timestamp."
+            )
+        return t, {"as_of": t.isoformat(), "anchor": "explicit"}
+
+    t = datetime.now(timezone.utc)
+    return t, {"as_of": t.isoformat(), "anchor": "now"}
+
+
+def _write_current_report(
+    cfg, output_path: Path | None = None, as_of: str | None = None
+) -> tuple[Path, str, str]:
     from datetime import datetime, timezone
 
     from orpheus.aggregate.windows import compute_state_and_trait
     from orpheus.output.assemble import assemble_report, record_run, write_report
+    from orpheus.output.narrative import compose_narrative
+    from orpheus.output.perspectives import compute_perspectives
+    from orpheus.output.temporal import compute_temporal
     from orpheus.pattern.cluster import cluster_gmm, clusters_status, filter_noise
     from orpheus.pattern.trends import (
         compare_state_trait,
@@ -79,14 +114,28 @@ def _write_current_report(cfg, output_path: Path | None = None) -> tuple[Path, s
     started_at = datetime.now(timezone.utc)
 
     try:
-        windows = compute_state_and_trait(conn, cfg)
+        t_now, as_of_info = _resolve_as_of(conn, as_of)
+        windows = compute_state_and_trait(conn, cfg, t_now=t_now)
+        if as_of_info["anchor"] == "now" and windows["state"]["coverage"]["total_plays"] == 0:
+            click.echo(
+                "Note: no plays fall in the recent window — the export data may end "
+                "weeks ago. Use --as-of latest-play to anchor windows to the newest play.",
+                err=True,
+            )
         clean_points, clean_tracks, _ = filter_noise(conn, cfg)
         clusters = cluster_gmm(clean_points, clean_tracks, cfg) if len(clean_points) > 0 else []
         cl_status = clusters_status(conn, clusters, len(clean_points))
-        trends = detect_trends(conn)
-        co_occurrences = detect_co_occurrences_by_window(conn, cfg)
+        trends = detect_trends(conn, t_now=t_now)
+        co_occurrences = detect_co_occurrences_by_window(conn, cfg, t_now=t_now)
         shifts = compare_state_trait(windows["state"], windows["trait"])
         safety_flags = check_rumination(windows["state"], cfg)
+        temporal = compute_temporal(conn, t_now)
+        experimental = compute_perspectives(conn, cfg.model_version, t_now)
+        narrative = compose_narrative(
+            state=windows["state"], trait=windows["trait"],
+            shifts=shifts, trends=trends, clusters=clusters,
+            clusters_status=cl_status, temporal=temporal, as_of=as_of_info,
+        )
 
         report_data = assemble_report(
             state=windows["state"], trait=windows["trait"],
@@ -97,6 +146,8 @@ def _write_current_report(cfg, output_path: Path | None = None) -> tuple[Path, s
             trait_co_occurrence_matrix=co_occurrences["trait"]["matrix"],
             clusters=clusters, config=cfg, safety_flags=safety_flags,
             clusters_status=cl_status,
+            temporal=temporal, narrative=narrative, as_of=as_of_info,
+            experimental=experimental,
         )
 
         if output_path is None:
@@ -293,17 +344,25 @@ def analyze(ctx):
                f"{len(shifts)} shifts, {noise_count} noise tracks filtered.")
 
 
+_AS_OF_HELP = (
+    "Window anchor: 'now' (default), 'latest-play' (anchor to the newest play in the DB — "
+    "use for stale exports), or an ISO timestamp."
+)
+
+
 @main.command()
 @click.option("--out", type=click.Path(), default=None, help="Explicit output path for JSON report")
 @click.option("--profile", default=None, help="Write a timestamped report into <reports_dir>/<profile>/ (where the dashboard reads it)")
+@click.option("--as-of", "as_of", default="now", help=_AS_OF_HELP)
 @click.pass_context
-def report(ctx, out, profile):
+def report(ctx, out, profile, as_of):
     """Assemble and write the JSON report."""
     _load_cfg(ctx)
     cfg = ctx.obj["config"]
     output_path, run_id, output_hash = _write_current_report(
         cfg,
         _resolve_report_path(cfg, out, profile),
+        as_of=as_of,
     )
 
     click.echo(f"Report written to {output_path}")
@@ -313,14 +372,16 @@ def report(ctx, out, profile):
 @main.command()
 @click.option("--out", type=click.Path(), default=None, help="Explicit output path for JSON report")
 @click.option("--profile", default=None, help="Write a timestamped report into <reports_dir>/<profile>/ (where the dashboard reads it)")
+@click.option("--as-of", "as_of", default="now", help=_AS_OF_HELP)
 @click.pass_context
-def refresh(ctx, out, profile):
+def refresh(ctx, out, profile, as_of):
     """Refresh the report from the current database."""
     _load_cfg(ctx)
     cfg = ctx.obj["config"]
     output_path, run_id, output_hash = _write_current_report(
         cfg,
         _resolve_report_path(cfg, out, profile),
+        as_of=as_of,
     )
 
     click.echo(f"Latest report: {output_path}")
@@ -332,8 +393,9 @@ def refresh(ctx, out, profile):
 @click.option("--source", type=click.Path(exists=True), default=None, help="Path to Spotify export (optional if already ingested)")
 @click.option("--out", type=click.Path(), default=None, help="Explicit output path for JSON report")
 @click.option("--profile", default=None, help="Write a timestamped report into <reports_dir>/<profile>/ (where the dashboard reads it)")
+@click.option("--as-of", "as_of", default="now", help=_AS_OF_HELP)
 @click.pass_context
-def run_all(ctx, source, out, profile):
+def run_all(ctx, source, out, profile, as_of):
     """Run the full pipeline end-to-end."""
     _load_cfg(ctx)
     cfg = ctx.obj["config"]
@@ -348,6 +410,9 @@ def run_all(ctx, source, out, profile):
     from orpheus.aggregate.windows import compute_state_and_trait
     from orpheus.enrich import run_enrichment
     from orpheus.output.assemble import assemble_report, record_run, write_report
+    from orpheus.output.narrative import compose_narrative
+    from orpheus.output.perspectives import compute_perspectives
+    from orpheus.output.temporal import compute_temporal
     from orpheus.pattern.cluster import cluster_gmm, clusters_status, filter_noise
     from orpheus.pattern.trends import (
         compare_state_trait,
@@ -375,14 +440,22 @@ def run_all(ctx, source, out, profile):
     click.echo(f"  {score_stats['scored']} tracks scored")
 
     click.echo("Analyzing...")
-    windows = compute_state_and_trait(conn, cfg)
+    t_now, as_of_info = _resolve_as_of(conn, as_of)
+    windows = compute_state_and_trait(conn, cfg, t_now=t_now)
     clean_points, clean_tracks, noise_count = filter_noise(conn, cfg)
     clusters = cluster_gmm(clean_points, clean_tracks, cfg) if len(clean_points) > 0 else []
     cl_status = clusters_status(conn, clusters, len(clean_points))
-    trends = detect_trends(conn)
-    co_occurrences = detect_co_occurrences_by_window(conn, cfg)
+    trends = detect_trends(conn, t_now=t_now)
+    co_occurrences = detect_co_occurrences_by_window(conn, cfg, t_now=t_now)
     shifts = compare_state_trait(windows["state"], windows["trait"])
     safety_flags = check_rumination(windows["state"], cfg)
+    temporal = compute_temporal(conn, t_now)
+    experimental = compute_perspectives(conn, cfg.model_version, t_now)
+    narrative = compose_narrative(
+        state=windows["state"], trait=windows["trait"],
+        shifts=shifts, trends=trends, clusters=clusters,
+        clusters_status=cl_status, temporal=temporal, as_of=as_of_info,
+    )
 
     click.echo("Assembling report...")
     report_data = assemble_report(
@@ -394,6 +467,8 @@ def run_all(ctx, source, out, profile):
         trait_co_occurrence_matrix=co_occurrences["trait"]["matrix"],
         clusters=clusters, config=cfg, safety_flags=safety_flags,
         clusters_status=cl_status,
+        temporal=temporal, narrative=narrative, as_of=as_of_info,
+        experimental=experimental,
     )
 
     if report_path is None:

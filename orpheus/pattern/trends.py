@@ -63,8 +63,8 @@ def _qualified_play_counts(
     return {row["track_uri"]: row["n"] for row in rows}
 
 
-def detect_trends(conn: sqlite3.Connection) -> list[dict]:
-    t_now = datetime.now(timezone.utc)
+def detect_trends(conn: sqlite3.Connection, t_now: datetime | None = None) -> list[dict]:
+    t_now = t_now or datetime.now(timezone.utc)
     buckets = _build_weekly_buckets(conn, t_now, _TREND_WEEKS)
 
     # Drop weeks with too few plays to yield a trustworthy weekly mean. Without

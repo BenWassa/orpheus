@@ -99,6 +99,10 @@ orpheus run-all --source "path/to/Spotify Extended Streaming History/" --profile
 
 # Normal repeat use after data is already in the DB
 orpheus refresh --profile Ben
+
+# Static exports always end in the past; anchor the "recent" window to the
+# newest play instead of the wall clock:
+orpheus refresh --profile Ben --as-of latest-play
 ```
 
 See **[SETUP.md](SETUP.md)** for credentials, runtimes, and troubleshooting.
@@ -139,11 +143,12 @@ See [CLAUDE.md](CLAUDE.md) for the full architecture reference and design notes.
 
 ## Docs map
 
-- **Root docs** — entry points and operating guides: this README, [SETUP.md](SETUP.md), [PRODUCT.md](PRODUCT.md), [UI_UPGRADE_TODO.md](UI_UPGRADE_TODO.md), [CLAUDE.md](CLAUDE.md), and [AGENTS.md](AGENTS.md).
+- **[STATUS.md](STATUS.md)** — **the single status document**: current verified state, findings ledger, and the build-out roadmap. Start here for "where is this project at?".
+- **Root docs** — entry points and operating guides: this README, [SETUP.md](SETUP.md), [PRODUCT.md](PRODUCT.md), [CLAUDE.md](CLAUDE.md), and [AGENTS.md](AGENTS.md).
 - **[`docs/`](docs/)** — durable product, methodology, data-pipeline, and implementation specs.
 - **[`frontend/*.md`](frontend/)** — frontend build commission, QA notes, and numbered implementation briefs.
 - **[`orpheus/enrich/README.md`](orpheus/enrich/README.md)** — enrichment-specific setup and behavior notes.
-- **[`archive/v1/`](archive/v1/)** — historical Streamlit implementation retained for reference, not live architecture.
+- **[`archive/`](archive/)** — historical material: the v1 Streamlit implementation and the dated frontend-upgrade handoff bundle. Reference only, not live architecture.
 
 ---
 
